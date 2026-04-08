@@ -1,0 +1,127 @@
+:root {
+  /* Dark base with higher-contrast surfaces/borders */
+  --bg-base:      #020607;
+  --bg-surface:   #091214;
+  --bg-card:      #0f1f22;
+  --bg-hover:     #142a2f;
+  --border:       #25575f;
+  --border-glow:  #00d4aa70;
+
+  --teal:         #00f0bf;
+  --teal-dim:     #00f0bf26;
+  --teal-mid:     #00cfa3;
+  --cyan:         #2de4ff;
+  --cyan-dim:     #2de4ff26;
+
+  /* Brighter text for better readability */
+  --text-primary:   #f3fdfd;
+  --text-secondary: #c0ecec;
+  --text-muted:     #7aa7aa;
+  --text-accent:    #00f0bf;
+
+  --success:  #00d4aa;
+  --warning:  #f59e0b;
+  --danger:   #ef4444;
+
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --radius:    8px;
+  --radius-lg: 14px;
+  --shadow:    0 4px 24px #00000060;
+  --shadow-teal: 0 0 30px #00d4aa18;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root {
+  height: 100%;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--teal); }
+
+button { cursor: pointer; border: none; background: none; font-family: inherit; }
+input, textarea { font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+
+/* Utility */
+.mono { font-family: var(--font-mono); }
+.teal { color: var(--teal); }
+
+/* Minimal utility classes used in report dashboard (Tailwind-style) */
+.bg-white { background-color: #ffffff; }
+.text-black { color: #020617; }
+.text-white { color: #f9fafb; }
+.p-6 { padding: 1.5rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mb-4 { margin-bottom: 1rem; }
+.rounded { border-radius: 0.375rem; }
+.rounded-lg { border-radius: 0.75rem; }
+.text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+.font-bold { font-weight: 700; }
+.h-64 { height: 16rem; }
+.w-full { width: 100%; }
+.bg-green-600 { background-color: #16a34a; }
+
+#report-view {
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+}
+
+/* Grid texture overlay on bg */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(#102325 1px, transparent 1px),
+    linear-gradient(90deg, #102325 1px, transparent 1px);
+  background-size: 40px 40px;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root { position: relative; z-index: 1; }
+
+/* Animations */
+@keyframes pulse-ring {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(1.7); opacity: 0; }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px #00d4aa30; }
+  50%       { box-shadow: 0 0 40px #00d4aa60, 0 0 80px #00d4aa20; }
+}
