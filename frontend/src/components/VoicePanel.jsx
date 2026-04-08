@@ -332,7 +332,7 @@ export default function VoicePanel() {
             {msg.intent === "REPORT" && msg.db_rows && msg.db_rows[0] && (
               <div id="report-view" className="bg-white p-6 rounded-lg text-black mt-4">
                 <h3 className="text-xl font-bold mb-4">Monthly Analytics Dashboard</h3>
-                
+
                 {/* Sales Trend Chart */}
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
@@ -345,7 +345,73 @@ export default function VoicePanel() {
                   </ResponsiveContainer>
                 </div>
 
-                <button 
+                {/* Text summary sections to mirror the CLI report */}
+                {(() => {
+                  const report = msg.db_rows[0]
+                  const meta = report.meta || {}
+                  const summary = report.summary || {}
+                  const topProducts = report.top_products || []
+                  const daily = report.daily_breakdown || []
+                  const critical = report.critical_stock || []
+                  const dead = report.dead_stock || []
+                  return (
+                    <div style={{ marginTop: '1.5rem', fontSize: 13, lineHeight: 1.6 }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700 }}>💰 Financial Summary</div>
+                        <div>Total Revenue: ₹{summary.total_revenue?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+                        <div>Total Profit: ₹{summary.total_profit?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+                        <div>Profit Margin: {summary.margin_pct}%</div>
+                        <div>Total Orders: {summary.total_orders}</div>
+                        <div>Units Sold: {summary.total_units_sold}</div>
+                        <div>Unique Customers: {summary.unique_customers}</div>
+                      </div>
+
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700 }}>⏰ Peak Performance</div>
+                        <div>Peak Day: {summary.peak_day?.day} (₹{summary.peak_day?.revenue?.toLocaleString('en-IN', { maximumFractionDigits: 0 })})</div>
+                        <div>Peak Hour: {summary.peak_hour}</div>
+                      </div>
+
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700 }}>🏆 Top 5 Products</div>
+                        {topProducts.slice(0, 5).map((p, idx) => (
+                          <div key={p.item + idx}>
+                            {idx + 1}. {p.item} {p.qty} units ₹{p.revenue?.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700 }}>📦 Daily Sales (Last 7 days)</div>
+                        {daily.slice(-7).map(d => (
+                          <div key={d.day}>
+                            {d.day} — ₹{d.revenue?.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({d.orders} orders)
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ marginBottom: 8 }}>
+                        <div style={{ fontWeight: 700 }}>🔴 Critical Stock Alerts</div>
+                        {critical.map(item => (
+                          <div key={item.item}>
+                            ⚠️ {item.item}: ~{item.days_until_stockout} din bacha hai!
+                          </div>
+                        ))}
+                      </div>
+
+                      <div>
+                        <div style={{ fontWeight: 700 }}>🧊 Dead Stock (30+ days no sale)</div>
+                        {dead.map(item => (
+                          <div key={item.item}>
+                            • {item.item}: Last sold {item.last_sold}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                <button
                   onClick={() => handleDownloadPDF()}
                   className="mt-4 bg-green-600 text-white px-4 py-2 rounded"
                 >
