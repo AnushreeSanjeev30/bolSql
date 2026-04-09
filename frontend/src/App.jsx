@@ -4,6 +4,7 @@ import VoicePanel from './components/VoicePanel'
 import InventoryPanel from './components/InventoryPanel'
 import HistoryPanel from './components/HistoryPanel'
 import TrendsPanel from './components/TrendsPanel'
+import CustomerTrendsPanel from './components/CustomerTrendsPanel'
 import { getHealth } from './api'
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -94,6 +95,7 @@ const LABELS = {
     inventory: 'Inventory',
     history: 'History',
     trends: 'Trends & Reports',
+    customer: 'Customer Trends',
     
     // VoicePanel
     voiceTitle: 'Voice Query',
@@ -122,6 +124,7 @@ const LABELS = {
     inventory: 'Inventory - Samanukkam',
     history: 'History - Varalaru',
     trends: 'Trends - Viral Kavai',
+    customer: 'Customer Trends',
     
     // VoicePanel (Tanglish)
     voiceTitle: 'Voice Query - Tanglish',
@@ -161,6 +164,7 @@ export default function App() {
     inventory: <InventoryPanel key={refreshKey} language={language} />,
     history:   <HistoryPanel language={language} />,
     trends:    <TrendsPanel language={language} />,
+    customer:  <CustomerTrendsPanel />,
   }
 
   useEffect(() => {

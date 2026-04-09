@@ -3,8 +3,8 @@ import { useState } from 'react'
 const NAV_IDS = [
   { id: 'voice',     icon: '🎙️' },
   { id: 'inventory', icon: '📦' },
-  { id: 'history',   icon: '🕒' },
   { id: 'trends',    icon: '📈' },
+  { id: 'customer',  icon: '👥' },
 ]
 
 const NAV_LABELS = {
@@ -13,12 +13,14 @@ const NAV_LABELS = {
     inventory: 'Inventory',
     history: 'History',
     trends: 'Trends & Reports',
+    customer: 'Customer Trends',
   },
   tamil: {
     voice: 'Voice Query - Tanglish',
     inventory: 'Inventory - Samanukkam',
     history: 'History - Varalaru',
     trends: 'Trends - Viral Kavai',
+    customer: 'Customer Trends',
   },
 }
 

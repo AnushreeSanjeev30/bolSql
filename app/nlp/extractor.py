@@ -306,7 +306,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     unit_pattern = "|".join(re.escape(u) for u in sorted(UNIT_MAP.keys(), key=len, reverse=True))
     cleaned = re.sub(rf"\d+(?:\.\d+)?\s*(?:{unit_pattern})?\b", "", text_l)
 
-    # Remove intent words and common fillers
+    # Remove intent words and common fillers (Hindi + English helpers)
     fillers = [
         r"\badd\b", r"\baid\b", r"\bkaro\b", r"\bkro\b", r"\bdaal\b", r"\bdalo\b", r"\bdo\b",
         r"\bbecho\b", r"\bbecha\b", r"\bdiya\b", r"\bgaya\b",
@@ -323,6 +323,11 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
         r"\bbadha\b", r"\bbadhao\b", r"\bincrease\b", r"\bdecrease\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
+        r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
+        # English glue words that should not be part of item name
+        r"\bthe\b", r"\bof\b", r"\bto\b", r"\bfor\b", r"\bon\b",
+        r"\bcan\b", r"\byou\b", r"\baap\b", r"\bplease\b", r"\bplz\b",
+        r"\brupees?\b", r"\brs\.?\b",
     ]
     for f in fillers:
         cleaned = re.sub(f, " ", cleaned)

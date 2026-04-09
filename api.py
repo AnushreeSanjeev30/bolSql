@@ -21,6 +21,20 @@ except ImportError:
 from app.db.database import init_db, get_all_items
 from pipeline import process
 from app.trends.classifier import detect_language
+from config import DB_PATH
+
+from app.trends.customer_engine import (
+    compute_rfm,
+    compute_ltv,
+    predict_churn,
+    visit_frequency,
+    basket_size_trend,
+    cohort_retention,
+    predict_next_purchases,
+    loyalty_scores,
+    generate_delivery_orders,
+    save_predictions_to_db,
+)
 
 app = FastAPI(
     title="VoiceSQL — Kirana Intelligence API",
@@ -281,6 +295,43 @@ async def export_trends_pdf():
         return report
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to export PDF: {e}")
+
+
+@app.get("/customer-trends")
+async def get_customer_trends():
+    """Aggregate key customer analytics for the dashboard."""
+    try:
+        from datetime import datetime
+
+        db_path = DB_PATH
+
+        rfm = compute_rfm(db_path)
+        ltv = compute_ltv(db_path)
+        churn = predict_churn(db_path)
+        visits = visit_frequency(db_path)
+        baskets = basket_size_trend(db_path)
+        cohorts = cohort_retention(db_path)
+        loyalty = loyalty_scores(db_path)
+
+        # Refresh predictive tables and delivery suggestions
+        save_predictions_to_db(db_path)
+        next_purchases = predict_next_purchases(db_path)
+        deliveries = generate_delivery_orders(db_path)
+
+        return {
+            "generated_at": datetime.now().isoformat(),
+            "rfm": rfm,
+            "ltv": ltv,
+            "churn": churn,
+            "visit_frequency": visits,
+            "basket_size": baskets,
+            "cohort_retention": cohorts,
+            "loyalty": loyalty,
+            "next_purchases": next_purchases,
+            "delivery_orders": deliveries,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load customer trends: {e}")
 
 
 @app.get("/health")

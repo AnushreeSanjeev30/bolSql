@@ -35,3 +35,8 @@ export async function exportTrendsPDF() {
   return response.data
 }
 
+export async function getCustomerTrends() {
+  const { data } = await api.get('/customer-trends')
+  return data
+}
+
