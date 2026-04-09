@@ -46,7 +46,38 @@ from app.trends.formatter import format_customer_result, get_greeting
 log = get_logger("pipeline")
 
 
-# Initialise trends pipeline (analytics) at module import time
+# ── ASR Normalization (Remove filler words, handle lack of punctuation) ────────
+
+ASR_STRIP = re.compile(
+    r"\b(kro|kr|kar|karo|please|na|haan|dena|chahiye|chaiye|aro|aur|par|lekin|bas|lo|ho|raha|rahaa|hai|hain)\b",
+    re.IGNORECASE
+)
+
+def normalize_asr_input(text: str, is_voice: bool = False) -> str:
+    """
+    Normalize ASR output: remove filler words, normalize spacing.
+    
+    ASR outputs are:
+    - All lowercase
+    - No punctuation
+    - May have filler words (karo, please, na, etc.)
+    - Multiple spaces
+    
+    This normalizer removes common fillers to match text input.
+    """
+    if not is_voice:
+        return text
+    
+    # Remove common Hinglish filler words
+    text = ASR_STRIP.sub("", text)
+    
+    # Collapse multiple spaces
+    text = re.sub(r"\s+", " ", text).strip()
+    
+    return text
+
+
+# ── Trends Pipeline ───────────────────────────────────────────────────────────
 try:
     _trends_pipeline = TrendsPipeline(db_path=str(TRENDS_DB_PATH))
     maybe_generate_monthly_report(str(TRENDS_DB_PATH))
@@ -323,14 +354,19 @@ def _classify_customer_query(text: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def process(text: str) -> PipelineResult:
+def process(text: str, is_voice: bool = False) -> PipelineResult:
     """Main pipeline entry point.
 
     text: transcribed/typed Hinglish query
+    is_voice: True if input came from ASR (applies normalization)
     Returns PipelineResult with response and metadata.
     """
 
     text = text.strip()
+    
+    # Normalize ASR output: remove fillers, normalize spacing
+    text = normalize_asr_input(text, is_voice=is_voice)
+    
     if not text:
         return PipelineResult(
             success=False,
@@ -338,10 +374,31 @@ def process(text: str) -> PipelineResult:
             error="empty input",
         )
 
-    log.info("Processing: '%s'", text)
+    log.info("Processing: '%s' (voice=%s)", text, is_voice)
 
-    # Step 1: NLP parsing
-    parsed = parse(text)
+    # CRITICAL FIX: Check trends BEFORE transliteration to preserve Hindi patterns
+    # This ensures Hindi market basket queries work correctly
+    if _trends_pipeline is not None and _trends_pipeline.is_trend_query(text):
+        trend_response = _trends_pipeline.process(text)
+        if trend_response:
+            return PipelineResult(
+                success=True,
+                response=trend_response,
+                intent="TREND",
+            )
+
+    # Step 1: NLP parsing — route to LLM parser for voice, rule-based for text
+    if is_voice:
+        from app.nlp.extractor import parse_voice
+        parsed = parse_voice(text)  # parse_voice handles Devanagari transliteration
+    else:
+        # For text input with Devanagari, transliterate first
+        from app.nlp.extractor import _transliterate_devanagari
+        text_normalized = _transliterate_devanagari(text)
+        if text_normalized != text:
+            log.debug("Devanagari transliterated: '%s' → '%s'", text, text_normalized)
+            text = text_normalized  # Use transliterated text for all downstream processing
+        parsed = parse(text)
     log.info(
         "Intent=%s item=%s qty=%s unit=%s conf=%.2f",
         parsed.intent,
@@ -413,17 +470,7 @@ def process(text: str) -> PipelineResult:
                 trend_type=customer_trend_type,
             )
 
-    # Step 2: existing general trends (sales, dead stock, etc.)
-    if _trends_pipeline is not None and _trends_pipeline.is_trend_query(text):
-        trend_response = _trends_pipeline.process(text)
-        if trend_response:
-            return PipelineResult(
-                success=True,
-                response=trend_response,
-                intent="TREND",
-            )
-
-    # Step 3: route by intent + confidence
+    # Step 2: route by intent + confidence (general inventory/cart operations)
     if parsed.intent == "ADD" and parsed.item_name and parsed.confidence >= 0.4:
         return _handle_add(parsed)
 

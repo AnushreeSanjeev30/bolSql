@@ -6,7 +6,7 @@ const api = axios.create({
 })
 
 export async function sendQuery(text) {
-  const { data } = await api.post('/query', { text, verbose: true })
+  const { data } = await api.post('/query', { text, verbose: false })
   return data
 }
 

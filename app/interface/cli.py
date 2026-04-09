@@ -141,10 +141,17 @@ def run_cli(voice_mode=False, verbose=False):
 
         if user_input.lower() in ("/voice", "/v") and asr:
             print(_c(Fore.CYAN, "\n🎤 Recording... (speak now)"))
-            text = asr.record_and_transcribe()
-            if text:
-                print(_c(Fore.GREEN, f"   Suna: \"{text}\""))
-                result = process(text)
+            result = asr.record_and_transcribe()
+            if result:
+                text, confidence = result
+                print(_c(Fore.GREEN, f"   Suna: \"{text}\" (confidence: {confidence:.1%})"))
+                
+                # Confidence threshold: reject low-confidence transcriptions
+                if confidence < 0.5:
+                    print(_c(Fore.YELLOW, "   ⚠️  Confidence low. Dobara try karein.\n"))
+                    continue
+                
+                result = process(text, is_voice=True)
             else:
                 print(_c(Fore.RED, "   Kuch samajh nahi aaya. Dobara try karein.\n"))
                 continue

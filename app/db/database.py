@@ -72,6 +72,9 @@ def init_db() -> None:
             ("chai",     5.0,  "kg",     400.0),
             ("mirchi",   3.0,  "kg",     80.0),
             ("haldi",    2.0,  "kg",     120.0),
+            ("aloo",     40.0, "kg",     25.0),     # Potatoes
+            ("apple",    35.0, "piece",  15.0),    # Apples
+            ("mango",    25.0, "piece",  20.0),    # Mangoes
         ]
         c.executemany(
             "INSERT INTO inventory (name, quantity, unit, price) VALUES (?,?,?,?)",

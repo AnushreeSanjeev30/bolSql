@@ -384,7 +384,9 @@ class TrendsEngine:
         window = timedelta(minutes=5)
 
         for item, ts_str in rows:
-            ts = datetime.strptime(ts_str[:19], "%Y-%m-%d %H:%M:%S")
+            # Handle both ISO format (2026-03-10T14:40:44) and space format (2026-03-10 14:40:44)
+            ts_str_normalized = ts_str[:19].replace('T', ' ')
+            ts = datetime.strptime(ts_str_normalized, "%Y-%m-%d %H:%M:%S")
             if last_time is None or (ts - last_time) > window:
                 if current_basket:
                     baskets.append(current_basket)

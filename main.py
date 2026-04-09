@@ -19,6 +19,11 @@ from config import DB_PATH
 
 sys.path.insert(0, str(Path(__file__).parent))
 
+# Initialize database first
+from app.db.database import init_db
+init_db()
+
+# Then run migrations and analytics
 from app.db.migrations import run_customer_migrations
 from app.trends.customer_engine import save_rfm_to_db, save_predictions_to_db
 

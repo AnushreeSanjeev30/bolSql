@@ -7,11 +7,12 @@ Or: uvicorn api:app --reload
 import sys
 from pathlib import Path
 from typing import Optional
+import tempfile
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
-    from fastapi import FastAPI, HTTPException
+    from fastapi import FastAPI, HTTPException, File, UploadFile
     from fastapi.middleware.cors import CORSMiddleware
     from pydantic import BaseModel
 except ImportError:
@@ -54,6 +55,18 @@ class QueryResponse(BaseModel):
     error: Optional[str]
 
 
+class VoiceQueryResponse(BaseModel):
+    success: bool
+    transcribed_text: str           # What Whisper heard
+    transcription_confidence: float  # 0-1 confidence score
+    response: str                    # Business logic response
+    intent: Optional[str]
+    sql: Optional[str]
+    db_rows: Optional[list] = None
+    error: Optional[str]
+    skipped: Optional[bool] = False  # True if confidence too low
+
+
 @app.post("/query", response_model=QueryResponse)
 async def query_endpoint(req: QueryRequest):
     """Process a Hinglish text query."""
@@ -71,6 +84,74 @@ async def query_endpoint(req: QueryRequest):
         db_rows=result.db_rows,
         error=result.error,
     )
+
+
+@app.post("/voice", response_model=VoiceQueryResponse)
+async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False):
+    """
+    Process voice input: transcribe (with confidence) → process query.
+    
+    Returns:
+    - transcribed_text: What Whisper heard
+    - transcription_confidence: 0-1 (reject if < 0.5)
+    - response: Business logic response
+    - skipped: True if confidence too low to process
+    """
+    # Read audio file
+    try:
+        audio_bytes = await audio.read()
+        if not audio_bytes:
+            raise HTTPException(status_code=400, detail="Empty audio file")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to read audio: {e}")
+    
+    # Transcribe with confidence
+    try:
+        from app.asr.whisper_asr import get_asr
+        asr = get_asr()
+        
+        if not asr or not asr.available:
+            raise HTTPException(status_code=503, detail="ASR model not available")
+        
+        result = asr.transcribe_bytes(audio_bytes)
+        if not result:
+            raise HTTPException(status_code=400, detail="Transcription failed")
+        
+        transcribed_text, confidence = result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"ASR error: {e}")
+    
+    # Check confidence threshold
+    if confidence < 0.5:
+        return VoiceQueryResponse(
+            success=False,
+            transcribed_text=transcribed_text,
+            transcription_confidence=confidence,
+            response=f"⚠️ Confidence low ({confidence:.0%}). Dobara boliye.",
+            intent=None,
+            sql=None,
+            db_rows=None,
+            skipped=True,
+            error="Low transcription confidence",
+        )
+    
+    # Process the transcribed text
+    try:
+        proc_result = process(transcribed_text, is_voice=True)
+        
+        return VoiceQueryResponse(
+            success=proc_result.success,
+            transcribed_text=transcribed_text,
+            transcription_confidence=confidence,
+            response=proc_result.response,
+            intent=proc_result.intent,
+            sql=proc_result.sql if verbose else None,
+            db_rows=proc_result.db_rows,
+            skipped=False,
+            error=proc_result.error,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processing error: {e}")
 
 
 @app.get("/inventory")

@@ -195,7 +195,7 @@ const QUICK = [
   'kaunsa saman kam hai',
 ]
 
-export default function VoicePanel() {
+export default function VoicePanel({ onRefresh }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -224,6 +224,10 @@ export default function VoicePanel() {
         intent: res.intent,
         db_rows: res.db_rows,
       }])
+      // Refresh inventory after successful ADD or SELL operations
+      if (res.success && (res.intent === 'ADD' || res.intent === 'SELL')) {
+        if (onRefresh) onRefresh()
+      }
     } catch (err) {
       setMessages(prev => [...prev, {
         type: 'bot',

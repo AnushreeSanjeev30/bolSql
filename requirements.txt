@@ -5,10 +5,11 @@
 python-dotenv>=1.0.0
 
 # === ASR ===
-openai-whisper>=20231117
+# openai-whisper>=20231117    # Whisper (commented out - using Sarvam Saaras v3)
 sounddevice>=0.4.6
 numpy>=1.24.0
 scipy>=1.11.0
+requests>=2.31.0              # For Sarvam API calls
 
 # === RAG ===
 faiss-cpu>=1.7.4

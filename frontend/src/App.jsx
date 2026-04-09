@@ -95,6 +95,17 @@ const LABELS = {
 export default function App() {
   const [active, setActive] = useState('voice')
   const [apiOnline, setApiOnline] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  const triggerRefresh = () => {
+    setRefreshKey(k => k + 1)
+  }
+
+  const panels = {
+    voice:     <VoicePanel onRefresh={triggerRefresh} />,
+    inventory: <InventoryPanel key={refreshKey} />,
+    history:   <HistoryPanel />,
+  }
 
   useEffect(() => {
     getHealth()
