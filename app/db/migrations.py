@@ -1,5 +1,58 @@
 import sqlite3
 
+def run_inventory_migrations(db_path: str):
+    """Add new inventory fields and tables for expanded feature support."""
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    
+    # Add new columns to inventory table
+    for col, typedef in [
+        ("category", "TEXT DEFAULT 'general'"),
+        ("expiry_date", "TEXT"),
+    ]:
+        try:
+            c.execute(f"ALTER TABLE inventory ADD COLUMN {col} {typedef}")
+            print(f"✅ Added column {col} to inventory table")
+        except sqlite3.OperationalError:
+            pass  # column already exists
+    
+    # Create price_history table
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS price_history (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        item_id    INTEGER REFERENCES inventory(id),
+        item_name  TEXT,
+        old_price  REAL,
+        new_price  REAL,
+        changed_by TEXT    DEFAULT 'system',
+        changed_at TEXT    NOT NULL
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_price_item ON price_history(item_id)")
+    print("✅ price_history table created/updated")
+    
+    # Create orders table (new dedicated structure)
+    c.execute("""
+    CREATE TABLE IF NOT EXISTS orders_new (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        order_id   TEXT    UNIQUE NOT NULL,
+        customer_id TEXT,
+        item_id    INTEGER REFERENCES inventory(id),
+        item_name  TEXT,
+        quantity   REAL    NOT NULL,
+        price      REAL,
+        order_date TEXT    NOT NULL,
+        status     TEXT    DEFAULT 'pending' CHECK(status IN ('pending','confirmed','delivered','cancelled')),
+        delivery_date TEXT,
+        notes      TEXT
+    )""")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders_new(customer_id)")
+    c.execute("CREATE INDEX IF NOT EXISTS idx_orders_status ON orders_new(status)")
+    print("✅ orders table created")
+    
+    conn.commit()
+    conn.close()
+
+
 def run_customer_migrations(db_path: str):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()

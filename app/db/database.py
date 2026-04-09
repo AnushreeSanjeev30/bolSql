@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from config import DB_PATH
 from logger import get_logger
+from .migrations import run_inventory_migrations, run_customer_migrations
 
 log = get_logger("db")
 
@@ -38,7 +39,9 @@ def init_db() -> None:
             quantity   REAL    NOT NULL DEFAULT 0,
             unit       TEXT    NOT NULL DEFAULT 'piece',
             price      REAL    DEFAULT 0,
-            cost_price REAL
+            cost_price REAL,
+            category   TEXT    DEFAULT 'general',
+            expiry_date TEXT
         );
 
         CREATE TABLE IF NOT EXISTS transactions (
@@ -52,8 +55,35 @@ def init_db() -> None:
             customer_id TEXT
         );
 
+        CREATE TABLE IF NOT EXISTS price_history (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            item_id    INTEGER REFERENCES inventory(id),
+            item_name  TEXT,
+            old_price  REAL,
+            new_price  REAL,
+            changed_by TEXT    DEFAULT 'system',
+            changed_at TEXT    NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS orders (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            order_id   TEXT    UNIQUE NOT NULL,
+            customer_id TEXT    REFERENCES customers(customer_id),
+            item_id    INTEGER REFERENCES inventory(id),
+            item_name  TEXT,
+            quantity   REAL    NOT NULL,
+            price      REAL,
+            order_date TEXT    NOT NULL,
+            status     TEXT    DEFAULT 'pending' CHECK(status IN ('pending','confirmed','delivered','cancelled')),
+            delivery_date TEXT,
+            notes      TEXT
+        );
+
         CREATE INDEX IF NOT EXISTS idx_txn_item ON transactions(item_id);
         CREATE INDEX IF NOT EXISTS idx_txn_time ON transactions(timestamp);
+        CREATE INDEX IF NOT EXISTS idx_price_item ON price_history(item_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);
+        CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
     """)
 
     # Seed if empty
@@ -82,6 +112,12 @@ def init_db() -> None:
         )
     conn.commit()
     conn.close()
+    
+    # Run migrations for new fields/tables
+    log.info("Running database migrations")
+    run_inventory_migrations(str(DB_PATH))
+    run_customer_migrations(str(DB_PATH))
+    
     log.info("Database ready")
 
 
@@ -214,3 +250,174 @@ def execute_safe_sql(sql: str, params: tuple = ()) -> int:
         return cur.rowcount
     finally:
         conn.close()
+
+def update_item_price(name: str, new_price: float, reason: str = "manual") -> dict:
+    """Update item price and log to price_history."""
+    norm = normalize_name(name)
+    conn = get_conn()
+    
+    # Get current price
+    item = conn.execute(
+        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
+    ).fetchone()
+    
+    if not item:
+        conn.close()
+        raise ValueError(f"Item '{name}' not found")
+    
+    old_price = item["price"]
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Update price
+    conn.execute(
+        "UPDATE inventory SET price=? WHERE id=?",
+        (new_price, item["id"])
+    )
+    
+    # Log to price_history
+    conn.execute(
+        "INSERT INTO price_history (item_id, item_name, old_price, new_price, changed_by, changed_at) VALUES (?,?,?,?,?,?)",
+        (item["id"], item["name"], old_price, new_price, reason, ts)
+    )
+    
+    conn.commit()
+    updated = conn.execute("SELECT * FROM inventory WHERE id=?", (item["id"],)).fetchone()
+    conn.close()
+    
+    log.info("Price updated for %s: %.1f → %.1f", norm, old_price, new_price)
+    return dict(updated)
+
+
+def rollback_item_price(name: str) -> dict:
+    """Rollback item price to previous value from price_history."""
+    norm = normalize_name(name)
+    conn = get_conn()
+    
+    item = conn.execute(
+        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
+    ).fetchone()
+    
+    if not item:
+        conn.close()
+        raise ValueError(f"Item '{name}' not found")
+    
+    # Get most recent price change
+    prev_price = conn.execute(
+        "SELECT old_price FROM price_history WHERE item_id=? ORDER BY changed_at DESC LIMIT 1",
+        (item["id"],)
+    ).fetchone()
+    
+    if not prev_price:
+        conn.close()
+        raise ValueError(f"No price history found for '{name}'")
+    
+    old_price = item["price"]
+    new_price = prev_price["old_price"]
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Update price to previous
+    conn.execute(
+        "UPDATE inventory SET price=? WHERE id=?",
+        (new_price, item["id"])
+    )
+    
+    # Log the rollback
+    conn.execute(
+        "INSERT INTO price_history (item_id, item_name, old_price, new_price, changed_by, changed_at) VALUES (?,?,?,?,?,?)",
+        (item["id"], item["name"], old_price, new_price, "rollback", ts)
+    )
+    
+    conn.commit()
+    updated = conn.execute("SELECT * FROM inventory WHERE id=?", (item["id"],)).fetchone()
+    conn.close()
+    
+    log.info("Price rolled back for %s: %.1f → %.1f", norm, old_price, new_price)
+    return dict(updated)
+
+
+def add_order(customer_id: str, item_id: int, quantity: float, price: float, delivery_date: str = None) -> dict:
+    """Add new order to orders table."""
+    conn = get_conn()
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    order_id = f"ORD-{ts.replace(' ', '-').replace(':', '')}"
+    
+    # Get item name
+    item = conn.execute("SELECT name FROM inventory WHERE id=?", (item_id,)).fetchone()
+    if not item:
+        conn.close()
+        raise ValueError(f"Item with id {item_id} not found")
+    
+    conn.execute(
+        """INSERT INTO orders 
+           (order_id, customer_id, item_id, item_name, quantity, price, order_date, status, delivery_date) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?)""",
+        (order_id, customer_id, item_id, item["name"], quantity, price, ts, delivery_date)
+    )
+    
+    conn.commit()
+    order = conn.execute(
+        "SELECT * FROM orders WHERE order_id=?", (order_id,)
+    ).fetchone()
+    conn.close()
+    
+    log.info("Order created: %s for %s", order_id, item["name"])
+    return dict(order)
+
+
+def get_orders_by_status(status: str = "pending", customer_id: str = None) -> list[dict]:
+    """Get orders filtered by status and optionally by customer."""
+    conn = get_conn()
+    
+    if customer_id:
+        rows = conn.execute(
+            "SELECT * FROM orders WHERE status=? AND customer_id=? ORDER BY order_date DESC",
+            (status, customer_id)
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM orders WHERE status=? ORDER BY order_date DESC",
+            (status,)
+        ).fetchall()
+    
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def get_items_by_expiry(days_until_expiry: int = 7) -> list[dict]:
+    """Get items expiring within specified days."""
+    conn = get_conn()
+    rows = conn.execute(
+        """SELECT * FROM inventory 
+           WHERE expiry_date IS NOT NULL 
+           AND datetime(expiry_date) <= datetime('now', '+' || ? || ' days')
+           ORDER BY expiry_date ASC""",
+        (days_until_expiry,)
+    ).fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
+
+
+def set_item_expiry(name: str, expiry_date: str) -> dict:
+    """Set expiry date for an item (format: YYYY-MM-DD)."""
+    norm = normalize_name(name)
+    conn = get_conn()
+    
+    item = conn.execute(
+        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
+    ).fetchone()
+    
+    if not item:
+        conn.close()
+        raise ValueError(f"Item '{name}' not found")
+    
+    conn.execute(
+        "UPDATE inventory SET expiry_date=? WHERE id=?",
+        (expiry_date, item["id"])
+    )
+    
+    conn.commit()
+    updated = conn.execute("SELECT * FROM inventory WHERE id=?", (item["id"],)).fetchone()
+    conn.close()
+    
+    log.info("Expiry date set for %s: %s", norm, expiry_date)
+    return dict(updated)

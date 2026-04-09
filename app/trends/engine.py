@@ -361,12 +361,18 @@ class TrendsEngine:
     # ─────────────────────────────────────────────
     # 10. MARKET BASKET TREND (Apriori-lite)
     # ─────────────────────────────────────────────
-    def market_basket(self, min_support: int = 3, top_n: int = 10) -> list:
+    def market_basket(self, min_support: int = 3, top_n: int = 10, product: str = None, item_name: str = None) -> dict:
         """
         Find frequently co-purchased item pairs using
         a simplified Apriori pass on same-session transactions.
         Groups transactions within 5-minute windows as "baskets".
+        
+        If product or item_name is specified, returns items bought with that product.
         """
+        # Use item_name if provided (from NLP extractor), otherwise use product
+        if item_name:
+            product = item_name
+        
         conn = self._conn()
         cur = conn.cursor()
         cur.execute("""
@@ -399,22 +405,67 @@ class TrendsEngine:
 
         # Count co-occurrences
         pair_count = defaultdict(int)
+        product_cooccur = defaultdict(int)  # For product-specific analysis
+        
         for basket in baskets:
             unique = list(set(basket))
+            
+            # General pairs
             for i in range(len(unique)):
                 for j in range(i + 1, len(unique)):
                     pair = tuple(sorted([unique[i], unique[j]]))
                     pair_count[pair] += 1
+            
+            # Product-specific pairs
+            if product:
+                product_lower = product.lower()
+                for item in unique:
+                    if product_lower in item.lower() or item.lower() in product_lower:
+                        for other in unique:
+                            if other.lower() != product_lower:
+                                product_cooccur[other] += 1
 
-        # Filter by min_support and rank
+        # If product specified, return product-specific results
+        if product:
+            if product_cooccur:
+                sorted_items = sorted(product_cooccur.items(), key=lambda x: -x[1])
+                data = [{
+                    "item": item,
+                    "count": count,
+                    "pair": f"{product} + {item}"
+                } for item, count in sorted_items[:top_n]]
+                
+                top_item = sorted_items[0] if sorted_items else None
+                return {
+                    "trend": "market_basket",
+                    "product": product,
+                    "data": data,
+                    "insight": f"{product} ke saath sabse zyada {top_item[0]} bika hai ({top_item[1]} baar)" if top_item else f"{product} k saath koi combination nahi mila"
+                }
+            else:
+                return {
+                    "trend": "market_basket",
+                    "product": product,
+                    "data": [],
+                    "insight": f"{product} k liye koi market basket data nahi hai"
+                }
+
+        # General market basket (no specific product)
         frequent = [(p, c) for p, c in pair_count.items() if c >= min_support]
         frequent.sort(key=lambda x: -x[1])
 
-        return [{
-            "item_a": p[0][0], "item_b": p[0][1],
-            "co_occurrences": p[1],
-            "insight": f"{p[0][0]} aur {p[0][1]} aksar saath bikते hain ({p[1]} baar)"
+        data = [{
+            "pair": f"{p[0][0]} + {p[0][1]}",
+            "item_a": p[0][0],
+            "item_b": p[0][1],
+            "count": p[1],
         } for p in frequent[:top_n]]
+
+        return {
+            "trend": "market_basket",
+            "data": data,
+            "insight": f"Sabse popular combination: {frequent[0][0][0]} aur {frequent[0][0][1]} ({frequent[0][1]} baar)" if frequent else "Koi frequent pairs nahi"
+        }
 
     # ─────────────────────────────────────────────
     # 11. CUSTOMER BUYING PATTERN TREND
@@ -464,13 +515,54 @@ class TrendsEngine:
     # ─────────────────────────────────────────────
     # 12. AUTO-SUBSCRIPTION TREND
     # ─────────────────────────────────────────────
-    def auto_subscription(self, customer_id: str) -> dict:
+    def auto_subscription(self, customer_id: str = None) -> dict:
         """
         Predict next purchase date per item using:
             next_purchase = last_purchase + avg_gap_days
+        If no customer_id specified, return general subscription recommendations.
         """
         conn = self._conn()
         cur = conn.cursor()
+        
+        # If no specific customer, analyze all regular items
+        if not customer_id:
+            cur.execute("""
+                SELECT item_name, COUNT(*) as purchases,
+                       MAX(timestamp) as last_purchase,
+                       AVG(julianday('now') - julianday(timestamp)) as avg_days_between
+                FROM transactions
+                GROUP BY item_name
+                HAVING purchases >= 3
+                ORDER BY purchases DESC
+            """)
+            rows = cur.fetchall()
+            conn.close()
+            
+            if not rows:
+                return {
+                    "trend": "auto_subscription",
+                    "data": [],
+                    "insight": "Abhi koi regular subscription pattern nahi hai"
+                }
+            
+            predictions = []
+            for item, purchases, last_purchase, avg_days in rows:
+                if avg_days:
+                    predictions.append({
+                        "item": item,
+                        "total_purchases": int(purchases),
+                        "avg_days_between": round(float(avg_days), 1),
+                        "last_purchase": last_purchase[:10] if last_purchase else "Unknown",
+                        "recommendation": f"Har {round(float(avg_days), 0)} din mein restock karo"
+                    })
+            
+            return {
+                "trend": "auto_subscription",
+                "data": predictions[:10],
+                "insight": f"Top {len(predictions)} items regularly bikta hai, subscription plan banao"
+            }
+        
+        # Specific customer analysis
         cur.execute("""
             SELECT item_name, timestamp
             FROM transactions
@@ -505,7 +597,8 @@ class TrendsEngine:
         return {
             "trend": "auto_subscription",
             "customer": customer_id,
-            "predictions": predictions
+            "data": predictions,
+            "insight": f"{len(predictions)} items ke liye subscription plan ban sakti hai"
         }
 
     # ─────────────────────────────────────────────

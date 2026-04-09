@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { getAllTrends, exportTrendsPDF, exportTrendsJSON } from '../api'
 
 export default function TrendsPanel() {
@@ -184,9 +185,18 @@ export default function TrendsPanel() {
     trendTitle: {
       fontSize: 16,
       fontWeight: 600,
-      marginBottom: 12,
+      marginBottom: 16,
       borderBottom: '2px solid var(--accent)',
       paddingBottom: 8,
+    },
+    chartContainer: {
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border)',
+      borderRadius: 4,
+      padding: 16,
+      marginBottom: 16,
+      width: '100%',
+      height: 300,
     },
     trendData: {
       fontSize: 13,
@@ -208,7 +218,159 @@ export default function TrendsPanel() {
       padding: '60px 20px',
       color: 'var(--text-muted)',
     },
+    insight: {
+      marginTop: 16,
+      padding: 12,
+      background: 'var(--bg-card)',
+      borderRadius: 4,
+      border: '1px solid var(--border)',
+      color: 'var(--text)',
+    },
   }
+
+  // Parse seasonal trend data for chart
+  const parseSeasonalTrendData = (formatted) => {
+    if (!formatted) return []
+    const lines = formatted.split('\n')
+    const data = []
+    const regex = /(\d{4}-\d{2}):\s*([\d,]+\.[\d]+)\s*units\s*\(\s*(₹[\d,]+)\s*\)/
+    
+    lines.forEach((line) => {
+      const match = line.match(regex)
+      if (match) {
+        data.push({
+          month: match[1],
+          units: parseFloat(match[2].replace(/,/g, '')),
+          amount: match[3],
+        })
+      }
+    })
+    return data
+  }
+
+  // Render appropriate chart based on trend type and data structure
+  const renderChart = (trend) => {
+    if (!trend.raw || !trend.raw.data) return null
+
+    const { type, raw } = trend
+    const data = raw.data || []
+
+    // Sales Trend - Line Chart
+    if (type === 'sales_trend' && data.length > 0) {
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" stroke="var(--text-muted)" />
+              <YAxis stroke="var(--text-muted)" />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+                formatter={(value) => `₹${value.toLocaleString()}`}
+              />
+              <Legend />
+              <Line type="monotone" dataKey="revenue" stroke="#00C49F" strokeWidth={2} dot={{ r: 4 }} name="Revenue" />
+              <Line type="monotone" dataKey="orders" stroke="#0088FE" strokeWidth={2} dot={{ r: 4 }} name="Orders" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    // Hourly Rush - Bar Chart
+    if (type === 'hourly_rush' && data.length > 0) {
+      const chartData = data.map(d => ({
+        ...d,
+        hour: `${d.hour}:00`
+      }))
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="hour" stroke="var(--text-muted)" />
+              <YAxis stroke="var(--text-muted)" />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+              />
+              <Legend />
+              <Bar dataKey="orders" fill="#FFBB28" name="Orders" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    // Product Demand - Bar Chart (Top products)
+    if (type === 'product_demand' && data.length > 0) {
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis type="number" stroke="var(--text-muted)" />
+              <YAxis dataKey="item_name" type="category" stroke="var(--text-muted)" width={100} />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+              />
+              <Legend />
+              <Bar dataKey="total_qty" fill="#8884D8" name="Quantity" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    // Stock Depletion - Bar Chart
+    if (type === 'stock_depletion' && data.length > 0) {
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="item_name" stroke="var(--text-muted)" angle={-45} textAnchor="end" height={80} />
+              <YAxis stroke="var(--text-muted)" />
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+              />
+              <Legend />
+              <Bar dataKey="current_stock" fill="#FF8042" name="Current Stock" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    // Market Basket - Pie Chart
+    if (type === 'market_basket' && data.length > 0) {
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie data={data} dataKey="count" nameKey="pair" cx="50%" cy="50%" outerRadius={80} label>
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip 
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    return null
+  }
+
+  // Chart colors
+  const COLORS = ['#00C49F', '#0088FE', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF7C7C']
 
   return (
     <div style={styles.container}>
@@ -280,12 +442,17 @@ export default function TrendsPanel() {
             <div style={styles.trendSection}>
               <h2 style={styles.trendTitle}>{trendLabels[selectedTrend.type] || selectedTrend.type}</h2>
               
+              {/* Render chart based on trend type */}
+              {renderChart(selectedTrend)}
+
+              {/* Display formatted text */}
               {selectedTrend.formatted && (
                 <div style={styles.trendData}>
                   {selectedTrend.formatted}
                 </div>
               )}
 
+              {/* Raw data collapsible */}
               {selectedTrend.raw && (
                 <div style={styles.chart}>
                   <details>
@@ -299,8 +466,9 @@ export default function TrendsPanel() {
                 </div>
               )}
 
+              {/* Insight box */}
               {selectedTrend.insight && (
-                <div style={{ marginTop: 16, padding: 12, background: 'var(--bg-card)', borderRadius: 4 }}>
+                <div style={styles.insight}>
                   <strong>💡 Insight:</strong> {selectedTrend.insight}
                 </div>
               )}

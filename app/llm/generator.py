@@ -35,6 +35,24 @@ STRICT RULES:
 5. If item name is ambiguous, use LIKE: WHERE LOWER(name) LIKE '%item%'
 6. For listing all items: SELECT name, quantity, unit FROM inventory ORDER BY name
 7. For low stock: WHERE quantity < 5
+8. For price updates: UPDATE inventory SET price = price + X WHERE LOWER(name) LIKE '%item%'
+9. For price check: SELECT name, price FROM inventory WHERE LOWER(name) LIKE '%item%'
+10. For orders: SELECT item_name, quantity, timestamp FROM transactions WHERE DATE(timestamp) = DATE('now')
+11. For category price updates: UPDATE inventory SET price = price * 1.1 WHERE category LIKE '%category%'
+12. For price rollback: SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory WHERE LOWER(name) LIKE '%item%') ORDER BY changed_at DESC LIMIT 1
+13. For expiry checks: SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= datetime('now', '+7 days')
+14. For viewing orders: SELECT * FROM orders WHERE status = 'pending' ORDER BY order_date DESC
+
+EXAMPLES:
+- Stock correction: UPDATE inventory SET quantity = 30 WHERE LOWER(name) LIKE '%dal%'
+- Price update: UPDATE inventory SET price = price + 5 WHERE LOWER(name) LIKE '%atta%'
+- Price check: SELECT name, price FROM inventory WHERE LOWER(name) LIKE '%atta%'
+- Low stock: SELECT name, quantity FROM inventory WHERE quantity < 5 ORDER BY quantity
+- Pending orders: SELECT item_name, quantity FROM transactions WHERE DATE(timestamp) = DATE('now')
+- Category price update: UPDATE inventory SET price = price * 1.1 WHERE category LIKE '%masala%'
+- Price rollback: SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory WHERE LOWER(name) LIKE '%atta%') ORDER BY changed_at DESC LIMIT 1
+- Expiry check: SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= datetime('now', '+7 days') ORDER BY expiry_date
+- View all orders: SELECT * FROM orders WHERE status = 'pending' ORDER BY order_date DESC
 
 SIMILAR EXAMPLES FROM DATABASE:
 {examples}
@@ -201,6 +219,16 @@ Generate a short, friendly Hinglish response.
     def _template_response(self, intent: str, results: list, query: str) -> str:
         """Hardcoded Hinglish templates when LLM unavailable."""
         if not results:
+            if intent == "PRICE":
+                return "❌ Item ka price nahi mila database mein"
+            elif intent == "CORRECTION":
+                return "❌ Stock correction nahi ho saka"
+            elif intent == "ORDER":
+                return "❌ Order data nahi mila"
+            elif intent == "ROLLBACK":
+                return "❌ Price history nahi mila, rollback nahi ho saka"
+            elif intent == "EXPIRY":
+                return "✓ Koi item expire hone wala nahi hai aaj kal"
             return "✓ Kaam ho gaya"
 
         if intent == "QUERY" and results:
@@ -209,19 +237,71 @@ Generate a short, friendly Hinglish response.
                 name = row.get("name", "item")
                 qty = row.get("quantity", "?")
                 unit = row.get("unit", "")
-                return f"Aapke paas {qty} {unit} {name} bacha hai"
-            # Multiple rows
+                # Single item query
+                if len(results) == 1:
+                    return f"Aapke paas {qty} {unit} {name} bacha hai"
+            
+            # Multiple rows - list all items
             if len(results) > 1:
-                items = ", ".join(
-                    f"{r.get('name','?')} ({r.get('quantity','?')} {r.get('unit','')})"
-                    for r in results[:5]
-                )
-                return f"Stock: {items}"
+                items_list = []
+                for r in results:  # Show ALL items
+                    name = r.get('name', '?')
+                    qty = r.get('quantity', '?')
+                    unit = r.get('unit', '')
+                    items_list.append(f"{qty}{unit} {name}" if unit else f"{qty} {name}")
+                
+                # Format nicely with line breaks for many items
+                if len(results) > 8:
+                    items_text = "\n  • " + "\n  • ".join(items_list)
+                    return f"Aapke inventory mein yeh {len(results)} items available hain:\n  • {items_text}"
+                else:
+                    items_text = ", ".join(items_list)
+                    return f"Aapke inventory mein: {items_text}"
 
         if intent == "ADD":
             return "✓ Stock mein add ho gaya"
+        
         if intent == "SELL":
             return "✓ Sale record ho gaya"
+        
+        if intent == "PRICE":
+            row = results[0] if results else {}
+            item = row.get("name", "item")
+            price = row.get("price", "?")
+            return f"{item} ka current rate: ₹{price}"
+        
+        if intent == "CORRECTION":
+            row = results[0] if results else {}
+            item = row.get("name", "item")
+            qty = row.get("quantity", "?")
+            unit = row.get("unit", "")
+            return f"✓ {item} ka stock correct ho gaya: {qty} {unit}"
+        
+        if intent == "ORDER":
+            # Show pending orders
+            orders_text = "\n  • ".join(
+                f"{r.get('item', '?')}: {r.get('qty', '?')} {r.get('unit', '')}"
+                for r in results[:10]
+            )
+            return f"Aaj ke pending orders:\n  • {orders_text}"
+        
+        if intent == "ROLLBACK":
+            row = results[0] if results else {}
+            old_price = row.get("old_price", "?")
+            return f"✓ Price rollback ho gaya previous rate pe: ₹{old_price}"
+        
+        if intent == "EXPIRY":
+            items_list = []
+            for r in results:
+                name = r.get('name', '?')
+                expiry = r.get('expiry_date', '?')
+                items_list.append(f"{name} (expiry: {expiry})")
+            
+            items_text = "\n  • ".join(items_list)
+            return f"Yeh {len(results)} items expire hone wale hain:\n  • {items_text}"
+        
+        if intent == "CATEGORY":
+            return f"✓ Category ka price update ho gaya"
 
         return "✓ Kaam ho gaya"
 

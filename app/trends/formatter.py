@@ -129,11 +129,34 @@ def _fmt_festival(d: dict) -> str:
     return "\n".join(lines)
 
 
-def _fmt_basket(items: list) -> str:
-    if not items:
+def _fmt_basket(data: Union[dict, list]) -> str:
+    # Handle new dict format with product-specific data
+    if isinstance(data, dict):
+        items = data.get("data", [])
+        product = data.get("product")
+        insight = data.get("insight", "")
+        
+        if not items:
+            return f"🛒 {insight or 'Market basket data nahi mila.'}"
+        
+        lines = ["🛒 Frequently Bought Together:\n"]
+        for item in items[:10]:
+            if "pair" in item:
+                lines.append(f"  • {item['pair']} ({item.get('count', 0)} baar)")
+            else:
+                lines.append(f"  • {item.get('item', item)} ({item.get('count', 0)} baar)")
+        
+        if insight:
+            lines.append(f"\n✅ {insight}")
+        else:
+            lines.append("\n💡 Inhe paas paas rakhein ya combo offer banao.")
+        return "\n".join(lines)
+    
+    # Handle old list format
+    if not data:
         return "🛒 Market basket data nahi mila. Zyada transactions chahiye."
     lines = ["🛒 Frequently Bought Together:\n"]
-    for item in items[:6]:
+    for item in data[:6]:
         lines.append(f"  • {item['item_a']} + {item['item_b']} ({item['co_occurrences']} baar saath bika)")
     lines.append("\n💡 Inhe paas paas rakhein ya combo offer banao.")
     return "\n".join(lines)
@@ -155,15 +178,29 @@ def _fmt_customer(d: dict) -> str:
 
 
 def _fmt_subscription(d: dict) -> str:
-    preds = d.get("predictions", [])
+    # Handle both old "predictions" and new "data" keys
+    preds = d.get("data", d.get("predictions", []))
     if not preds:
         return "🔁 Is customer ka subscription pattern abhi nahi ban paya."
+    
+    # General (no customer specified)
+    if "customer" not in d:
+        lines = ["🔁 Auto-Subscription Recommendations:\n"]
+        for p in preds[:8]:
+            if "recommendation" in p:
+                lines.append(f"  • {p['item']}: {p['recommendation']}")
+            else:
+                lines.append(f"  • {p['item']}: Avg {p.get('avg_gap_days', '?')} din gap")
+        lines.append(f"\n✅ {d.get('insight', '')}")
+        return "\n".join(lines)
+    
+    # Specific customer
     lines = [f"🔁 Auto-Subscription Prediction — {d['customer']}:\n"]
     for p in preds[:5]:
-        status_icon = "🔴" if p["status"] == "DUE SOON" else "🟡"
+        status_icon = "🔴" if p.get("status") == "DUE SOON" else "🟡"
         lines.append(
-            f"  {status_icon} {p['item']}: Agla order {p['predicted_next']} ko "
-            f"({p['days_until']} din mein) — har {p['avg_gap_days']} din mein"
+            f"  {status_icon} {p['item']}: Agla order {p.get('predicted_next', '?')} ko "
+            f"({p.get('days_until', '?')} din mein) — har {p.get('avg_gap_days', '?')} din mein"
         )
     return "\n".join(lines)
 

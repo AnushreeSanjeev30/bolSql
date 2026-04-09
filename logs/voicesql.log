@@ -351,3 +351,373 @@
 2026-04-09 10:36:18 [INFO] db: Database ready
 2026-04-09 10:36:19 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
 2026-04-09 10:36:19 [INFO] db: Database ready
+2026-04-09 10:53:11 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 10:53:11 [INFO] db: Database ready
+2026-04-09 10:53:37 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 10:53:37 [INFO] db: Database ready
+2026-04-09 10:59:03 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:00:01 [INFO] pipeline: Processing: 'मेरे को राजमा चावल पसंद है' (voice=False)
+2026-04-09 11:00:01 [INFO] pipeline: Intent=QUERY item=mere rajma chawal qty=None unit=None conf=1.00
+2026-04-09 11:00:16 [INFO] rag: Loading existing FAISS index from /Users/bhavana/bolSql/app/rag/faiss_index.faiss
+2026-04-09 11:00:22 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 11:00:24 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 11:00:25 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%rajma chawal%'
+2026-04-09 11:00:34 [INFO] pipeline: Processing: 'चावल ऐड करो' (voice=False)
+2026-04-09 11:00:34 [INFO] pipeline: Intent=ADD item=chawal qty=None unit=None conf=1.00
+2026-04-09 11:00:34 [INFO] db: Restocked chawal: +1.0 piece → 81.0 total
+2026-04-09 11:00:55 [INFO] pipeline: Processing: 'कौन सा चीज ज्यादा बिकती है' (voice=False)
+2026-04-09 11:00:55 [INFO] pipeline: Intent=QUERY item=kaun sa cheej jyada biktee qty=None unit=None conf=1.00
+2026-04-09 11:00:57 [INFO] llm: LLM generated SQL (attempt 1): SELECT i.name, SUM(t.quantity) as total_sold FROM transactions t JOIN inventory i ON t.item_id = i.i
+2026-04-09 11:01:09 [INFO] pipeline: Processing: 'वुड यू से फ्रिक्वेंटली बाट टुगेदर' (voice=False)
+2026-04-09 11:01:09 [INFO] pipeline: Intent=QUERY item=vud yoo se phrikvetlee bat tugedr qty=None unit=None conf=0.30
+2026-04-09 11:01:10 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%phrikvetlee%'
+2026-04-09 11:01:17 [INFO] pipeline: Processing: 'कौन सी चीज एक साथ बिकती है ज्यादा' (voice=False)
+2026-04-09 11:02:21 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:02:21 [INFO] db: Database ready
+2026-04-09 11:02:23 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:02:23 [INFO] db: Database ready
+2026-04-09 11:02:52 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:02:52 [INFO] db: Database ready
+2026-04-09 11:02:53 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:02:53 [INFO] db: Database ready
+2026-04-09 11:03:08 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:03:21 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:03:48 [INFO] pipeline: Processing: 'pichle 7 din ka sales batao' (voice=False)
+2026-04-09 11:05:19 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:05:40 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:06:02 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:06:02 [INFO] db: Database ready
+2026-04-09 11:06:03 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:06:03 [INFO] db: Database ready
+2026-04-09 11:06:14 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:06:20 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:07:00 [INFO] pipeline: Processing: 'butter k saath kya bikta h' (voice=False)
+2026-04-09 11:07:11 [INFO] pipeline: Processing: 'kya kya saath bikta h' (voice=False)
+2026-04-09 11:07:19 [INFO] pipeline: Processing: 'combo kya bik raha h' (voice=False)
+2026-04-09 11:07:59 [INFO] pipeline: Processing: 'chawal k saath ky zayad bikte h' (voice=False)
+2026-04-09 11:08:47 [INFO] pipeline: Processing: 'चावल के साथ क्या ज्यादा बिकती है' (voice=False)
+2026-04-09 11:10:30 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 11:10:30 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 11:10:34 [INFO] pipeline: Processing: 'kaunsa saman kam hai' (voice=False)
+2026-04-09 11:10:34 [INFO] pipeline: Intent=QUERY item=None qty=None unit=None conf=1.00
+2026-04-09 11:10:35 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 11:10:35 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 11:10:36 [INFO] pipeline: Processing: 'atta stock check karo' (voice=False)
+2026-04-09 11:10:36 [INFO] pipeline: Intent=ADD item=atta qty=None unit=None conf=0.50
+2026-04-09 11:10:36 [INFO] db: Restocked atta: +1.0 piece → 251.0 total
+2026-04-09 11:16:14 [INFO] pipeline: Processing: 'लाइक थिस' (voice=False)
+2026-04-09 11:16:14 [INFO] pipeline: Intent=QUERY item=laik this qty=None unit=None conf=0.30
+2026-04-09 11:16:16 [INFO] rag: Loading existing FAISS index from /Users/bhavana/bolSql/app/rag/faiss_index.faiss
+2026-04-09 11:16:21 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 11:16:22 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 11:16:22 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%laik%'
+2026-04-09 11:16:29 [INFO] pipeline: Processing: 'मेरे को इन्वेंटरी के सारे प्रोडक्ट्स दिखाइए' (voice=False)
+2026-04-09 11:16:29 [INFO] pipeline: Intent=QUERY item=mere invetree sare prodkts dikhaie qty=None unit=None conf=0.30
+2026-04-09 11:16:30 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory ORDER BY name
+2026-04-09 11:16:46 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 11:16:46 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 11:19:11 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:19:11 [INFO] db: Database ready
+2026-04-09 11:19:13 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:19:13 [INFO] db: Database ready
+2026-04-09 11:20:01 [INFO] pipeline: Processing: 'सब आइटम्स दिखाओ' (voice=False)
+2026-04-09 11:20:01 [INFO] pipeline: Intent=QUERY item=aaitms qty=None unit=None conf=1.00
+2026-04-09 11:20:04 [INFO] rag: Loading existing FAISS index from /Users/bhavana/bolSql/app/rag/faiss_index.faiss
+2026-04-09 11:20:08 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 11:20:09 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 11:20:10 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory ORDER BY name
+2026-04-09 11:23:23 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:23:23 [INFO] db: Database ready
+2026-04-09 11:23:24 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:23:24 [INFO] db: Database ready
+2026-04-09 11:23:51 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 11:23:51 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 11:24:05 [INFO] pipeline: Processing: 'सब आइटम्स की लिस्ट दिखाओ' (voice=False)
+2026-04-09 11:24:05 [INFO] pipeline: Intent=QUERY item=aaitms kee qty=None unit=None conf=1.00
+2026-04-09 11:24:27 [INFO] pipeline: Processing: 'sabhi items dekho' (voice=False)
+2026-04-09 11:24:27 [INFO] pipeline: Intent=QUERY item=items dekho qty=None unit=None conf=1.00
+2026-04-09 11:25:29 [INFO] pipeline: Processing: 'customer ky sab se zayad demand h' (voice=False)
+2026-04-09 11:25:29 [INFO] pipeline: Intent=QUERY item=se zayad demand qty=None unit=None conf=1.00
+2026-04-09 11:28:19 [INFO] pipeline: Processing: 'hi' (voice=False)
+2026-04-09 11:28:19 [INFO] pipeline: Intent=QUERY item=hi qty=None unit=None conf=0.30
+2026-04-09 11:28:22 [INFO] rag: Loading existing FAISS index from /Users/bhavana/bolSql/app/rag/faiss_index.faiss
+2026-04-09 11:28:27 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 11:28:28 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 11:28:29 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory ORDER BY name
+2026-04-09 11:32:02 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:32:02 [INFO] db: Database ready
+2026-04-09 11:32:03 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:32:03 [INFO] db: Database ready
+2026-04-09 11:37:23 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:37:23 [INFO] db: Database ready
+2026-04-09 11:37:25 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:37:25 [INFO] db: Database ready
+2026-04-09 11:37:46 [INFO] pipeline: Processing: 'dal ka stock 30kg hai correct karo' (voice=False)
+2026-04-09 11:37:46 [INFO] pipeline: Intent=CORRECTION item=dal correct qty=30.0 unit=kg conf=0.50
+2026-04-09 11:37:49 [INFO] rag: Loading existing FAISS index from /Users/bhavana/bolSql/app/rag/faiss_index.faiss
+2026-04-09 11:37:55 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 11:37:56 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 11:37:56 [INFO] llm: LLM generated SQL (attempt 1): UPDATE inventory SET quantity = 30 WHERE LOWER(name) LIKE '%dal%'
+2026-04-09 11:38:28 [INFO] pipeline: Processing: 'atta ka abhi kya rate hai' (voice=False)
+2026-04-09 11:38:28 [INFO] pipeline: Intent=PRICE item=atta abhi rate qty=None unit=None conf=0.67
+2026-04-09 11:38:29 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, price FROM inventory WHERE LOWER(name) LIKE '%atta%'
+2026-04-09 11:38:37 [INFO] pipeline: Processing: 'atta ka price 5 rupaye badha do' (voice=False)
+2026-04-09 11:38:37 [INFO] pipeline: Intent=PRICE item=atta price rupaye badha qty=5.0 unit=piece conf=0.67
+2026-04-09 11:38:38 [INFO] llm: LLM generated SQL (attempt 1): UPDATE inventory SET price = price + 5 WHERE LOWER(name) LIKE '%atta%'
+2026-04-09 11:38:58 [INFO] pipeline: Processing: 'kaunsa product khatam hone wala hai' (voice=False)
+2026-04-09 11:39:08 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-09 11:39:08 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.80
+2026-04-09 11:39:10 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_id, quantity, timestamp FROM transactions WHERE type = 'sale' AND DATE(timestamp) = DATE
+2026-04-09 11:54:57 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:54:57 [INFO] db: Running database migrations
+2026-04-09 11:54:57 [INFO] db: Database ready
+2026-04-09 11:56:51 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:56:51 [INFO] db: Running database migrations
+2026-04-09 11:56:51 [INFO] db: Database ready
+2026-04-09 11:58:06 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:58:06 [INFO] db: Running database migrations
+2026-04-09 11:58:06 [INFO] db: Database ready
+2026-04-09 11:58:08 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 11:58:08 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 11:58:08 [INFO] db: Running database migrations
+2026-04-09 11:58:08 [INFO] db: Database ready
+2026-04-09 11:59:05 [INFO] pipeline: Processing: 'price rollback karo atta ka' (voice=False)
+2026-04-09 11:59:05 [INFO] pipeline: Intent=PRICE item=price rollback atta qty=None unit=None conf=0.50
+2026-04-09 11:59:05 [WARNING] rag: FAISS/sentence-transformers not available (No module named 'faiss'). Using keyword fallback.
+2026-04-09 11:59:05 [ERROR] llm: groq package not installed. Run: pip install groq
+2026-04-09 11:59:05 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 11:59:05 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 11:59:05 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 11:59:05 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 11:59:10 [INFO] pipeline: Processing: 'kaunsa product expire hone wala hai' (voice=False)
+2026-04-09 11:59:10 [INFO] pipeline: Intent=QUERY item=product expire hone qty=None unit=None conf=0.67
+2026-04-09 11:59:10 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 11:59:10 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 11:59:10 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 11:59:10 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:08 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:01:08 [INFO] db: Running database migrations
+2026-04-09 12:01:08 [INFO] db: Database ready
+2026-04-09 12:01:09 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:01:09 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:01:09 [INFO] db: Running database migrations
+2026-04-09 12:01:09 [INFO] db: Database ready
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'atta ka price rollback karo' (voice=False)
+2026-04-09 12:01:55 [INFO] pipeline: Intent=PRICE item=atta price rollback qty=None unit=None conf=0.50
+2026-04-09 12:01:55 [WARNING] rag: FAISS/sentence-transformers not available (No module named 'faiss'). Using keyword fallback.
+2026-04-09 12:01:55 [ERROR] llm: groq package not installed. Run: pip install groq
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:01:55 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'kaunse items expire hone wale hain' (voice=False)
+2026-04-09 12:01:55 [INFO] pipeline: Intent=QUERY item=kaunse items expire hone wale hain qty=None unit=None conf=0.67
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:01:55 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'spices ke price 10 percent badha do' (voice=False)
+2026-04-09 12:01:55 [INFO] pipeline: Intent=PRICE item=spices price percent badha qty=10.0 unit=piece conf=0.67
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:01:55 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-09 12:01:55 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.80
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:01:55 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'grains mein kya kya hai' (voice=False)
+2026-04-09 12:01:55 [INFO] pipeline: Intent=QUERY item=grains qty=None unit=None conf=0.67
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:01:55 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:01:55 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:01:55 [INFO] pipeline: Processing: 'kaunse items khatam hone wale hain' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'atta ka price rollback karo' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Intent=PRICE item=atta price rollback qty=None unit=None conf=0.50
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:06 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'kaunse items expire hone wale hain' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Intent=QUERY item=kaunse items expire hone wale hain qty=None unit=None conf=0.67
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:06 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'spices ke price 10 percent badha do' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Intent=PRICE item=spices price percent badha qty=10.0 unit=piece conf=0.67
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:06 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.80
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:06 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'grains mein kya kya hai' (voice=False)
+2026-04-09 12:02:06 [INFO] pipeline: Intent=QUERY item=grains qty=None unit=None conf=0.67
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:06 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:06 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:02:06 [INFO] pipeline: Processing: 'kaunse items khatam hone wale hain' (voice=False)
+2026-04-09 12:02:12 [INFO] pipeline: Processing: 'kaunse items expire hone wale hain' (voice=False)
+2026-04-09 12:02:12 [INFO] pipeline: Intent=QUERY item=kaunse items expire hone wale hain qty=None unit=None conf=0.67
+2026-04-09 12:02:12 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:02:12 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:02:12 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:02:12 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:03:42 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:03:42 [INFO] db: Running database migrations
+2026-04-09 12:03:42 [INFO] db: Database ready
+2026-04-09 12:03:44 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:03:44 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:03:44 [INFO] db: Running database migrations
+2026-04-09 12:03:44 [INFO] db: Database ready
+2026-04-09 12:04:37 [INFO] pipeline: Processing: 'items khatam hone wale hain' (voice=False)
+2026-04-09 12:05:25 [INFO] pipeline: Processing: 'items khatam hone wale' (voice=False)
+2026-04-09 12:05:45 [INFO] pipeline: Processing: 'atta price rollback' (voice=False)
+2026-04-09 12:05:45 [INFO] pipeline: Intent=PRICE item=atta price rollback qty=None unit=None conf=0.67
+2026-04-09 12:05:45 [WARNING] rag: FAISS/sentence-transformers not available (No module named 'faiss'). Using keyword fallback.
+2026-04-09 12:05:45 [ERROR] llm: groq package not installed. Run: pip install groq
+2026-04-09 12:05:45 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:05:45 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:05:45 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:05:45 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:06:18 [INFO] pipeline: Processing: 'expiry check karo' (voice=False)
+2026-04-09 12:06:18 [INFO] pipeline: Intent=QUERY item=expiry qty=None unit=None conf=0.50
+2026-04-09 12:06:18 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:06:18 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:06:18 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:06:18 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:07:49 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:10:41 [INFO] pipeline: Processing: '"kaunse items expire hone wale hain"' (voice=False)
+2026-04-09 12:10:41 [INFO] pipeline: Intent=QUERY item="kaunse items expire hone wale hain" qty=None unit=None conf=0.67
+2026-04-09 12:10:41 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:10:41 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:10:41 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:10:41 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:11:42 [INFO] pipeline: Processing: 'atta ka price 25 karo' (voice=False)
+2026-04-09 12:11:42 [INFO] pipeline: Intent=ADD item=atta price qty=25.0 unit=piece conf=0.50
+2026-04-09 12:11:42 [INFO] db: New item atta price: 25.0 piece added
+2026-04-09 12:13:12 [INFO] pipeline: Processing: '200kg atta becha' (voice=False)
+2026-04-09 12:13:12 [INFO] pipeline: Intent=SELL item=atta qty=200.0 unit=kg conf=1.00
+2026-04-09 12:13:12 [INFO] db: Sold atta: -200.0 kg → 51.0 remaining
+2026-04-09 12:13:28 [INFO] pipeline: Processing: 'price of atta increase karo to 25' (voice=False)
+2026-04-09 12:13:28 [INFO] pipeline: Intent=ADD item=price of atta increase to qty=25.0 unit=piece conf=0.50
+2026-04-09 12:13:28 [INFO] db: New item price of atta increase to: 25.0 piece added
+2026-04-09 12:14:33 [INFO] pipeline: Processing: '"spices ke price 10 percent badha do"' (voice=False)
+2026-04-09 12:14:33 [INFO] pipeline: Intent=PRICE item="spices price percent badha " qty=10.0 unit=piece conf=0.67
+2026-04-09 12:14:33 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:14:33 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:14:33 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:14:33 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:14:51 [INFO] pipeline: Processing: 'spices ke price 10 percent badha do' (voice=False)
+2026-04-09 12:14:51 [INFO] pipeline: Intent=PRICE item=spices price percent badha qty=10.0 unit=piece conf=0.67
+2026-04-09 12:14:51 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 12:14:51 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 12:14:51 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 12:14:51 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 12:14:55 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 12:14:55 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 12:15:47 [INFO] pipeline: Processing: '10 packet biscuit becha' (voice=False)
+2026-04-09 12:15:47 [INFO] pipeline: Intent=SELL item=biscuit qty=10.0 unit=packet conf=1.00
+2026-04-09 12:15:47 [INFO] db: Sold biscuit: -10.0 packet → 70.0 remaining
+2026-04-09 12:15:48 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 12:15:48 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 12:19:21 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:19:21 [INFO] db: Running database migrations
+2026-04-09 12:19:21 [INFO] db: Database ready
+2026-04-09 12:19:22 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:19:22 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:19:22 [INFO] db: Running database migrations
+2026-04-09 12:19:22 [INFO] db: Database ready
+2026-04-09 12:20:13 [INFO] pipeline: Processing: 'Atta ka price 5 rupaye badha do' (voice=False)
+2026-04-09 12:20:14 [INFO] pipeline: Intent=PRICE item=atta price rupaye badha qty=5.0 unit=piece conf=1.00
+2026-04-09 12:20:49 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:20:49 [INFO] db: Running database migrations
+2026-04-09 12:20:49 [INFO] db: Database ready
+2026-04-09 12:20:51 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:20:51 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:20:51 [INFO] db: Running database migrations
+2026-04-09 12:20:51 [INFO] db: Database ready
+2026-04-09 12:21:03 [INFO] pipeline: Processing: 'Atta ka price 5 rupaye badha do' (voice=False)
+2026-04-09 12:21:03 [INFO] pipeline: Intent=PRICE item=atta qty=5.0 unit=piece conf=1.00
+2026-04-09 12:21:03 [INFO] db: Price updated for atta: 22.0 → 5.0
+2026-04-09 12:21:11 [INFO] pipeline: Processing: 'ATTA ka price kitna hai' (voice=False)
+2026-04-09 12:21:11 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=0.50
+2026-04-09 12:21:31 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:21:31 [INFO] db: Running database migrations
+2026-04-09 12:21:31 [INFO] db: Database ready
+2026-04-09 12:21:33 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:21:33 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:21:33 [INFO] db: Running database migrations
+2026-04-09 12:21:33 [INFO] db: Database ready
+2026-04-09 12:21:33 [INFO] pipeline: Processing: 'ATTA ka price kitna hai' (voice=False)
+2026-04-09 12:21:33 [INFO] pipeline: Intent=PRICE item=atta qty=None unit=None conf=0.60
+2026-04-09 12:23:32 [INFO] pipeline: Processing: 'atta price ₹25 increase karo' (voice=False)
+2026-04-09 12:23:32 [INFO] pipeline: Intent=PRICE item=atta qty=25.0 unit=piece conf=1.00
+2026-04-09 12:23:32 [INFO] db: Price updated for atta: 5.0 → 25.0
+2026-04-09 12:23:46 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
+2026-04-09 12:23:46 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
+2026-04-09 12:23:46 [INFO] db: Restocked atta: +50.0 kg → 101.0 total
+2026-04-09 12:24:53 [INFO] pipeline: Processing: 'delete atta price' (voice=False)
+2026-04-09 12:24:53 [INFO] pipeline: Intent=PRICE item=delete atta qty=None unit=None conf=1.00
+2026-04-09 12:25:14 [INFO] pipeline: Processing: 'delete atta price 25 piece —' (voice=False)
+2026-04-09 12:25:14 [INFO] pipeline: Intent=PRICE item=delete atta qty=25.0 unit=piece conf=1.00
+2026-04-09 12:25:37 [INFO] pipeline: Processing: 'nikalo atta price from inventory' (voice=False)
+2026-04-09 12:25:37 [INFO] pipeline: Intent=PRICE item=nikalo atta from inventory qty=None unit=None conf=1.00
+2026-04-09 12:26:02 [INFO] pipeline: Processing: 'mere inventory se atta price nikalo' (voice=False)
+2026-04-09 12:26:02 [INFO] pipeline: Intent=PRICE item=mere inventory se atta nikalo qty=None unit=None conf=1.00
+2026-04-09 12:26:10 [INFO] pipeline: Processing: 'kaunsa saman kam hai' (voice=False)
+2026-04-09 12:26:10 [INFO] pipeline: Intent=QUERY item=None qty=None unit=None conf=1.00
+2026-04-09 12:26:12 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 12:26:12 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 12:26:14 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 12:26:14 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 12:27:35 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:27:35 [INFO] db: Running database migrations
+2026-04-09 12:27:35 [INFO] db: Database ready
+2026-04-09 12:27:36 [WARNING] nlp: rapidfuzz not installed. Fuzzy matching disabled.
+2026-04-09 12:27:37 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:27:37 [INFO] db: Running database migrations
+2026-04-09 12:27:37 [INFO] db: Database ready
+2026-04-09 12:28:04 [INFO] pipeline: Processing: 'atta ki price kya hai' (voice=False)
+2026-04-09 12:28:04 [INFO] pipeline: Intent=PRICE item=atta qty=None unit=None conf=0.60
+2026-04-09 12:28:11 [INFO] pipeline: Processing: 'atta ki price 30 rupaye badha do' (voice=False)
+2026-04-09 12:28:11 [INFO] pipeline: Intent=PRICE item=atta qty=30.0 unit=piece conf=1.00
+2026-04-09 12:28:11 [INFO] db: Price updated for atta: 25.0 → 30.0
+2026-04-09 12:28:42 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:28:42 [INFO] db: Running database migrations
+2026-04-09 12:28:42 [INFO] db: Database ready
+2026-04-09 12:28:44 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:28:44 [INFO] db: Running database migrations
+2026-04-09 12:28:44 [INFO] db: Database ready
+2026-04-09 12:29:21 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:29:21 [INFO] db: Running database migrations
+2026-04-09 12:29:21 [INFO] db: Database ready
+2026-04-09 12:29:23 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 12:29:23 [INFO] db: Running database migrations
+2026-04-09 12:29:23 [INFO] db: Database ready
+2026-04-09 12:30:04 [INFO] pipeline: Processing: 'आटा का प्राइस आरएस 30 करो' (voice=False)
+2026-04-09 12:30:04 [INFO] pipeline: Intent=ADD item=atta prais aares qty=30.0 unit=piece conf=1.00
+2026-04-09 12:30:04 [INFO] db: New item atta prais aares: 30.0 piece added
+2026-04-09 12:30:27 [INFO] pipeline: Processing: 'आटा का प्राइस आरएस 40 करो' (voice=False)
+2026-04-09 12:30:27 [INFO] pipeline: Intent=ADD item=atta prais aares qty=40.0 unit=piece conf=1.00
+2026-04-09 12:30:27 [INFO] db: Restocked atta prais aares: +40.0 piece → 70.0 total
+2026-04-09 12:30:40 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
+2026-04-09 12:30:40 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
+2026-04-09 12:30:40 [INFO] db: Restocked atta: +50.0 kg → 151.0 total
+2026-04-09 12:30:58 [INFO] pipeline: Processing: '50rs atta increase karo' (voice=False)
+2026-04-09 12:30:58 [INFO] pipeline: Intent=PRICE item=50rs atta qty=None unit=None conf=1.00
+2026-04-09 12:31:17 [INFO] pipeline: Processing: '₹30 atta increase karo' (voice=False)
+2026-04-09 12:31:17 [INFO] pipeline: Intent=PRICE item=atta qty=30.0 unit=piece conf=1.00
+2026-04-09 12:31:17 [INFO] db: Price updated for atta: 30.0 → 30.0
+2026-04-09 12:31:28 [INFO] pipeline: Processing: '₹50 atta increase karo' (voice=False)
+2026-04-09 12:31:28 [INFO] pipeline: Intent=PRICE item=atta qty=50.0 unit=piece conf=1.00
+2026-04-09 12:31:28 [INFO] db: Price updated for atta: 30.0 → 50.0

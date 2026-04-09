@@ -254,6 +254,168 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
     return None
 
 
+# ── New Feature Handlers (Category, Expiry, Rollback) ────────────────────────
+
+def _handle_price_rollback(parsed: ParsedQuery) -> PipelineResult:
+    """Rollback price to previous value from price_history."""
+    if not parsed.item_name:
+        return PipelineResult(
+            success=False,
+            response="Kaunsa item? Item naam bataao.",
+            error="missing item name",
+        )
+    
+    try:
+        from app.db.database import rollback_item_price
+        item = rollback_item_price(parsed.item_name)
+        return PipelineResult(
+            success=True,
+            response=f"✓ {parsed.item_name.title()} ka price rollback ho gaya: ₹{item['price']}",
+            intent="ROLLBACK",
+            db_rows=[item],
+        )
+    except ValueError as e:
+        return PipelineResult(
+            success=False,
+            response=f"❌ {str(e)}",
+            error=str(e),
+        )
+    except Exception as e:
+        log.error("Price rollback error: %s", e)
+        return PipelineResult(
+            success=False,
+            response="Price rollback mein dikkat aayi",
+            error=str(e),
+        )
+
+
+def _handle_expiry_check(parsed: ParsedQuery) -> PipelineResult:
+    """Check items expiring within 7 days."""
+    try:
+        from app.db.database import get_items_by_expiry
+        items = get_items_by_expiry(days_until_expiry=7)
+        
+        if not items:
+            return PipelineResult(
+                success=True,
+                response="✓ Koi item expire hone wala nahi hai aaj kal. Sab fresh hai!",
+                intent="EXPIRY",
+                db_rows=[],
+            )
+        
+        # Format response
+        items_list = []
+        for item in items:
+            name = item.get('name', '?')
+            expiry = item.get('expiry_date', '?')
+            items_list.append(f"{name} (expire: {expiry})")
+        
+        items_text = "\n  • ".join(items_list)
+        response = f"⚠️  Yeh {len(items)} items expire hone wale hain 7 din mein:\n  • {items_text}"
+        
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="EXPIRY",
+            db_rows=items,
+        )
+    except Exception as e:
+        log.error("Expiry check error: %s", e)
+        return PipelineResult(
+            success=False,
+            response="Expiry check mein dikkat aayi",
+            error=str(e),
+        )
+
+
+def _handle_category_update(parsed: ParsedQuery) -> PipelineResult:
+    """Handle category-based price updates."""
+    if not parsed.item_name or not parsed.quantity:
+        return PipelineResult(
+            success=False,
+            response="Category aur percentage dono batao. E.g., 'spices ke price 10% badha do'",
+            error="missing category or percentage",
+        )
+    
+    try:
+        # Extract category from item_name (fuzzy match against categories)
+        category = parsed.item_name
+        percentage = parsed.quantity  # Used as percentage multiplier
+        
+        # Execute update
+        from app.db.database import execute_safe_sql
+        count = execute_safe_sql(
+            f"UPDATE inventory SET price = price * ? WHERE LOWER(category) LIKE ?",
+            (1 + (percentage / 100), f"%{category.lower()}%")
+        )
+        
+        if count == 0:
+            return PipelineResult(
+                success=False,
+                response=f"❌ {category} category nahi mila",
+                error="category not found",
+            )
+        
+        return PipelineResult(
+            success=True,
+            response=f"✓ {category} category ke {count} items ka price {percentage}% badha diya",
+            intent="CATEGORY",
+            db_rows=[{"category": category, "items_updated": count, "percentage": percentage}],
+        )
+    except Exception as e:
+        log.error("Category update error: %s", e)
+        return PipelineResult(
+            success=False,
+            response="Category price update mein dikkat aayi",
+            error=str(e),
+        )
+
+
+def _handle_price_check(parsed: ParsedQuery) -> PipelineResult:
+    """Check or update item price - don't create new items."""
+    if not parsed.item_name:
+        return PipelineResult(
+            success=False,
+            response="Kaunsa item? Item naam bataao.",
+            error="missing item name",
+        )
+    
+    try:
+        item = get_item(parsed.item_name)
+        if not item:
+            return PipelineResult(
+                success=False,
+                response=f"❌ '{parsed.item_name}' nahi mila inventory mein",
+                error="item not found",
+            )
+        
+        # If quantity provided with PRICE intent, it's a price UPDATE
+        if parsed.quantity:
+            from app.db.database import update_item_price
+            updated = update_item_price(parsed.item_name, parsed.quantity, reason="voice_command")
+            return PipelineResult(
+                success=True,
+                response=f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}",
+                intent="PRICE",
+                db_rows=[updated],
+            )
+        else:
+            # Just PRICE CHECK - no quantity means show current price
+            return PipelineResult(
+                success=True,
+                response=f"{item['name']} ka current rate: ₹{item['price']}",
+                intent="PRICE",
+                db_rows=[item],
+            )
+    except Exception as e:
+        log.error("Price check error: %s", e)
+        return PipelineResult(
+            success=False,
+            response="Price check mein dikkat aayi",
+            error=str(e),
+        )
+
+
 # ---------------------------------------------------------------------------
 # LLM + RAG path
 # ---------------------------------------------------------------------------
@@ -481,6 +643,19 @@ def process(text: str, is_voice: bool = False) -> PipelineResult:
         direct = _handle_query_direct(parsed)
         if direct is not None:
             return direct
+
+    # Handle new inventory features with template SQL
+    if parsed.intent == "ROLLBACK":
+        return _handle_price_rollback(parsed)
+
+    if parsed.intent == "EXPIRY":
+        return _handle_expiry_check(parsed)
+    
+    if parsed.intent == "CATEGORY":
+        return _handle_category_update(parsed)
+    
+    if parsed.intent == "PRICE" and parsed.item_name:
+        return _handle_price_check(parsed)
 
     # Step 4: LLM fallback
     return _handle_with_llm(text, parsed)

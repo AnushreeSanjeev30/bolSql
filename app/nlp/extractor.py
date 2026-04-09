@@ -69,6 +69,49 @@ QUERY_KEYWORDS = [
     r"\bbachela\b", r"\bbachela\b", r"\bbachi\b.*\bhai\b",
     r"\bavailable\b", r"\bhain\b", r"\bhai\b",
     r"\btotal\b", r"\bcount\b", r"\bsummary\b",
+    r"\bpending\b", r"\borders\b", r"\baaj\b.*order",
+    r"\bexpire\b", r"\bexpiry\b", r"\bkhatam\b.*hoga",
+]
+
+# Price and correction keywords
+PRICE_KEYWORDS = [
+    r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\bkya\s+rate\b",
+    r"\bbadha\b", r"\bbadhao\b", r"\bkam\b.*karo",
+    r"\bupdate\b.*price\b", r"\bchange\b.*price\b", r"\bundo\b", r"\brollback\b",
+    r"\bincrease\b", r"\bdecrease\b", r"\bset\b.*price\b",
+    r"\bprice.*kya\b", r"\bprice.*kitna\b", r"\brate.*kya\b", r"\brate.*kitna\b",
+    r"\bkitna.*rate\b", r"\bkitna.*price\b", r"\bkitna.*daam\b",
+    r"\bprice.*hai\b", r"\brate.*hai\b", r"\bdaam.*hai\b",
+]
+
+CORRECTION_KEYWORDS = [
+    r"\bcorrect\b", r"\bfix\b", r"\bupdate\b", r"\bhai\b.*correct\b",
+    r"\bstock\s+count\b", r"\bmanual\b.*count",
+]
+
+ORDER_KEYWORDS = [
+    r"\border\b", r"\bordar\b", r"\bbuya\b", r"\bmangao\b",
+    r"\bpending\b", r"\bdelivery\b", r"\bshipping\b",
+]
+
+ROLLBACK_KEYWORDS = [
+    r"\brollback\b", r"\bunundo\b", r"\brevert\b",
+    r"\bundo\b", r"\bprevious\b.*price\b", r"\bphle\b.*rate\b",
+    r"\bback\b.*price\b", r"\bpichle\b", r"\bpehle\b",
+]
+
+EXPIRY_KEYWORDS = [
+    r"\bexpiry\b", r"\bexpire\b", r"\bexpires\b",
+    r"\bkhatam\b.*hoga\b", r"\bkhatam\b.*honge\b",
+    r"\bkhatam\b.*hai\b", r"\bkhatam\b.*ho.*\b",
+    r"\bpurani\b", r"\bkhrab\b", r"\bsड़ा\b",
+    r"\bvalidity\b", r"\bdate\b.*expiry\b",
+    r"\bspoiled\b", r"\bspoil\b", r"\bstale\b",
+]
+
+CATEGORY_KEYWORDS = [
+    r"\bcategory\b", r"\btype\b", r"\bmasala\b", r"\bvegetable\b",
+    r"\bfruit\b", r"\bbesan\b", r"\bgrains\b", r"\bpulses\b",
 ]
 
 
@@ -277,6 +320,9 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bbika\b", r"\bbiki\b", r"\bgayi\b", r"\bgaye\b",
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
+        r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
+        r"\bbadha\b", r"\bbadhao\b", r"\bincrease\b", r"\bdecrease\b",
+        r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
     ]
     for f in fillers:
         cleaned = re.sub(f, " ", cleaned)
@@ -323,8 +369,30 @@ def parse(text: str) -> ParsedQuery:
     add_score = _score_intent(text, ADD_KEYWORDS)
     sell_score = _score_intent(text, SELL_KEYWORDS)
     query_score = _score_intent(text, QUERY_KEYWORDS)
+    price_score = _score_intent(text, PRICE_KEYWORDS)
+    correction_score = _score_intent(text, CORRECTION_KEYWORDS)
+    order_score = _score_intent(text, ORDER_KEYWORDS)
+    rollback_score = _score_intent(text, ROLLBACK_KEYWORDS)
+    expiry_score = _score_intent(text, EXPIRY_KEYWORDS)
+    category_score = _score_intent(text, CATEGORY_KEYWORDS)
 
-    scores = {"ADD": add_score, "SELL": sell_score, "QUERY": query_score}
+    scores = {
+        "ADD": add_score,
+        "SELL": sell_score,
+        "QUERY": query_score,
+        "PRICE": price_score,
+        "CORRECTION": correction_score,
+        "ORDER": order_score,
+        "ROLLBACK": rollback_score,
+        "EXPIRY": expiry_score,
+        "CATEGORY": category_score,
+    }
+    
+    # If PRICE keywords found, strongly prefer PRICE over ADD
+    if price_score > 0:
+        scores["ADD"] = max(0, scores["ADD"] - price_score)
+        scores["SELL"] = max(0, scores["SELL"] - price_score)
+    
     intent = max(scores, key=scores.get)
     max_score = scores[intent]
 

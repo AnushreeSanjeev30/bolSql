@@ -101,6 +101,9 @@ const s = {
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius-lg)',
     overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    maxHeight: 'calc(100vh - 550px)',
   },
   tableHeader: {
     display: 'grid',
@@ -108,6 +111,14 @@ const s = {
     padding: '10px 20px',
     borderBottom: '1px solid var(--border)',
     background: 'var(--bg-surface)',
+    position: 'sticky',
+    top: 0,
+    zIndex: 10,
+    flexShrink: 0,
+  },
+  tableBody: {
+    overflowY: 'auto',
+    flex: 1,
   },
   th: {
     fontSize: 10,
@@ -727,37 +738,39 @@ export default function InventoryPanel() {
           <div style={s.th}>Status</div>
         </div>
 
-        {loading ? (
-          <div style={s.spinner}><div style={s.spinnerInner} /></div>
-        ) : error ? (
-          <div style={s.empty}>{error}</div>
-        ) : items.length === 0 ? (
-          <div style={s.empty}>
-            Inventory khaali hai —{' '}
-            <span style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => setShowCSV(true)}>
-              CSV import karo
-            </span>
-            {' '}ya voice se add karo
-          </div>
-        ) : (
-          items.map((item) => {
-            const low = item.quantity < 5
-            return (
-              <div
-                key={item.id}
-                style={s.tableRow(low)}
-                onMouseEnter={e => { e.currentTarget.style.background = low ? '#f59e0b10' : 'var(--bg-hover)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = low ? '#f59e0b08' : 'transparent' }}
-              >
-                <div style={s.td}>{item.name}</div>
-                <div style={{ ...s.tdMono, color: low ? 'var(--warning)' : 'var(--teal)' }}>{item.quantity}</div>
-                <div style={{ ...s.tdMono, color: 'var(--text-secondary)', fontSize: 11 }}>{item.unit}</div>
-                <div style={{ ...s.tdMono, color: 'var(--text-secondary)' }}>{item.price ? `₹${item.price}` : '—'}</div>
-                <div><span style={s.badge(low)}>{low ? '⚠ Low' : '● OK'}</span></div>
-              </div>
-            )
-          })
-        )}
+        <div style={s.tableBody}>
+          {loading ? (
+            <div style={s.spinner}><div style={s.spinnerInner} /></div>
+          ) : error ? (
+            <div style={s.empty}>{error}</div>
+          ) : items.length === 0 ? (
+            <div style={s.empty}>
+              Inventory khaali hai —{' '}
+              <span style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => setShowCSV(true)}>
+                CSV import karo
+              </span>
+              {' '}ya voice se add karo
+            </div>
+          ) : (
+            items.map((item) => {
+              const low = item.quantity < 5
+              return (
+                <div
+                  key={item.id}
+                  style={s.tableRow(low)}
+                  onMouseEnter={e => { e.currentTarget.style.background = low ? '#f59e0b10' : 'var(--bg-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = low ? '#f59e0b08' : 'transparent' }}
+                >
+                  <div style={s.td}>{item.name}</div>
+                  <div style={{ ...s.tdMono, color: low ? 'var(--warning)' : 'var(--teal)' }}>{item.quantity}</div>
+                  <div style={{ ...s.tdMono, color: 'var(--text-secondary)', fontSize: 11 }}>{item.unit}</div>
+                  <div style={{ ...s.tdMono, color: 'var(--text-secondary)' }}>{item.price ? `₹${item.price}` : '—'}</div>
+                  <div><span style={s.badge(low)}>{low ? '⚠ Low' : '● OK'}</span></div>
+                </div>
+              )
+            })
+          )}
+        </div>
       </div>
     </div>
   )

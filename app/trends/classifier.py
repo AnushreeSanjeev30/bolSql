@@ -117,6 +117,9 @@ TREND_PATTERNS = [
     (r"festival\s*(?:sales?|trends?|demand|inventory)", "festival_trend", lambda m: {"festival": "general"}),
 
     # 10. Market Basket (Hinglish + Hindi + English)
+    # Extract product name specifically - product k saath pattern
+    (r"(\w+)\s+(?:k|ka|ke|ki)?\s*saath", "market_basket", _item),  # chawal k saath kya bikte h
+    
     # English/Hinglish patterns
     (r"(?:saath|together|combo|bundle|pair|market basket|basket analysis)", "market_basket", lambda m: {}),
     (r"(?:log|customers?)\s*kya\s*saath\s*(?:mein)?\s*(?:kharidte|kharidta|buy|lete)", "market_basket", lambda m: {}),
