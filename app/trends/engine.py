@@ -651,9 +651,14 @@ class TrendsEngine:
             "insight": f"{season.title()} mein {top} sabse zyada bikta hai."
         }
 
-    def demand_stock_risk(self, days_ahead: int = 3):
-        """Predict future demand and assess stock risk."""
-        demand = predict_demand_ema(self.db_path, days_ahead)
+    def demand_stock_risk(self, days: int | None = None, days_ahead: int = 3):
+        """Predict future demand and assess stock risk.
+
+        Accepts either a generic `days` parameter (from the
+        classifier) or an explicit `days_ahead` value.
+        """
+        horizon = days if days is not None else days_ahead
+        demand = predict_demand_ema(self.db_path, horizon)
 
         conn = self._conn()
         cur = conn.cursor()

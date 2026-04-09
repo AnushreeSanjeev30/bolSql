@@ -5,16 +5,18 @@ def run_inventory_migrations(db_path: str):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     
-    # Add new columns to inventory table
+    # Add new columns to inventory table (backwards compatible)
     for col, typedef in [
-        ("category", "TEXT DEFAULT 'general'"),
+        ("unit",       "TEXT DEFAULT 'piece'"),
+        ("category",   "TEXT DEFAULT 'general'"),
         ("expiry_date", "TEXT"),
     ]:
         try:
             c.execute(f"ALTER TABLE inventory ADD COLUMN {col} {typedef}")
             print(f"✅ Added column {col} to inventory table")
         except sqlite3.OperationalError:
-            pass  # column already exists
+            # Column already exists in this DB, safe to ignore
+            pass
     
     # Create price_history table
     c.execute("""
@@ -59,6 +61,8 @@ def run_customer_migrations(db_path: str):
 
     # Add missing columns to existing transactions table
     for col, typedef in [
+        ("type",       "TEXT DEFAULT 'sale'"),
+        ("item_id",    "INTEGER"),
         ("customer_id", "TEXT"),
         ("channel",     "TEXT DEFAULT 'walk-in'"),
         ("order_id",    "TEXT"),
@@ -68,6 +72,13 @@ def run_customer_migrations(db_path: str):
             c.execute(f"ALTER TABLE transactions ADD COLUMN {col} {typedef}")
         except sqlite3.OperationalError:
             pass  # column already exists
+
+    # Ensure helpful indexes exist once item_id is present
+    try:
+        c.execute("CREATE INDEX IF NOT EXISTS idx_txn_item ON transactions(item_id)")
+    except sqlite3.OperationalError:
+        # If item_id truly doesn't exist, skip creating the index
+        pass
 
     c.execute("""
     CREATE TABLE IF NOT EXISTS customers (

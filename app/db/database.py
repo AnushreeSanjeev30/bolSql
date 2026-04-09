@@ -79,7 +79,6 @@ def init_db() -> None:
             notes      TEXT
         );
 
-        CREATE INDEX IF NOT EXISTS idx_txn_item ON transactions(item_id);
         CREATE INDEX IF NOT EXISTS idx_txn_time ON transactions(timestamp);
         CREATE INDEX IF NOT EXISTS idx_price_item ON price_history(item_id);
         CREATE INDEX IF NOT EXISTS idx_orders_customer ON orders(customer_id);

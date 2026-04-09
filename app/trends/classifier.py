@@ -52,6 +52,12 @@ def _customer(m) -> dict:
 
 
 TREND_PATTERNS = [
+    # -1. Demand & Stock Risk (checked very early)
+    (r"(?:next\s*(\d+)\s*(?:din|day)\s*(?:ka)?\s*(?:stock|demand))", "demand_stock_risk", _days),
+    (r"(?:future\s*(?:demand|stock))", "demand_stock_risk", lambda m: {}),
+    (r"(?:khatam hone wala|kaunsa maal khatam hoga)", "demand_stock_risk", lambda m: {}),
+    (r"(?:stock shortage|shortage dikhao)", "demand_stock_risk", lambda m: {}),
+
     # 0. Monthly Report  ← checked FIRST so "monthly report" never reaches LLM
     (r"monthly\s*report",                          "monthly_report", lambda m: {}),
     (r"mahine\s*(?:ka)?\s*report",                 "monthly_report", lambda m: {}),
