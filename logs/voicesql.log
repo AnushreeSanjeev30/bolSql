@@ -721,3 +721,21 @@
 2026-04-09 12:31:28 [INFO] pipeline: Processing: '₹50 atta increase karo' (voice=False)
 2026-04-09 12:31:28 [INFO] pipeline: Intent=PRICE item=atta qty=50.0 unit=piece conf=1.00
 2026-04-09 12:31:28 [INFO] db: Price updated for atta: 30.0 → 50.0
+2026-04-09 12:40:30 [INFO] tts: pyttsx3 TTS initialized
+2026-04-09 12:40:56 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 12:40:56 [INFO] db: Running database migrations
+2026-04-09 12:40:56 [INFO] db: Database ready
+2026-04-09 12:40:59 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 12:40:59 [INFO] db: Running database migrations
+2026-04-09 12:40:59 [INFO] db: Database ready
+2026-04-09 12:41:31 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 12:41:31 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 12:41:41 [INFO] pipeline: Processing: 'सब आइटम की लिस्ट' (voice=False)
+2026-04-09 12:41:41 [INFO] pipeline: Intent=QUERY item=aaitm kee qty=None unit=None conf=1.00
+2026-04-09 12:43:34 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 12:43:34 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 12:43:54 [INFO] pipeline: Processing: '10 packet biscuit becha' (voice=False)
+2026-04-09 12:43:54 [INFO] pipeline: Intent=SELL item=biscuit qty=10.0 unit=packet conf=1.00
+2026-04-09 12:43:54 [INFO] db: Sold biscuit: -10.0 packet → 60.0 remaining
+2026-04-09 12:44:11 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-09 12:44:11 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00

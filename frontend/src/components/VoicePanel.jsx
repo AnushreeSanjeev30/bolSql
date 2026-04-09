@@ -15,8 +15,10 @@ const s = {
   },
   header: {
     display: 'flex',
-    flexDirection: 'column',
-    gap: 4,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 16,
   },
   title: {
     fontFamily: 'var(--font-display)',
@@ -152,6 +154,21 @@ const s = {
     boxShadow: recording ? '0 0 20px #ef444440' : 'none',
     animation: recording ? 'glow-pulse 1.5s infinite' : 'none',
   }),
+  speakerBtn: (enabled) => ({
+    width: 46,
+    height: 46,
+    borderRadius: '50%',
+    background: enabled ? 'var(--teal-dim)' : 'var(--bg-card)',
+    border: enabled ? '1px solid var(--border-glow)' : '1px solid var(--border)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 18,
+    transition: 'all 0.2s',
+    flexShrink: 0,
+    cursor: 'pointer',
+    color: enabled ? 'var(--teal)' : 'var(--text-muted)',
+  }),
   typing: {
     display: 'flex',
     gap: 5,
@@ -201,12 +218,26 @@ export default function VoicePanel({ onRefresh }) {
   const [loading, setLoading] = useState(false)
   const [recording, setRecording] = useState(false)
   const [focusInput, setFocusInput] = useState(false)
+  const [voiceEnabled, setVoiceEnabled] = useState(false)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
+
+  function speak(text) {
+    if (!voiceEnabled || !('speechSynthesis' in window)) return
+    
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel()
+    
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'hi-IN'
+    utterance.rate = 0.9
+    utterance.pitch = 1.0
+    window.speechSynthesis.speak(utterance)
+  }
 
   async function submit(text) {
     const q = (text || input).trim()
@@ -224,16 +255,20 @@ export default function VoicePanel({ onRefresh }) {
         intent: res.intent,
         db_rows: res.db_rows,
       }])
+      // Speak the response if voice is enabled
+      speak(res.response)
       // Refresh inventory after successful ADD or SELL operations
       if (res.success && (res.intent === 'ADD' || res.intent === 'SELL')) {
         if (onRefresh) onRefresh()
       }
     } catch (err) {
+      const errMsg = '⚠️ API se connect nahi ho saka. Check karo ki backend chal raha hai.'
       setMessages(prev => [...prev, {
         type: 'bot',
-        text: '⚠️ API se connect nahi ho saka. Check karo ki backend chal raha hai.',
+        text: errMsg,
         success: false,
       }])
+      speak(errMsg)
     }
     setLoading(false)
   }
@@ -286,8 +321,17 @@ export default function VoicePanel({ onRefresh }) {
   return (
     <div style={s.root}>
       <div style={s.header}>
-        <div style={s.title}>Voice Query <span style={{ color: 'var(--teal)' }}>बोलिए</span></div>
-        <div style={s.subtitle}>Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai</div>
+        <div>
+          <div style={s.title}>Voice Query <span style={{ color: 'var(--teal)' }}>बोलिए</span></div>
+          <div style={s.subtitle}>Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai</div>
+        </div>
+        <button
+          style={s.speakerBtn(voiceEnabled)}
+          onClick={() => setVoiceEnabled(!voiceEnabled)}
+          title={voiceEnabled ? 'Voice output: ON' : 'Voice output: OFF'}
+        >
+          {voiceEnabled ? '🔊' : '🔇'}
+        </button>
       </div>
 
       {/* Quick chips */}

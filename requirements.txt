@@ -22,9 +22,8 @@ groq>=0.9.0           # Free 14,400 req/day at console.groq.com
 # === NLP ===
 rapidfuzz>=3.0.0      # Fuzzy string matching for item names
 
-# === Voice Output (optional) ===
-# gtts>=2.3.2
-# pygame>=2.5.0
+# === Voice Output (TTS) ===
+pyttsx3>=2.90          # Free offline text-to-speech (Hindi/English/Hinglish)
 
 # === API ===
 fastapi>=0.104.0

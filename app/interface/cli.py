@@ -33,7 +33,7 @@ def _c(color, text):
     return f"{color}{text}{Style.RESET_ALL}" if HAS_COLOR else text
 
 
-def print_header():
+def print_header(voice_output_enabled=False):
     print()
     print(_c(Fore.CYAN, "━" * 50))
     print(_c(Fore.CYAN, "  🏪 VoiceSQL — Kirana Intelligence"))
@@ -41,6 +41,7 @@ def print_header():
     print(_c(Fore.CYAN, "━" * 50))
     print(_c(Fore.YELLOW, "  Commands:"))
     print("    /voice  — mic se bolo (Whisper ASR)")
+    print("    /speak  — voice output toggle" + (_c(Fore.GREEN, " ✓") if voice_output_enabled else ""))
     print("    /list   — sab items dikhao")
     print("    /help   — help dekho")
     print("    /quit   — band karo")
@@ -66,12 +67,20 @@ def print_help():
     print()
 
 
-def print_result(result, verbose=False):
+def print_result(result, verbose=False, tts=None):
     print()
     if result.success:
         print(_c(Fore.GREEN, f"✅  {result.response}"))
     else:
         print(_c(Fore.RED, f"❌  {result.response}"))
+    
+    # Speak response if TTS enabled
+    if tts and tts.available:
+        try:
+            tts.speak(result.response)
+        except Exception as e:
+            log.debug(f"TTS failed: {e}")
+    
     if verbose and result.sql:
         print(_c(Fore.CYAN, f"   SQL: {result.sql}"))
     if verbose and result.db_rows and len(result.db_rows) > 1:
@@ -97,7 +106,17 @@ def run_cli(voice_mode=False, verbose=False):
     from app.db.database import init_db
 
     init_db()
-    print_header()
+    
+    # Initialize TTS (always try, even if voice_mode is off)
+    tts = None
+    try:
+        from app.tts.pyttsx_tts import get_tts
+        tts = get_tts()
+    except Exception as e:
+        log.debug(f"TTS initialization failed: {e}")
+    
+    voice_output_enabled = False
+    print_header(voice_output_enabled=voice_output_enabled)
 
     asr = None
     if voice_mode:
@@ -134,9 +153,19 @@ def run_cli(voice_mode=False, verbose=False):
 
         if user_input.lower() in ("/list", "/l"):
             result = process("sab items ki list dikhao")
-            print_result(result, verbose=verbose)
+            print_result(result, verbose=verbose, tts=tts if voice_output_enabled else None)
             if result.db_rows and len(result.db_rows) > 1:
                 _print_table(result.db_rows)
+            continue
+
+        if user_input.lower() in ("/speak", "/s"):
+            if tts and tts.available:
+                voice_output_enabled = not voice_output_enabled
+                status = _c(Fore.GREEN, "🔊 ON") if voice_output_enabled else _c(Fore.YELLOW, "🔇 OFF")
+                print(_c(Fore.CYAN, f"\nVoice output: {status}\n"))
+                print_header(voice_output_enabled=voice_output_enabled)
+            else:
+                print(_c(Fore.YELLOW, "\n⚠️  TTS not available\n"))
             continue
 
         if user_input.lower() in ("/voice", "/v") and asr:
@@ -162,4 +191,4 @@ def run_cli(voice_mode=False, verbose=False):
             elapsed = time.time() - t0
             log.debug("Pipeline took %.2fs", elapsed)
 
-        print_result(result, verbose=verbose)
+        print_result(result, verbose=verbose, tts=tts if voice_output_enabled else None)
