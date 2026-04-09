@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { getInventory } from '../api'
+import { getInventory, sendQuery } from '../api'
 
 const s = {
   root: {
@@ -461,15 +461,7 @@ function CSVModal({ onClose, onImported }) {
       if (!name || isNaN(quantity)) { failCount++; continue }
 
       try {
-        const res = await fetch('/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: `${quantity} ${unit} ${name} add karo`,
-            verbose: false,
-          }),
-        })
-        const data = await res.json()
+        const data = await sendQuery(`${quantity} ${unit} ${name} add karo`)
         if (data.success) successCount++
         else failCount++
       } catch {

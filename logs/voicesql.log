@@ -342,3 +342,12 @@
 2026-04-09 09:57:20 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
 2026-04-09 09:57:20 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
 2026-04-09 09:57:20 [INFO] db: Restocked atta: +50.0 kg → 250.0 total
+2026-04-09 10:31:22 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana_trends.db
+2026-04-09 10:31:59 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 10:31:59 [INFO] db: Database ready
+2026-04-09 10:32:01 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 10:32:01 [INFO] db: Database ready
+2026-04-09 10:36:18 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 10:36:18 [INFO] db: Database ready
+2026-04-09 10:36:19 [INFO] db: Initializing database at /Users/ankanamandal/Downloads/bolSql/kirana.db
+2026-04-09 10:36:19 [INFO] db: Database ready

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getAllTrends, exportTrendsPDF, exportTrendsJSON } from '../api'
 
 export default function TrendsPanel() {
   const [trends, setTrends] = useState([])
@@ -46,9 +47,7 @@ export default function TrendsPanel() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/trends/all')
-      if (!response.ok) throw new Error('Failed to fetch trends')
-      const data = await response.json()
+      const data = await getAllTrends()
       setTrends(data.trends || [])
       if (data.trends && data.trends.length > 0) {
         setSelectedTrend(data.trends[0])
@@ -63,9 +62,7 @@ export default function TrendsPanel() {
 
   const exportPDF = async () => {
     try {
-      const response = await fetch('/trends/export-pdf')
-      if (!response.ok) throw new Error('Failed to export PDF')
-      const blob = await response.blob()
+      const blob = await exportTrendsPDF()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -82,9 +79,7 @@ export default function TrendsPanel() {
 
   const exportJSON = async () => {
     try {
-      const response = await fetch('/trends/export-json')
-      if (!response.ok) throw new Error('Failed to export JSON')
-      const data = await response.json()
+      const data = await exportTrendsJSON()
       const dataStr = JSON.stringify(data, null, 2)
       const blob = new Blob([dataStr], { type: 'application/json' })
       const url = window.URL.createObjectURL(blob)

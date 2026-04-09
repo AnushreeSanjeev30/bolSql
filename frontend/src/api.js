@@ -31,7 +31,7 @@ export async function exportTrendsJSON() {
 }
 
 export async function exportTrendsPDF() {
-  const { data } = await api.get('/trends/export-pdf')
-  return data
+  const response = await api.get('/trends/export-pdf', { responseType: 'blob' })
+  return response.data
 }
 
