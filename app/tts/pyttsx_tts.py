@@ -42,12 +42,13 @@ class Pyttsx3TTS:
     def available(self) -> bool:
         return self._available
 
-    def speak(self, text: str) -> bool:
+    def speak(self, text: str, language: str = "hinglish") -> bool:
         """
         Speak text aloud using system TTS.
         
         Args:
-            text: Text to speak (supports Hindi/English/Hinglish)
+            text: Text to speak (supports Hindi/English/Hinglish/Tamil)
+            language: "hinglish", "hindi", or "tamil" (default: "hinglish")
         
         Returns:
             True if successful, False otherwise
@@ -57,19 +58,23 @@ class Pyttsx3TTS:
             return False
 
         try:
+            # pyttsx3 automatically detects language from Unicode characters
+            # (Tamil script ஆ, Hindi script आ, etc.)
             self.engine.say(text)
             self.engine.runAndWait()
+            log.info(f"TTS spoke ({language}): {text[:50]}...")
             return True
         except Exception as e:
             log.error(f"TTS speak failed: {e}")
             return False
 
-    def speak_async(self, text: str) -> bool:
+    def speak_async(self, text: str, language: str = "hinglish") -> bool:
         """
         Speak text asynchronously (starts and returns immediately).
         
         Args:
             text: Text to speak
+            language: "hinglish", "hindi", or "tamil" (default: "hinglish")
         
         Returns:
             True if queued successfully, False otherwise

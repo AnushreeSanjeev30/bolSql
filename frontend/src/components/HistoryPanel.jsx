@@ -139,13 +139,13 @@ const s = {
 }
 
 const PRESETS = [
-  'sab items ki list dikhao',
-  'kaunsa saman kam hai',
-  'chawal kitna bacha hai',
-  'atta stock check karo',
+  'show all items',
+  'which items are running low',
+  'how much rice is left',
+  'check wheat stock',
 ]
 
-export default function HistoryPanel() {
+export default function HistoryPanel({ language = 'hinglish' }) {
   const [query, setQuery] = useState('')
   const [result, setResult] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -160,7 +160,7 @@ export default function HistoryPanel() {
       const res = await sendQuery(text)
       setResult(res)
     } catch {
-      setResult({ success: false, response: 'API error. Backend chal raha hai?' })
+      setResult({ success: false, response: 'API error. Is the backend running?' })
     }
     setLoading(false)
   }
@@ -170,14 +170,14 @@ export default function HistoryPanel() {
   return (
     <div style={s.root}>
       <div style={s.title}>
-        Query History <span style={{ color: 'var(--teal)' }}>🕒</span>
+        {language === 'tamil' ? 'Query History - Varalaru' : 'Query History'} <span style={{ color: 'var(--teal)' }}>🕒</span>
       </div>
 
       {/* Query input */}
       <div style={s.queryRow}>
         <input
           style={{ ...s.input, borderColor: focused ? 'var(--teal)' : 'var(--border)' }}
-          placeholder="koi bhi query likhein..."
+          placeholder={language === 'tamil' ? 'Type query here...' : 'Enter any query...'}
           value={query}
           onChange={e => setQuery(e.target.value)}
           onFocus={() => setFocused(true)}
@@ -256,7 +256,7 @@ export default function HistoryPanel() {
 
       {!result && !loading && (
         <div style={s.hint}>
-          Query run karo ya upar se koi preset chunein
+          Run a query or select a preset above
         </div>
       )}
     </div>

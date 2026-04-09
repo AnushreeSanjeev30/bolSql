@@ -30,10 +30,10 @@ class TrendsPipeline:
         trend_type, _ = classify_trend(query)
         return trend_type is not None
 
-    def process(self, query: str) -> str:
+    def process(self, query: str, language: str = "hinglish") -> str:
         """
         Full pipeline:
-          query → classify → engine → format → Hinglish response
+          query → classify → engine → format → language-appropriate response
         """
         trend_type, params = classify_trend(query)
         if not trend_type:
@@ -56,7 +56,7 @@ class TrendsPipeline:
             return _render_text(report)
 
         raw = self.engine.dispatch(trend_type, params)
-        return format_trend_response(trend_type, raw)
+        return format_trend_response(trend_type, raw, language=language)
 
 
 __all__ = ["TrendsEngine", "TrendsPipeline", "classify_trend", "format_trend_response"]

@@ -717,13 +717,17 @@ class TrendsEngine:
             return fn()
         return {"error": f"Unknown trend: {trend_type}"}
     
-    import numpy as np
-    from sklearn.metrics import mean_absolute_error, mean_squared_error, precision_recall_fscore_support
-
     def calculate_accuracy_metrics(y_true, y_pred, task_type="regression"):
         """
         Computes the rich analytical metrics for your Kirana trends.
         """
+        try:
+            import numpy as np
+            from sklearn.metrics import mean_absolute_error, mean_squared_error, precision_recall_fscore_support
+        except ImportError:
+            # If sklearn is not available, return basic metrics
+            return {"note": "sklearn not available for full metrics"}
+        
         if task_type == "regression":
             # Used for Stock Depletion and Next-Purchase Dates
             mae = mean_absolute_error(y_true, y_pred)

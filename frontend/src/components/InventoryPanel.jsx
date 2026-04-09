@@ -613,7 +613,7 @@ function CSVModal({ onClose, onImported }) {
   )
 }
 
-export default function InventoryPanel() {
+export default function InventoryPanel({ language = 'hinglish' }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -651,7 +651,7 @@ export default function InventoryPanel() {
 
       <div style={s.header}>
         <div style={s.title}>
-          Inventory <span style={{ color: 'var(--teal)' }}>📦</span>
+          {language === 'tamil' ? 'Inventory - Samanukkam' : 'Inventory'} <span style={{ color: 'var(--teal)' }}>📦</span>
         </div>
         <div style={s.headerBtns}>
           <button

@@ -62,12 +62,15 @@ class WhisperASR:
             log.error("Recording failed: %s", e)
             return None
 
-    def transcribe_bytes(self, audio_bytes: bytes) -> Optional[Tuple[str, float]]:
+    def transcribe_bytes(self, audio_bytes: bytes, language: str = "hinglish") -> Optional[Tuple[str, float]]:
         """
         Transcribe audio bytes using Sarvam Saaras v3.
         
         Args:
             audio_bytes: Raw audio bytes (WAV format)
+            language: "hinglish", "hindi", or "tamil" (default: "hinglish")
+                      - hinglish/hindi: Hindi-English codemix
+                      - tamil: Tamil-English codemix (Tanglish)
         
         Returns:
             Tuple of (transcribed_text, confidence) or None on failure.
@@ -77,6 +80,16 @@ class WhisperASR:
         if not self._available:
             log.error("Sarvam API key not configured")
             return None
+
+        # Map language to Sarvam language code
+        language_map = {
+            "hinglish": "hi-IN",
+            "hindi": "hi-IN",
+            "tamil": "ta-IN",
+        }
+        lang_code = language_map.get(language.lower(), "hi-IN")
+        # Use codemix mode for both Hinglish and Tanglish (Tamil-English mix)
+        mode = "codemix" if language.lower() in ["hinglish", "hindi", "tamil"] else "default"
 
         try:
             # Write to temp file (Sarvam needs file to read)
@@ -89,8 +102,8 @@ class WhisperASR:
                 headers = {"api-subscription-key": SARVAM_API_KEY}
                 data = {
                     "model": "saaras:v3",
-                    "mode": "codemix",        # KEY: Hinglish output with native script
-                    "language_code": "hi-IN",
+                    "mode": mode,        # KEY: codemix for Hinglish, default for Tamil
+                    "language_code": lang_code,
                 }
 
                 response = requests.post(
@@ -112,7 +125,7 @@ class WhisperASR:
 
             # Sarvam doesn't return per-segment confidence, so use 0.9 for successful transcription
             confidence = 0.9
-            log.info("Transcribed: '%s' (Sarvam codemix)", text)
+            log.info("Transcribed: '%s' (language: %s)", text, language)
             return (text, confidence)
 
         except requests.exceptions.RequestException as e:
@@ -122,9 +135,13 @@ class WhisperASR:
             log.error("Transcription failed: %s", e)
             return None
 
-    def transcribe_file(self, file_path: str) -> Optional[Tuple[str, float]]:
+    def transcribe_file(self, file_path: str, language: str = "hinglish") -> Optional[Tuple[str, float]]:
         """
         Transcribe from an audio file path using Sarvam.
+        
+        Args:
+            file_path: Path to audio file
+            language: "hinglish"/"hindi" for Hindi-English codemix, or "tamil" for Tamil-English codemix (Tanglish)
         
         Returns:
             Tuple of (transcribed_text, confidence) or None on failure.
@@ -132,14 +149,24 @@ class WhisperASR:
         if not self._available:
             return None
 
+        # Map language to Sarvam language code
+        language_map = {
+            "hinglish": "hi-IN",
+            "hindi": "hi-IN",
+            "tamil": "ta-IN",
+        }
+        lang_code = language_map.get(language.lower(), "hi-IN")
+        # Use codemix mode for both Hinglish and Tanglish (Tamil-English mix)
+        mode = "codemix" if language.lower() in ["hinglish", "hindi", "tamil"] else "default"
+
         try:
             with open(file_path, "rb") as f:
                 files = {"file": (Path(file_path).name, f, "audio/wav")}
                 headers = {"api-subscription-key": SARVAM_API_KEY}
                 data = {
                     "model": "saaras:v3",
-                    "mode": "codemix",
-                    "language_code": "hi-IN",
+                    "mode": mode,
+                    "language_code": lang_code,
                 }
 
                 response = requests.post(
@@ -163,12 +190,18 @@ class WhisperASR:
             log.error("File transcription failed: %s", e)
             return None
 
-    def record_and_transcribe(self, seconds: int = RECORD_SECONDS) -> Optional[Tuple[str, float]]:
-        """Full pipeline: record → transcribe. Returns (text, confidence) or None."""
+    def record_and_transcribe(self, seconds: int = RECORD_SECONDS, language: str = "hinglish") -> Optional[Tuple[str, float]]:
+        """
+        Full pipeline: record → transcribe. Returns (text, confidence) or None.
+        
+        Args:
+            seconds: Recording duration
+            language: "hinglish"/"hindi" for Hindi-English codemix, or "tamil" for Tamil-English codemix (Tanglish)
+        """
         audio = self.record_audio(seconds)
         if not audio:
             return None
-        return self.transcribe_bytes(audio)
+        return self.transcribe_bytes(audio, language=language)
 
     @property
     def available(self) -> bool:

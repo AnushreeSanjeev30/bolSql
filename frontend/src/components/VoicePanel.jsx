@@ -204,7 +204,7 @@ const s = {
   },
 }
 
-const QUICK = [
+const QUICK_HINGLISH = [
   'chawal kitna bacha hai',
   'sab items ki list dikhao',
   '50kg atta add karo',
@@ -212,7 +212,40 @@ const QUICK = [
   'kaunsa saman kam hai',
 ]
 
-export default function VoicePanel({ onRefresh }) {
+const QUICK_TANGLISH = [
+  'arisi kitna irukku',
+  'sab items paathukkala',
+  '50kg aatta add panna',
+  '10 packet biscuit vendi',
+  'yaar samaan less irukku',
+]
+
+// Intent label translations
+const INTENT_LABELS = {
+  hinglish: {
+    'ADD': 'ADD',
+    'SELL': 'SELL',
+    'QUERY': 'QUERY',
+    'TREND': 'TREND',
+    'PRICE': 'PRICE',
+    'REPORT': 'REPORT',
+  },
+  tamil: {
+    'ADD': 'ADD',
+    'SELL': 'SELL',
+    'QUERY': 'QUERY',
+    'TREND': 'TREND',
+    'PRICE': 'PRICE',
+    'REPORT': 'REPORT',
+  }
+}
+
+const USER_LABELS = {
+  hinglish: 'aap',
+  tamil: 'nee',
+}
+
+export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -232,8 +265,9 @@ export default function VoicePanel({ onRefresh }) {
     // Stop any ongoing speech
     window.speechSynthesis.cancel()
     
+    const langMap = { 'hinglish': 'hi-IN', 'hindi': 'hi-IN', 'tamil': 'ta-IN' }
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'hi-IN'
+    utterance.lang = langMap[language] || 'hi-IN'
     utterance.rate = 0.9
     utterance.pitch = 1.0
     window.speechSynthesis.speak(utterance)
@@ -246,7 +280,7 @@ export default function VoicePanel({ onRefresh }) {
     setMessages(prev => [...prev, { type: 'user', text: q }])
     setLoading(true)
     try {
-      const res = await sendQuery(q)
+      const res = await sendQuery(q, language)
       setMessages(prev => [...prev, {
         type: 'bot',
         text: res.response,
@@ -262,7 +296,9 @@ export default function VoicePanel({ onRefresh }) {
         if (onRefresh) onRefresh()
       }
     } catch (err) {
-      const errMsg = '⚠️ API se connect nahi ho saka. Check karo ki backend chal raha hai.'
+      const errMsg = language === 'tamil'
+        ? '⚠️ API connect pannathu illa. Backend running irukku check panna.'
+        : '⚠️ API se connect nahi ho saka. Check karo ki backend chal raha hai.'
       setMessages(prev => [...prev, {
         type: 'bot',
         text: errMsg,
@@ -321,9 +357,18 @@ export default function VoicePanel({ onRefresh }) {
   return (
     <div style={s.root}>
       <div style={s.header}>
-        <div>
-          <div style={s.title}>Voice Query <span style={{ color: 'var(--teal)' }}>बोलिए</span></div>
-          <div style={s.subtitle}>Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai</div>
+        <div style={{ flex: 1 }}>
+          <div style={s.title}>
+            {language === 'tamil' ? 'Voice Query - Tanglish' : 'Voice Query'}
+            <span style={{ color: 'var(--teal)' }}>
+              {language === 'tamil' ? ' 🎙️' : ' बोलिए'}
+            </span>
+          </div>
+          <div style={s.subtitle}>
+            {language === 'tamil' 
+              ? 'Tanglish mein bolo ya type karo — aatta, arisi, ennai, laavani sab samja jaayega' 
+              : 'Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai'}
+          </div>
         </div>
         <button
           style={s.speakerBtn(voiceEnabled)}
@@ -336,7 +381,7 @@ export default function VoicePanel({ onRefresh }) {
 
       {/* Quick chips */}
       <div style={s.quickChips}>
-        {QUICK.map(q => (
+        {(language === 'tamil' ? QUICK_TANGLISH : QUICK_HINGLISH).map(q => (
           <button key={q} style={s.chip}
             onClick={() => submit(q)}
             onMouseEnter={e => {
@@ -371,7 +416,10 @@ export default function VoicePanel({ onRefresh }) {
             }
           >
             <div style={s.bubbleLabel(msg.type)}>
-              {msg.type === 'user' ? 'aap' : `AI${msg.intent ? ` · ${msg.intent}` : ''}`}
+              {msg.type === 'user' 
+                ? USER_LABELS[language] || 'aap'
+                : `AI${msg.intent ? ` · ${INTENT_LABELS[language][msg.intent] || msg.intent}` : ''}`
+              }
             </div>
             <div style={s.bubbleContent(msg.type, msg.success)}>
               {msg.text}
@@ -493,7 +541,7 @@ export default function VoicePanel({ onRefresh }) {
           <input
             ref={inputRef}
             style={s.input}
-            placeholder="50kg atta add karo..."
+            placeholder={language === 'tamil' ? '50kg aatta add panna...' : '50kg atta add karo...'}
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}

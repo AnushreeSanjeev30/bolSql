@@ -1,7 +1,22 @@
 import sqlite3
 import pandas as pd
 import numpy as np
-from sklearn.metrics import mean_absolute_error, mean_squared_error, f1_score
+
+try:
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, f1_score
+    HAS_SKLEARN = True
+except ImportError:
+    # sklearn not available - define dummy functions
+    def mean_absolute_error(y_true, y_pred):
+        return sum(abs(a - b) for a, b in zip(y_true, y_pred)) / len(y_true) if y_true else 0
+    
+    def mean_squared_error(y_true, y_pred):
+        return sum((a - b) ** 2 for a, b in zip(y_true, y_pred)) / len(y_true) if y_true else 0
+    
+    def f1_score(y_true, y_pred):
+        return 0.0  # Placeholder
+    
+    HAS_SKLEARN = False
 
 def evaluate_trends(db_path="kirana.db"):
     conn = sqlite3.connect(db_path)

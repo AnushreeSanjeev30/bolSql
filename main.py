@@ -48,10 +48,12 @@ def run_tests():
         ("2 litre doodh gaya",           "SELL",  True),
     ]
 
+    from app.trends.classifier import detect_language
     print("\n🧪 Running pipeline self-tests...\n")
     passed = 0
     for query, expected_intent, should_succeed in test_cases:
-        result = process(query)
+        lang = detect_language(query)
+        result = process(query, language=lang)
         ok = result.success == should_succeed
         status = "✅" if ok else "❌"
         if ok:

@@ -5,8 +5,8 @@ const api = axios.create({
   timeout: 30000,
 })
 
-export async function sendQuery(text) {
-  const { data } = await api.post('/query', { text, verbose: false })
+export async function sendQuery(text, language = 'hinglish') {
+  const { data } = await api.post('/query', { text, verbose: false, language })
   return data
 }
 

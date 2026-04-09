@@ -88,26 +88,79 @@ function Clock() {
 }
 
 const LABELS = {
-  voice: 'Voice Query',
-  inventory: 'Inventory',
-  history: 'History',
-  trends: 'Trends & Reports',
+  hinglish: {
+    // Navigation
+    voice: 'Voice Query',
+    inventory: 'Inventory',
+    history: 'History',
+    trends: 'Trends & Reports',
+    
+    // VoicePanel
+    voiceTitle: 'Voice Query',
+    voiceSubtitle: 'Speak in Hinglish or type — rice, wheat, oil and all items understood',
+    voiceQuickChips: [
+      'how much rice is left',
+      'show me all items',
+      'add 50kg wheat',
+      'sell 10 packets of biscuits',
+      'which items are low on stock',
+    ],
+    voicePlaceholder: 'Enter query...',
+    
+    // InventoryPanel
+    inventoryTitle: 'Inventory Management',
+    
+    // HistoryPanel
+    historyTitle: 'Transaction History',
+    
+    // TrendsPanel
+    trendsTitle: 'Trends & Analytics',
+  },
+  tamil: {
+    // Navigation (Tanglish)
+    voice: 'Voice Query - Tanglish',
+    inventory: 'Inventory - Samanukkam',
+    history: 'History - Varalaru',
+    trends: 'Trends - Viral Kavai',
+    
+    // VoicePanel (Tanglish)
+    voiceTitle: 'Voice Query - Tanglish',
+    voiceSubtitle: 'Speak in Tanglish or type — rice, oil, flour and all items understood',
+    voiceQuickChips: [
+      'how much rice do we have',
+      'show all items',
+      'add 50kg of flour',
+      'we need 10 packets of biscuits',
+      'which items are running low',
+    ],
+    voicePlaceholder: 'Type here...',
+    
+    // InventoryPanel (Tanglish)
+    inventoryTitle: 'Inventory Management - Samanukkam',
+    
+    // HistoryPanel (Tanglish)
+    historyTitle: 'Transaction History - Varalaru',
+    
+    // TrendsPanel (Tanglish)
+    trendsTitle: 'Trends & Analytics - Viral Kavai',
+  },
 }
 
 export default function App() {
   const [active, setActive] = useState('voice')
   const [apiOnline, setApiOnline] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [language, setLanguage] = useState('hinglish')
 
   const triggerRefresh = () => {
     setRefreshKey(k => k + 1)
   }
 
   const panels = {
-    voice:     <VoicePanel onRefresh={triggerRefresh} />,
-    inventory: <InventoryPanel key={refreshKey} />,
-    history:   <HistoryPanel />,
-    trends:    <TrendsPanel />,
+    voice:     <VoicePanel onRefresh={triggerRefresh} language={language} />,
+    inventory: <InventoryPanel key={refreshKey} language={language} />,
+    history:   <HistoryPanel language={language} />,
+    trends:    <TrendsPanel language={language} />,
   }
 
   useEffect(() => {
@@ -128,12 +181,12 @@ export default function App() {
 
   return (
     <div style={styles.layout}>
-      <Sidebar active={active} onNav={setActive} apiOnline={apiOnline} />
+      <Sidebar active={active} onNav={setActive} apiOnline={apiOnline} language={language} onLanguageChange={setLanguage} />
 
       <main style={styles.main}>
         <div style={styles.topbar}>
           <span style={styles.breadcrumb}>
-            KiranaSQL / <span style={{ color: 'var(--text-secondary)' }}>{LABELS[active]}</span>
+            KiranaSQL / <span style={{ color: 'var(--text-secondary)' }}>{LABELS[language][active]}</span>
           </span>
           <div style={styles.topRight}>
             <Clock />

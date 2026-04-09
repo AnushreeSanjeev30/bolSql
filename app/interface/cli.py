@@ -104,6 +104,7 @@ def _print_table(rows):
 def run_cli(voice_mode=False, verbose=False):
     from pipeline import process
     from app.db.database import init_db
+    from app.trends.classifier import detect_language
 
     init_db()
     
@@ -152,7 +153,7 @@ def run_cli(voice_mode=False, verbose=False):
             continue
 
         if user_input.lower() in ("/list", "/l"):
-            result = process("sab items ki list dikhao")
+            result = process("sab items ki list dikhao", language="hinglish")
             print_result(result, verbose=verbose, tts=tts if voice_output_enabled else None)
             if result.db_rows and len(result.db_rows) > 1:
                 _print_table(result.db_rows)
@@ -180,14 +181,16 @@ def run_cli(voice_mode=False, verbose=False):
                     print(_c(Fore.YELLOW, "   ⚠️  Confidence low. Dobara try karein.\n"))
                     continue
                 
-                result = process(text, is_voice=True)
+                lang = detect_language(text)
+                result = process(text, is_voice=True, language=lang)
             else:
                 print(_c(Fore.RED, "   Kuch samajh nahi aaya. Dobara try karein.\n"))
                 continue
         else:
             print(_c(Fore.CYAN, "🧠 Processing..."))
             t0 = time.time()
-            result = process(user_input)
+            lang = detect_language(user_input)
+            result = process(user_input, language=lang)
             elapsed = time.time() - t0
             log.debug("Pipeline took %.2fs", elapsed)
 

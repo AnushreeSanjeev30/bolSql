@@ -60,6 +60,7 @@ TREND_PATTERNS = [
     (r"month(?:ly)?\s*summary",                    "monthly_report", lambda m: {}),
     (r"मंथली\s*रिपोर्ट",                          "monthly_report", lambda m: {}),  # Devanagari
     (r"show\s*(?:me\s*)?(?:the\s*)?monthly",       "monthly_report", lambda m: {}),
+    (r"(?:monthly|maasik|month)\s*report|maasik\s*summary", "monthly_report", lambda m: {}),  # Tamil/Tanglish
 
     # 1. Sales Trend
     (r"(?:pichle|last|guzre hue|previous)\s*(\d+)\s*(?:din|day|dinoM)", "sales_trend", _days),
@@ -67,12 +68,15 @@ TREND_PATTERNS = [
     (r"sales?\s*(?:trend|report|kya hai|batao|dekho)", "sales_trend", lambda m: {}),
     (r"din\s*din\s*(?:sales?|revenue|bikri)", "sales_trend", lambda m: {}),
     (r"weekly\s*(?:sales?|bikri|report)", "sales_trend", lambda m: {"days": 7}),
+    (r"(?:mynaadu|bikri|sales?|bikka)\s*(?:paathu|show|batao|kala)", "sales_trend", lambda m: {}),  # Tamil: mynaadu, bikka
+    (r"(?:gnaneyula|vipadiyula)\s*(?:days?|din)\s*sales?|sales?\s*kalakul", "sales_trend", lambda m: {}),  # Tamil: previous days sales
 
     # 2. Hourly Rush
     (r"(?:peak|rush|bheed|busy|crowd|rush hour)\s*(?:time|hour|samay|waqt|baje)?", "hourly_rush", lambda m: {}),
     (r"sabse zyada\s*(?:bheed|rush|busy|log|crowd)", "hourly_rush", lambda m: {}),
     (r"kaunse?\s*(?:time|waqt|baje|ghante)\s*(?:sabse)?\s*(?:busy|rush)", "hourly_rush", lambda m: {}),
     (r"kab\s*sabse\s*(?:zyada|ber|busy|log)", "hourly_rush", lambda m: {}),
+    (r"(?:rush|busy|peak|crowd)\s*(?:time|neram|hora)", "hourly_rush", lambda m: {}),  # Tamil: neram (time), hora (hour)
 
     # 3. Product Demand
     (r"(?:sabse|most|sab se|top)\s*(?:zyada)?\s*(?:bik|sell|demand|popular|chalta)", "product_demand", lambda m: {}),
@@ -80,6 +84,8 @@ TREND_PATTERNS = [
     (r"(?:kya|kaun sa)\s*(?:zyada)?\s*bik\s*(?:raha|rahe|rahe hain)", "product_demand", lambda m: {}),
     (r"top\s*(?:products?|items?|sellers?)", "product_demand", lambda m: {}),
     (r"best\s*selling|highest\s*demand", "product_demand", lambda m: {}),
+    (r"(?:most|sabse|top)\s*(?:popular|bikka|villnga)\s*(?:items?|saman)", "product_demand", lambda m: {}),  # Tamil: villnga (selling)
+    (r"demand.*recent|recent.*demand|top.*selling", "product_demand", lambda m: {}),
 
     # 4. Seasonal Trend
     (r"(?:garmi|baarish|sardi|holi|diwali|mausam|season)\s*(?:mein)?\s*(?:kya|what|kaun sa)", "seasonal_trend",
@@ -116,7 +122,7 @@ TREND_PATTERNS = [
     (r"(diwali|holi|eid|christmas|navratri|durga|raksha|ramzan)\s*(?:mein)?\s*(?:kya|sales?|bikri|demand)", "festival_trend", _festival),
     (r"festival\s*(?:sales?|trends?|demand|inventory)", "festival_trend", lambda m: {"festival": "general"}),
 
-    # 10. Market Basket (Hinglish + Hindi + English)
+    # 10. Market Basket (Hinglish + Hindi + English + Tamil/Tanglish)
     # Extract product name specifically - product k saath pattern
     (r"(\w+)\s+(?:k|ka|ke|ki)?\s*saath", "market_basket", _item),  # chawal k saath kya bikte h
     
@@ -133,6 +139,18 @@ TREND_PATTERNS = [
     (r"(?:किस|kis)\s*[\w\s]*(?:साथ|saath)\s*[\w\s]*(?:क्या|kya)", "market_basket", lambda m: {}),  # "किस साथ क्या"
     (r"एक\s*?\w*\s*?\w*\s*?साथ", "market_basket", lambda m: {}),  # Flexible "साथ" matching
     (r"combo\s*offer|bundle\s*deal", "market_basket", lambda m: {}),
+    
+    # Tamil/Tanglish patterns (Roman script)
+    (r"(?:bech\s*bol|adi\s*kada|often|frequently)\s*(?:together|saathey|onga|irukku)?", "market_basket", lambda m: {}),  # "bech bol", "adi kada"
+    (r"(?:market\s*basket|basket|combo|pair)\s*(?:analysis|paathukkala)?", "market_basket", lambda m: {}),
+    (r"(?:saathey|onga|irukku)\s*(?:konna|kondu|venum)", "market_basket", lambda m: {}),  # "saathey irukku", "onga venum"
+    (r"(?:ennai\s*)?(\w+)\s*(?:ongane|onga saath)\s*(?:konna|vango|velai)", "market_basket", _item),  # "aatta onga saath konna"
+    (r"frequently\s*bought|most\s*bought", "market_basket", lambda m: {}),
+    
+    # Tamil script patterns (native Tamil)
+    (r"அடிக்கடி.*ஒன்றாக|ஒன்றாக.*கொண்டு|கொண்டு.*வரப்படுகிறது", "market_basket", lambda m: {}),  # "அடிக்கடி ஒன்றாக கொண்டு வரப்படுகிறது"
+    (r"அடிக்கடி|ஒன்றாக|கொண்டு\s*(?:வாங்க|விற்க)", "market_basket", lambda m: {}),  # Tamil keywords
+    (r"சேர்ந்து|சாথி|பொருள்", "market_basket", lambda m: {}),  # Tamil: together, things, products
 
     # 11. Customer Pattern
     (r"customer\s*(?:(?:ka)?\s*pattern|buying|behavior|kharidta|kharidi)", "customer_pattern", lambda m: {}),
@@ -217,3 +235,74 @@ def classify_trend(query: str) -> Tuple[Optional[str], dict]:
                 params = {}
             return trend_type, params
     return None, {}
+
+
+def detect_language(text: str) -> str:
+    """
+    Detect language from input text: 'tamil', 'hindi', or 'hinglish' (default).
+    
+    Checks for:
+    - Tamil script characters (Unicode 0x0B80-0x0BFF) and Tamil keywords
+    - Tamil patterns: saathey, onga, villnga, mynaadu, bikka, neram, hora (Tanglish)
+    - Hindi/Devanagari patterns: एक साथ, साथ, क्या, बार, etc.
+    
+    Returns: 'tamil', 'hindi', or 'hinglish' (default)
+    """
+    text_lower = text.lower()
+    
+    # Check for Tamil script characters (Unicode range 0x0B80-0x0BFF)
+    # This catches native Tamil script input like: அடிக்கடி ஒன்றாக கொண்டு வரப்படுகிறது
+    tamil_script_range = any(ord(c) >= 0x0B80 and ord(c) <= 0x0BFF for c in text)
+    if tamil_script_range:
+        # Additional check: if it has Tamil script and market-basket-like words
+        # அடிக்கடி (frequently), ஒன்றாக (together), கொண்டு (with), வரப்படுகிறது (brought)
+        market_basket_keywords = [
+            "அடிக்கடி",  # frequently
+            "ஒன்றாக",   # together
+            "கொண்டு",   # with/bought
+            "வரப்படுகிறது",  # brought/comes
+            "பொருட்கள்",  # items/products
+            "விற்க",    # to sell
+            "வாங்க",    # to buy
+            "விற்பனை",  # sale
+            "சேர்ந்து",  # together
+            "அடிக்கடி",  # frequently
+        ]
+        if any(keyword in text for keyword in market_basket_keywords):
+            return "tamil"
+        # If it's Tamil script but not specifically market-basket, still return tamil
+        return "tamil"
+    
+    # Tamil indicators (Roman script / Tanglish patterns)
+    tamil_patterns = [
+        r"\bsaathey\b", r"\bonga\b", r"\borgane\b",
+        r"\bvillnga\b", r"\bbikka\b", r"\bmynaadu\b",
+        r"\bneram\b", r"\bhora\b", r"\bbech\s*bol\b",
+        r"\badi\s*kada\b", r"\billai\b", r"\birukku\b",
+        r"\bkondu\b", r"\bkonna\b", r"\bvenum\b",
+        r"\bvango\b", r"\bvelai\b", r"\bpaathukkala\b"
+    ]
+    
+    # Hindi/Devanagari indicators
+    hindi_patterns = [
+        r"एक\s*साथ",  # "एक साथ"
+        r"साथ\s*(?:खरीद|बिक|बिकता|क्या)",  # "साथ खरीद/बिक"
+        r"(?:दोनों|donon|दोनो)",  # "दोनों/donon"
+        r"(?:किस|kis)\s*[\w\s]*(?:साथ|saath)",  # "किस साथ"
+        r"बार",  # "बार"
+        r"एक",  # "एक"
+        r"क्या",  # "क्या"
+    ]
+    
+    # Check for Tamil patterns first (more specific)
+    for pattern in tamil_patterns:
+        if re.search(pattern, text_lower):
+            return "tamil"
+    
+    # Check for Hindi patterns
+    for pattern in hindi_patterns:
+        if re.search(pattern, text):
+            return "hindi"
+    
+    # Default to hinglish
+    return "hinglish"

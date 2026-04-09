@@ -254,7 +254,7 @@ def _render_text(r: dict) -> str:
     if r["critical_stock"]:
         lines += ["", sep, "  🔴 CRITICAL STOCK ALERTS", sep]
         for item in r["critical_stock"]:
-            lines.append(f"  ⚠️  {item['item']}: ~{item['days_until_stockout']} din bacha hai!")
+            lines.append(f"  ⚠️  {item['item']}: ~{item['days_until_stockout']} days left!")
 
     if r["dead_stock"]:
         lines += ["", sep, "  🧊 DEAD STOCK (30+ days no sale)", sep]
@@ -264,7 +264,7 @@ def _render_text(r: dict) -> str:
     lines += [
         "",
         sep,
-        "  ✅ Report complete. Agla mahina bhi badhiya ho!",
+        "  ✅ Report complete. May next month be even better!",
         sep,
         "",
     ]

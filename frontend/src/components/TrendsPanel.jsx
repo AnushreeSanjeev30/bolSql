@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { getAllTrends, exportTrendsPDF, exportTrendsJSON } from '../api'
 
-export default function TrendsPanel() {
+export default function TrendsPanel({ language = 'hinglish' }) {
   const [trends, setTrends] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -376,7 +376,7 @@ export default function TrendsPanel() {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <h1 style={styles.title}>📈 Kirana Trends & Reports</h1>
+        <h1 style={styles.title}>📈 {language === 'tamil' ? 'Kirana Trends & Reports - Viral Kavai' : 'Kirana Trends & Reports'}</h1>
         <div style={styles.buttonGroup}>
           <button
             style={styles.button}

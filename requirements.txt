@@ -21,6 +21,7 @@ groq>=0.9.0           # Free 14,400 req/day at console.groq.com
 
 # === NLP ===
 rapidfuzz>=3.0.0      # Fuzzy string matching for item names
+scikit-learn>=1.3.0   # Machine learning metrics for trends
 
 # === Voice Output (TTS) ===
 pyttsx3>=2.90          # Free offline text-to-speech (Hindi/English/Hinglish)

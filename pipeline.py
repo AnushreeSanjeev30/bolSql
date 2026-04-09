@@ -102,12 +102,16 @@ class PipelineResult:
 # ---------------------------------------------------------------------------
 
 
-def _handle_add(parsed: ParsedQuery) -> PipelineResult:
+def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Direct ADD: no LLM needed when NLP extracted enough info."""
     if not parsed.item_name:
+        response_map = {
+            "hinglish": "Kaunsa item add karna hai? Dobara boliye.",
+            "tamil": "Yaar item add panna? Repeat solgal."
+        }
         return PipelineResult(
             success=False,
-            response="Kaunsa item add karna hai? Dobara boliye.",
+            response=response_map.get(language, response_map["hinglish"]),
             error="item_name missing",
         )
 
@@ -116,10 +120,10 @@ def _handle_add(parsed: ParsedQuery) -> PipelineResult:
 
     try:
         row = upsert_item(parsed.item_name, qty, unit)
-        response = (
-            f"✓ {qty} {unit} {parsed.item_name} add ho gaya. "
-            f"Ab total {row['quantity']} {row['unit']} hai."
-        )
+        if language == "tamil":
+            response = f"✓ {qty} {unit} {parsed.item_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
+        else:
+            response = f"✓ {qty} {unit} {parsed.item_name} add ho gaya. Ab total {row['quantity']} {row['unit']} hai."
         return PipelineResult(
             success=True,
             response=response,
@@ -128,19 +132,27 @@ def _handle_add(parsed: ParsedQuery) -> PipelineResult:
         )
     except Exception as e:  # pragma: no cover - defensive
         log.error("ADD failed: %s", e)
+        response_map = {
+            "hinglish": f"Add karne mein problem aayi: {e}",
+            "tamil": f"Add pannrathu vela problem irukku: {e}"
+        }
         return PipelineResult(
             success=False,
-            response=f"Add karne mein problem aayi: {e}",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
 
-def _handle_sell(parsed: ParsedQuery) -> PipelineResult:
+def _handle_sell(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Direct SELL: no LLM needed when NLP extracted enough info."""
     if not parsed.item_name:
+        response_map = {
+            "hinglish": "Kaunsa item becha? Dobara boliye.",
+            "tamil": "Yaar item venditha? Repeat solgal."
+        }
         return PipelineResult(
             success=False,
-            response="Kaunsa item becha? Dobara boliye.",
+            response=response_map.get(language, response_map["hinglish"]),
             error="item_name missing",
         )
 
@@ -148,10 +160,10 @@ def _handle_sell(parsed: ParsedQuery) -> PipelineResult:
 
     try:
         row = sell_item(parsed.item_name, qty)
-        response = (
-            f"✓ {qty} {row['unit']} {parsed.item_name} ka sale record ho gaya. "
-            f"Ab {row['quantity']} {row['unit']} bacha hai."
-        )
+        if language == "tamil":
+            response = f"✓ {qty} {row['unit']} {parsed.item_name} sale record pannathu. Ab {row['quantity']} {row['unit']} left irukku."
+        else:
+            response = f"✓ {qty} {row['unit']} {parsed.item_name} ka sale record ho gaya. Ab {row['quantity']} {row['unit']} bacha hai."
         return PipelineResult(
             success=True,
             response=response,
@@ -168,14 +180,18 @@ def _handle_sell(parsed: ParsedQuery) -> PipelineResult:
         )
     except Exception as e:  # pragma: no cover - defensive
         log.error("SELL failed: %s", e)
+        response_map = {
+            "hinglish": f"Sale record karne mein problem: {e}",
+            "tamil": f"Sale record pannrathu vela problem: {e}"
+        }
         return PipelineResult(
             success=False,
-            response=f"Sale record karne mein problem: {e}",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
 
-def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
+def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Optional[PipelineResult]:
     """Handle simple QUERY directly from DB (no LLM needed).
 
     Returns PipelineResult if handled, None if LLM fallback needed.
@@ -188,10 +204,18 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
         low_stock = [r for r in rows if r['quantity'] < 10] # Adjust threshold as needed
         
         if not low_stock:
-            return PipelineResult(success=True, response="Sab badhiya hai! Koi bhi saman kam nahi hai.", intent="QUERY")
+            response_map = {
+                "hinglish": "Sab badhiya hai! Koi bhi saman kam nahi hai.",
+                "tamil": "Sab nalla irukku! Yaar samaan less illai."
+            }
+            return PipelineResult(success=True, response=response_map.get(language, response_map["hinglish"]), intent="QUERY")
         
         lines = [f"  • {r['name']}: {r['quantity']} {r['unit']}" for r in low_stock]
-        response = "⚠️ Yeh saman kam hai:\n" + "\n".join(lines)
+        response_map = {
+            "hinglish": "⚠️ Yeh saman kam hai:\n",
+            "tamil": "⚠️ Yeh samaan less irukku:\n"
+        }
+        response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
         return PipelineResult(success=True, response=response, intent="QUERY", db_rows=low_stock)
 
     # "list sab" / "sabhi items" type query
@@ -215,15 +239,23 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
     ):
         rows = get_all_items()
         if not rows:
+            response_map = {
+                "hinglish": "Inventory khaali hai. Kuch add karo pehle.",
+                "tamil": "Inventory empty. Kuch add panna."
+            }
             return PipelineResult(
                 success=True,
-                response="Inventory khaali hai. Kuch add karo pehle.",
+                response=response_map.get(language, response_map["hinglish"]),
                 intent="QUERY",
                 db_rows=[],
             )
 
         lines = [f"  • {r['name']}: {r['quantity']} {r['unit']}" for r in rows]
-        response = "📦 Aapka poora stock:\n" + "\n".join(lines)
+        response_map = {
+            "hinglish": "📦 Aapka poora stock:\n",
+            "tamil": "📦 Your complete stock:\n"
+        }
+        response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
         return PipelineResult(
             success=True,
             response=response,
@@ -238,11 +270,11 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
         unit = row["unit"]
         name = row["name"]
         if qty == 0:
-            response = f"⚠️  {name} ka stock khatam ho gaya hai! Restock karo."
+            response = f"⚠️  {name} ka stock khatam ho gaya hai! Restock karo." if language == "hinglish" else f"⚠️  {name} stock over. Restock panna."
         elif qty < 5:
-            response = f"⚠️  {name} kam bacha hai — sirf {qty} {unit}."
+            response = f"⚠️  {name} kam bacha hai — sirf {qty} {unit}." if language == "hinglish" else f"⚠️  {name} less irukku — only {qty} {unit}."
         else:
-            response = f"Aapke paas {qty} {unit} {name} bacha hai."
+            response = f"Aapke paas {qty} {unit} {name} bacha hai." if language == "hinglish" else f"You have {qty} {unit} {name} left."
         return PipelineResult(
             success=True,
             response=response,
@@ -256,21 +288,29 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
 
 # ── New Feature Handlers (Category, Expiry, Rollback) ────────────────────────
 
-def _handle_price_rollback(parsed: ParsedQuery) -> PipelineResult:
+def _handle_price_rollback(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Rollback price to previous value from price_history."""
     if not parsed.item_name:
+        response_map = {
+            "hinglish": "Kaunsa item? Item naam bataao.",
+            "tamil": "Yaar item? Item name solgal."
+        }
         return PipelineResult(
             success=False,
-            response="Kaunsa item? Item naam bataao.",
+            response=response_map.get(language, response_map["hinglish"]),
             error="missing item name",
         )
     
     try:
         from app.db.database import rollback_item_price
         item = rollback_item_price(parsed.item_name)
+        if language == "tamil":
+            response = f"✓ {parsed.item_name.title()} price rollback pannathu: ₹{item['price']}"
+        else:
+            response = f"✓ {parsed.item_name.title()} ka price rollback ho gaya: ₹{item['price']}"
         return PipelineResult(
             success=True,
-            response=f"✓ {parsed.item_name.title()} ka price rollback ho gaya: ₹{item['price']}",
+            response=response,
             intent="ROLLBACK",
             db_rows=[item],
         )
@@ -282,23 +322,31 @@ def _handle_price_rollback(parsed: ParsedQuery) -> PipelineResult:
         )
     except Exception as e:
         log.error("Price rollback error: %s", e)
+        response_map = {
+            "hinglish": "Price rollback mein dikkat aayi",
+            "tamil": "Price rollback vela problem"
+        }
         return PipelineResult(
             success=False,
-            response="Price rollback mein dikkat aayi",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
 
-def _handle_expiry_check(parsed: ParsedQuery) -> PipelineResult:
+def _handle_expiry_check(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Check items expiring within 7 days."""
     try:
         from app.db.database import get_items_by_expiry
         items = get_items_by_expiry(days_until_expiry=7)
         
         if not items:
+            response_map = {
+                "hinglish": "✓ Koi item expire hone wala nahi hai aaj kal. Sab fresh hai!",
+                "tamil": "✓ No items expiring soon. All fresh!"
+            }
             return PipelineResult(
                 success=True,
-                response="✓ Koi item expire hone wala nahi hai aaj kal. Sab fresh hai!",
+                response=response_map.get(language, response_map["hinglish"]),
                 intent="EXPIRY",
                 db_rows=[],
             )
@@ -311,7 +359,11 @@ def _handle_expiry_check(parsed: ParsedQuery) -> PipelineResult:
             items_list.append(f"{name} (expire: {expiry})")
         
         items_text = "\n  • ".join(items_list)
-        response = f"⚠️  Yeh {len(items)} items expire hone wale hain 7 din mein:\n  • {items_text}"
+        response_map = {
+            "hinglish": f"⚠️  Yeh {len(items)} items expire hone wale hain 7 din mein:\n  • ",
+            "tamil": f"⚠️  These {len(items)} items expiring in 7 days:\n  • "
+        }
+        response = response_map.get(language, response_map["hinglish"]) + items_text
         
         return PipelineResult(
             success=True,
@@ -321,19 +373,27 @@ def _handle_expiry_check(parsed: ParsedQuery) -> PipelineResult:
         )
     except Exception as e:
         log.error("Expiry check error: %s", e)
+        response_map = {
+            "hinglish": "Expiry check mein dikkat aayi",
+            "tamil": "Expiry check vela problem"
+        }
         return PipelineResult(
             success=False,
-            response="Expiry check mein dikkat aayi",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
 
-def _handle_category_update(parsed: ParsedQuery) -> PipelineResult:
+def _handle_category_update(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Handle category-based price updates."""
     if not parsed.item_name or not parsed.quantity:
+        response_map = {
+            "hinglish": "Category aur percentage dono batao. E.g., 'spices ke price 10% badha do'",
+            "tamil": "Category and percentage both tell. E.g., 'masala price 10% increase panna'"
+        }
         return PipelineResult(
             success=False,
-            response="Category aur percentage dono batao. E.g., 'spices ke price 10% badha do'",
+            response=response_map.get(language, response_map["hinglish"]),
             error="missing category or percentage",
         )
     
@@ -350,42 +410,53 @@ def _handle_category_update(parsed: ParsedQuery) -> PipelineResult:
         )
         
         if count == 0:
+            response = f"❌ {category} category nahi mila" if language == "hinglish" else f"❌ {category} category not found"
             return PipelineResult(
                 success=False,
-                response=f"❌ {category} category nahi mila",
+                response=response,
                 error="category not found",
             )
         
+        response = f"✓ {category} category ke {count} items ka price {percentage}% badha diya" if language == "hinglish" else f"✓ {category} category ke {count} items price {percentage}% increase pannathu"
         return PipelineResult(
             success=True,
-            response=f"✓ {category} category ke {count} items ka price {percentage}% badha diya",
+            response=response,
             intent="CATEGORY",
             db_rows=[{"category": category, "items_updated": count, "percentage": percentage}],
         )
     except Exception as e:
         log.error("Category update error: %s", e)
+        response_map = {
+            "hinglish": "Category price update mein dikkat aayi",
+            "tamil": "Category price update vela problem"
+        }
         return PipelineResult(
             success=False,
-            response="Category price update mein dikkat aayi",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
 
-def _handle_price_check(parsed: ParsedQuery) -> PipelineResult:
+def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Check or update item price - don't create new items."""
     if not parsed.item_name:
+        response_map = {
+            "hinglish": "Kaunsa item? Item naam bataao.",
+            "tamil": "Yaar item? Item name solgal."
+        }
         return PipelineResult(
             success=False,
-            response="Kaunsa item? Item naam bataao.",
+            response=response_map.get(language, response_map["hinglish"]),
             error="missing item name",
         )
     
     try:
         item = get_item(parsed.item_name)
         if not item:
+            response = f"❌ '{parsed.item_name}' nahi mila inventory mein" if language == "hinglish" else f"❌ '{parsed.item_name}' inventory le kanukkala"
             return PipelineResult(
                 success=False,
-                response=f"❌ '{parsed.item_name}' nahi mila inventory mein",
+                response=response,
                 error="item not found",
             )
         
@@ -393,25 +464,31 @@ def _handle_price_check(parsed: ParsedQuery) -> PipelineResult:
         if parsed.quantity:
             from app.db.database import update_item_price
             updated = update_item_price(parsed.item_name, parsed.quantity, reason="voice_command")
+            response = f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}" if language == "hinglish" else f"✓ {item['name']} price update pannathu: ₹{updated['price']}"
             return PipelineResult(
                 success=True,
-                response=f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}",
+                response=response,
                 intent="PRICE",
                 db_rows=[updated],
             )
         else:
             # Just PRICE CHECK - no quantity means show current price
+            response = f"{item['name']} ka current rate: ₹{item['price']}" if language == "hinglish" else f"{item['name']} current rate: ₹{item['price']}"
             return PipelineResult(
                 success=True,
-                response=f"{item['name']} ka current rate: ₹{item['price']}",
+                response=response,
                 intent="PRICE",
                 db_rows=[item],
             )
     except Exception as e:
         log.error("Price check error: %s", e)
+        response_map = {
+            "hinglish": "Price check mein dikkat aayi",
+            "tamil": "Price check vela problem"
+        }
         return PipelineResult(
             success=False,
-            response="Price check mein dikkat aayi",
+            response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
 
@@ -421,7 +498,7 @@ def _handle_price_check(parsed: ParsedQuery) -> PipelineResult:
 # ---------------------------------------------------------------------------
 
 
-def _handle_with_llm(raw_text: str, parsed: ParsedQuery) -> PipelineResult:
+def _handle_with_llm(raw_text: str, parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Full LLM pipeline: RAG retrieval → SQL → safety → execute → response."""
 
     # Step 1: RAG retrieval
@@ -471,8 +548,8 @@ def _handle_with_llm(raw_text: str, parsed: ParsedQuery) -> PipelineResult:
             error=str(e),
         )
 
-    # Step 5: Generate Hinglish response
-    response = llm.generate_response(raw_text, sql, rows, parsed.intent)
+    # Step 5: Generate response (in appropriate language)
+    response = llm.generate_response(raw_text, sql, rows, parsed.intent, language=language)
 
     return PipelineResult(
         success=True,
@@ -516,7 +593,7 @@ def _classify_customer_query(text: str) -> Optional[str]:
 # ---------------------------------------------------------------------------
 
 
-def process(text: str, is_voice: bool = False) -> PipelineResult:
+def process(text: str, is_voice: bool = False, language: str = "hinglish") -> PipelineResult:
     """Main pipeline entry point.
 
     text: transcribed/typed Hinglish query
@@ -541,7 +618,7 @@ def process(text: str, is_voice: bool = False) -> PipelineResult:
     # CRITICAL FIX: Check trends BEFORE transliteration to preserve Hindi patterns
     # This ensures Hindi market basket queries work correctly
     if _trends_pipeline is not None and _trends_pipeline.is_trend_query(text):
-        trend_response = _trends_pipeline.process(text)
+        trend_response = _trends_pipeline.process(text, language=language)
         if trend_response:
             return PipelineResult(
                 success=True,
@@ -634,28 +711,28 @@ def process(text: str, is_voice: bool = False) -> PipelineResult:
 
     # Step 2: route by intent + confidence (general inventory/cart operations)
     if parsed.intent == "ADD" and parsed.item_name and parsed.confidence >= 0.4:
-        return _handle_add(parsed)
+        return _handle_add(parsed, language=language)
 
     if parsed.intent == "SELL" and parsed.item_name and parsed.confidence >= 0.4:
-        return _handle_sell(parsed)
+        return _handle_sell(parsed, language=language)
 
     if parsed.intent == "QUERY":
-        direct = _handle_query_direct(parsed)
+        direct = _handle_query_direct(parsed, language=language)
         if direct is not None:
             return direct
 
     # Handle new inventory features with template SQL
     if parsed.intent == "ROLLBACK":
-        return _handle_price_rollback(parsed)
+        return _handle_price_rollback(parsed, language=language)
 
     if parsed.intent == "EXPIRY":
-        return _handle_expiry_check(parsed)
+        return _handle_expiry_check(parsed, language=language)
     
     if parsed.intent == "CATEGORY":
-        return _handle_category_update(parsed)
+        return _handle_category_update(parsed, language=language)
     
     if parsed.intent == "PRICE" and parsed.item_name:
-        return _handle_price_check(parsed)
+        return _handle_price_check(parsed, language=language)
 
     # Step 4: LLM fallback
-    return _handle_with_llm(text, parsed)
+    return _handle_with_llm(text, parsed, language=language)

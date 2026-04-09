@@ -1,7 +1,8 @@
 """
 app/llm/generator.py
-LLM integration — SQL generation + Hinglish response generation.
+LLM integration — SQL generation + Multi-language response generation.
 Supports Groq (free) and Ollama (offline) backends.
+Supports Hinglish, Hindi, and Tamil responses.
 """
 
 import re
@@ -64,9 +65,9 @@ Quantity: {quantity}
 Unit: {unit}
 """
 
-# ── Response Generation Prompt ────────────────────────────────────────────────
+# ── Response Generation Prompts ────────────────────────────────────────────────
 
-RESPONSE_SYSTEM_PROMPT = """You are a helpful assistant for an Indian kirana shop.
+RESPONSE_SYSTEM_PROMPT_HINGLISH = """You are a helpful assistant for an Indian kirana shop.
 Convert database results into natural, friendly Hinglish (Hindi + English mix).
 
 Rules:
@@ -83,6 +84,26 @@ Examples:
 - Low stock: "Warning: atta sirf 2kg bacha hai, restock karo"
 - Not found: "Yeh item inventory mein nahi mila"
 """
+
+RESPONSE_SYSTEM_PROMPT_TAMIL = """You are a helpful assistant for an Indian kirana shop.
+Convert database results into natural, friendly Tamil.
+
+Rules:
+- Keep responses SHORT (1-2 sentences max)
+- Use Tamil naturally: "aagum", "irukku", "pannathu", "koduthu"
+- Include numbers and units clearly
+- Be shopkeeper-friendly and warm
+- Always respond in Tamil script and Roman Tamil mix (Tamglish)
+
+Examples:
+- Stock added: "50kg aatta successfully add pannathu ✓"
+- Stock sold: "10 packet biscuit sale record pannathu ✓"
+- Stock check: "Unakku 30kg arisi irukku"
+- Low stock: "Warning: aatta sirf 2kg irukku, puthiya stock vaangikola"
+- Not found: "Ivar item inventory la illai"
+"""
+
+RESPONSE_SYSTEM_PROMPT = RESPONSE_SYSTEM_PROMPT_HINGLISH  # Default
 
 
 class LLMClient:
@@ -195,11 +216,26 @@ class LLMClient:
         log.error("SQL generation failed after %d attempts", max_retries + 1)
         return None
 
-    def generate_response(self, raw_query: str, sql: str, db_result: list, intent: str) -> str:
+    def generate_response(self, raw_query: str, sql: str, db_result: list, intent: str, language: str = "hinglish") -> str:
         """
-        Generate a natural Hinglish response from DB results.
+        Generate a natural response from DB results in the specified language.
         Falls back to template-based response if LLM unavailable.
+        
+        Args:
+            raw_query: Original user query
+            sql: Generated SQL
+            db_result: Database query results
+            intent: Query intent
+            language: "hinglish", "hindi", or "tamil" (default: "hinglish")
         """
+        # Select appropriate prompt
+        if language.lower() == "tamil":
+            system_prompt = RESPONSE_SYSTEM_PROMPT_TAMIL
+            lang_instruction = "Generate a short, friendly Tamil response in Tamglish (Tamil + Roman mix)."
+        else:
+            system_prompt = RESPONSE_SYSTEM_PROMPT_HINGLISH
+            lang_instruction = "Generate a short, friendly Hinglish response."
+        
         result_summary = json.dumps(db_result[:5], ensure_ascii=False, indent=2)
         user_prompt = f"""
 User said: "{raw_query}"
@@ -207,16 +243,118 @@ SQL executed: {sql}
 Database result: {result_summary}
 Intent: {intent}
 
-Generate a short, friendly Hinglish response.
+{lang_instruction}
 """
-        response = self._call_llm(RESPONSE_SYSTEM_PROMPT, user_prompt, max_tokens=100)
+        response = self._call_llm(system_prompt, user_prompt, max_tokens=100)
         if response:
             return response
 
         # Template fallback (no LLM needed)
-        return self._template_response(intent, db_result, raw_query)
+        return self._template_response(intent, db_result, raw_query, language=language)
 
-    def _template_response(self, intent: str, results: list, query: str) -> str:
+    def _template_response(self, intent: str, results: list, query: str, language: str = "hinglish") -> str:
+        """
+        Hardcoded response templates when LLM unavailable.
+        
+        Args:
+            intent: Query intent
+            results: Database results
+            query: Original query
+            language: "hinglish", "hindi", or "tamil" (default: "hinglish")
+        """
+        # Tamil templates
+        if language.lower() == "tamil":
+            return self._template_response_tamil(intent, results)
+        
+        # Default Hinglish templates
+        return self._template_response_hinglish(intent, results)
+    
+    def _template_response_tamil(self, intent: str, results: list) -> str:
+        """Hardcoded Tamil templates when LLM unavailable."""
+        if not results:
+            if intent == "PRICE":
+                return "❌ Item kaaga vidham vela database la illa"
+            elif intent == "CORRECTION":
+                return "❌ Stock correction panaka mudiyala"
+            elif intent == "ORDER":
+                return "❌ Order data illa"
+            elif intent == "ROLLBACK":
+                return "❌ Price history illa, rollback panaka mudiyala"
+            elif intent == "EXPIRY":
+                return "✓ Yaar item expire aagum kalai illa ippothu"
+            return "✓ Pannathu aagum"
+
+        if intent == "QUERY" and results:
+            row = results[0]
+            if "name" in row and "quantity" in row:
+                name = row.get("name", "item")
+                qty = row.get("quantity", "?")
+                unit = row.get("unit", "")
+                if len(results) == 1:
+                    return f"Unakku {qty} {unit} {name} irukku"
+            
+            if len(results) > 1:
+                items_list = []
+                for r in results:
+                    name = r.get('name', '?')
+                    qty = r.get('quantity', '?')
+                    unit = r.get('unit', '')
+                    items_list.append(f"{qty}{unit} {name}" if unit else f"{qty} {name}")
+                
+                if len(results) > 8:
+                    items_text = "\n  • " + "\n  • ".join(items_list)
+                    return f"Un inventory la ivan {len(results)} items irukku:\n  • {items_text}"
+                else:
+                    items_text = ", ".join(items_list)
+                    return f"Un inventory la: {items_text}"
+
+        if intent == "ADD":
+            return "✓ Stock add pannathu aagum"
+        
+        if intent == "SELL":
+            return "✓ Sale record pannathu aagum"
+        
+        if intent == "PRICE":
+            row = results[0] if results else {}
+            item = row.get("name", "item")
+            price = row.get("price", "?")
+            return f"{item} kaaga vidham vela: ₹{price}"
+        
+        if intent == "CORRECTION":
+            row = results[0] if results else {}
+            item = row.get("name", "item")
+            qty = row.get("quantity", "?")
+            unit = row.get("unit", "")
+            return f"✓ {item} stock correct pannathu aagum: {qty} {unit}"
+        
+        if intent == "ORDER":
+            orders_text = "\n  • ".join(
+                f"{r.get('item', '?')}: {r.get('qty', '?')} {r.get('unit', '')}"
+                for r in results[:10]
+            )
+            return f"Inrum kaaga pending orders:\n  • {orders_text}"
+        
+        if intent == "ROLLBACK":
+            row = results[0] if results else {}
+            old_price = row.get("old_price", "?")
+            return f"✓ Price rollback pannathu aagum previous rate la: ₹{old_price}"
+        
+        if intent == "EXPIRY":
+            items_list = []
+            for r in results:
+                name = r.get('name', '?')
+                expiry = r.get('expiry_date', '?')
+                items_list.append(f"{name} (expiry: {expiry})")
+            
+            items_text = "\n  • ".join(items_list)
+            return f"Ivan {len(results)} items expire aagum:\n  • {items_text}"
+        
+        if intent == "CATEGORY":
+            return f"✓ Category kaaga price update pannathu aagum"
+
+        return "✓ Pannathu aagum"
+
+    def _template_response_hinglish(self, intent: str, results: list) -> str:
         """Hardcoded Hinglish templates when LLM unavailable."""
         if not results:
             if intent == "PRICE":

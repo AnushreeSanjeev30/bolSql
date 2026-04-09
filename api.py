@@ -20,6 +20,7 @@ except ImportError:
 
 from app.db.database import init_db, get_all_items
 from pipeline import process
+from app.trends.classifier import detect_language
 
 app = FastAPI(
     title="VoiceSQL — Kirana Intelligence API",
@@ -43,6 +44,7 @@ async def startup():
 class QueryRequest(BaseModel):
     text: str
     verbose: Optional[bool] = False
+    language: Optional[str] = "hinglish"  # "hinglish", "hindi", or "tamil"
 
 
 class QueryResponse(BaseModel):
@@ -65,6 +67,7 @@ class VoiceQueryResponse(BaseModel):
     db_rows: Optional[list] = None
     error: Optional[str]
     skipped: Optional[bool] = False  # True if confidence too low
+    language: Optional[str] = "hinglish"  # Language used for response
 
 
 @app.post("/query", response_model=QueryResponse)
@@ -73,7 +76,9 @@ async def query_endpoint(req: QueryRequest):
     if not req.text.strip():
         raise HTTPException(status_code=400, detail="Empty query")
 
-    result = process(req.text)
+    # Auto-detect language if not explicitly provided
+    lang = req.language if req.language != "hinglish" else detect_language(req.text)
+    result = process(req.text, language=lang)
 
     return QueryResponse(
         success=result.success,
@@ -87,7 +92,7 @@ async def query_endpoint(req: QueryRequest):
 
 
 @app.post("/voice", response_model=VoiceQueryResponse)
-async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False):
+async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False, language: str = "hinglish"):
     """
     Process voice input: transcribe (with confidence) → process query.
     
@@ -113,13 +118,16 @@ async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False):
         if not asr or not asr.available:
             raise HTTPException(status_code=503, detail="ASR model not available")
         
-        result = asr.transcribe_bytes(audio_bytes)
+        result = asr.transcribe_bytes(audio_bytes, language=language)
         if not result:
             raise HTTPException(status_code=400, detail="Transcription failed")
         
         transcribed_text, confidence = result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"ASR error: {e}")
+    
+    # Auto-detect language if not explicitly provided
+    lang = language if language != "hinglish" else detect_language(transcribed_text)
     
     # Check confidence threshold
     if confidence < 0.5:
@@ -133,11 +141,12 @@ async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False):
             db_rows=None,
             skipped=True,
             error="Low transcription confidence",
+            language=lang,
         )
     
     # Process the transcribed text
     try:
-        proc_result = process(transcribed_text, is_voice=True)
+        proc_result = process(transcribed_text, is_voice=True, language=lang)
         
         return VoiceQueryResponse(
             success=proc_result.success,
@@ -149,6 +158,7 @@ async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False):
             db_rows=proc_result.db_rows,
             skipped=False,
             error=proc_result.error,
+            language=lang,
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {e}")
