@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import math
 
+from app.trends.demand_model import predict_demand_ema
+
 
 class TrendsEngine:
     """
@@ -649,6 +651,45 @@ class TrendsEngine:
             "insight": f"{season.title()} mein {top} sabse zyada bikta hai."
         }
 
+    def demand_stock_risk(self, days_ahead: int = 3):
+        """Predict future demand and assess stock risk."""
+        demand = predict_demand_ema(self.db_path, days_ahead)
+
+        conn = self._conn()
+        cur = conn.cursor()
+
+        cur.execute("SELECT name, quantity FROM inventory")
+        stock_rows = cur.fetchall()
+        conn.close()
+
+        inventory = {name: qty for name, qty in stock_rows}
+
+        results = []
+
+        for item, predicted in demand.items():
+            stock = inventory.get(item, 0)
+
+            shortage = predicted - stock
+            ratio = predicted / (stock + 1)
+
+            if predicted > stock:
+                risk = "🔴 CRITICAL"
+            elif ratio > 0.7:
+                risk = "🟡 HIGH"
+            else:
+                risk = "🟢 SAFE"
+
+            results.append({
+                "item": item,
+                "predicted_demand": round(predicted, 1),
+                "current_stock": stock,
+                "shortage": round(max(0, shortage), 1),
+                "risk": risk,
+                "suggested_reorder": round(max(0, shortage * 1.3), 1)
+            })
+
+        return sorted(results, key=lambda x: -x["predicted_demand"])
+
     # ─────────────────────────────────────────────
     # UNIFIED DISPATCH
     # ─────────────────────────────────────────────
@@ -669,6 +710,7 @@ class TrendsEngine:
             "customer_pattern":  lambda: self.customer_pattern(**params),
             "auto_subscription": lambda: self.auto_subscription(**params),
             "weather_trend":     lambda: self.weather_trend(**params),
+            "demand_stock_risk":  lambda: self.demand_stock_risk(**params),
         }
         fn = dispatch_map.get(trend_type)
         if fn:

@@ -151,6 +151,13 @@ TREND_PATTERNS = [
     (r"(baarish|monsoon|garmi|summer|sardi|winter|rain|heat|cold|mausam|weather)\s*(?:mein)?\s*(?:kya|what|kaun sa)\s*(?:bik|sell)", "weather_trend", _season),
     (r"(?:weather|mausam|season)\s*(?:mein)?\s*(?:kya|sales?|trends?|demand)", "weather_trend", lambda m: {"season": "general"}),
     (r"seasonal\s*(?:demand|trends?|patterns?)", "weather_trend", lambda m: {}),
+
+    # 14. Demand & Stock Risk
+    (r"(?:future|aane wala|next)\s*(?:demand|jaroorat|requirement|zaroorat)", "demand_stock_risk", lambda m: {}),
+    (r"(?:next|aane wale)\s*(\d+)\s*(?:din|day)\s*(?:ka)?\s*(?:demand|jaroorat)", "demand_stock_risk", _days),
+    (r"stock\s*(?:shortage|risk|khatam|danger|warn)", "demand_stock_risk", lambda m: {}),
+    (r"khatam\s*(?:hone|ho jayega)\s*(?:wala|risk)", "demand_stock_risk", lambda m: {}),
+    (r"kaunsa\s*(?:maal|saman)\s*khatam\s*(?:hoga|ho jayega)", "demand_stock_risk", lambda m: {}),
 ]
 
 CUSTOMER_PATTERNS = [
