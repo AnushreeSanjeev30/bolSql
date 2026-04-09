@@ -460,11 +460,31 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
                 error="item not found",
             )
         
-        # If quantity provided with PRICE intent, it's a price UPDATE
+        # If quantity provided with PRICE intent, it's a price UPDATE.
+        # Interpret phrases like "5 rupaye badha do" / "kam kar do" as delta changes,
+        # otherwise treat the number as the absolute new price.
         if parsed.quantity:
             from app.db.database import update_item_price
-            updated = update_item_price(parsed.item_name, parsed.quantity, reason="voice_command")
-            response = f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}" if language == "hinglish" else f"✓ {item['name']} price update pannathu: ₹{updated['price']}"
+
+            raw_l = parsed.raw_text.lower()
+            current_price = float(item.get("price") or 0.0)
+
+            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "increase"])
+            is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata"])
+
+            if is_increase:
+                new_price = current_price + float(parsed.quantity)
+            elif is_decrease:
+                new_price = max(0.0, current_price - float(parsed.quantity))
+            else:
+                new_price = float(parsed.quantity)
+
+            updated = update_item_price(parsed.item_name, new_price, reason="voice_command")
+            response = (
+                f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}"
+                if language == "hinglish"
+                else f"✓ {item['name']} price update pannathu: ₹{updated['price']}"
+            )
             return PipelineResult(
                 success=True,
                 response=response,

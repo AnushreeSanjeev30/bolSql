@@ -321,7 +321,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
         r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
-        r"\bbadha\b", r"\bbadhao\b", r"\bincrease\b", r"\bdecrease\b",
+        r"\bbadha\b", r"\bbadhao\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
         r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
         # English glue words that should not be part of item name
