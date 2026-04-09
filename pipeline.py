@@ -222,7 +222,13 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
                 db_rows=[],
             )
 
-        lines = [f"  • {r['name']}: {r['quantity']} {r['unit']}" for r in rows]
+        # Be defensive in case older DBs are missing the `unit` column
+        lines = []
+        for r in rows:
+            name = r.get("name", "?")
+            qty = r.get("quantity", 0)
+            unit = r.get("unit") or ""
+            lines.append(f"  • {name}: {qty} {unit}".rstrip())
         response = "📦 Aapka poora stock:\n" + "\n".join(lines)
         return PipelineResult(
             success=True,
@@ -234,9 +240,9 @@ def _handle_query_direct(parsed: ParsedQuery) -> Optional[PipelineResult]:
     # Specific item query
     row = get_item(item)
     if row:
-        qty = row["quantity"]
-        unit = row["unit"]
-        name = row["name"]
+        qty = row.get("quantity", 0)
+        unit = row.get("unit") or ""
+        name = row.get("name", item or "item")
         if qty == 0:
             response = f"⚠️  {name} ka stock khatam ho gaya hai! Restock karo."
         elif qty < 5:

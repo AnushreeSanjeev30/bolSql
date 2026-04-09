@@ -22,7 +22,8 @@ def format_trend_response(trend_type: str, data: Union[dict, list]) -> str:
         "customer_pattern":  _fmt_customer,
         "auto_subscription": _fmt_subscription,
         "weather_trend":     _fmt_weather,
-        "demand_stock_risk": _fmt_demand_stock,
+        "demand_stock_risk": _fmt_demand_stock_risk,
+        
     }
     fn = formatters.get(trend_type, lambda d: str(d))
     return fn(data)
@@ -37,7 +38,24 @@ def _fmt_sales(d: dict) -> str:
     lines.append(f"\n✅ {d['insight']}")
     return "\n".join(lines)
 
+def _fmt_demand_stock_risk(items: list) -> str:
+    if not items:
+        return "Sab stock safe hai 👍"
 
+    lines = ["📦 Demand vs Stock Risk:\n"]
+
+    for item in items[:5]:
+        lines.append(
+            f"  {item['item']} → Demand {item['predicted_demand']}, "
+            f"Stock {item['current_stock']} → {item['risk']}"
+        )
+
+        if item["shortage"] > 0:
+            lines.append(
+                f"    ⚠️ Shortage: {item['shortage']} → Reorder {item['suggested_reorder']}"
+            )
+
+    return "\n".join(lines)
 def _fmt_hourly(d: dict) -> str:
     if not d.get("data"):
         return "🕐 Hourly data nahi mila."
