@@ -5,6 +5,7 @@ import InventoryPanel from './components/InventoryPanel'
 import HistoryPanel from './components/HistoryPanel'
 import TrendsPanel from './components/TrendsPanel'
 import CustomerTrendsPanel from './components/CustomerTrendsPanel'
+import BillUploadPanel from './components/BillUploadPanel'
 import { getHealth } from './api'
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -95,8 +96,7 @@ const LABELS = {
     inventory: 'Inventory',
     history: 'History',
     trends: 'Trends & Reports',
-    customer: 'Customer Trends',
-    
+    customer: 'Customer Trends',    bill: 'Upload Bill',    
     // VoicePanel
     voiceTitle: 'Voice Query',
     voiceSubtitle: 'Speak in Hinglish or type — rice, wheat, oil and all items understood',
@@ -125,6 +125,7 @@ const LABELS = {
     history: 'History - Varalaru',
     trends: 'Trends - Viral Kavai',
     customer: 'Customer Trends',
+    bill: 'Upload Bill - Manilar Alai',
     
     // VoicePanel (Tanglish)
     voiceTitle: 'Voice Query - Tanglish',
@@ -165,6 +166,7 @@ export default function App() {
     history:   <HistoryPanel language={language} />,
     trends:    <TrendsPanel language={language} />,
     customer:  <CustomerTrendsPanel />,
+    bill:      <BillUploadPanel onBillProcessed={triggerRefresh} />,
   }
 
   useEffect(() => {

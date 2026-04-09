@@ -40,3 +40,8 @@ export async function getCustomerTrends() {
   return data
 }
 
+export async function uploadBill(bill) {
+  const { data } = await api.post('/api/upload-bill', bill)
+  return data
+}
+

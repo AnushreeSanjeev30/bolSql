@@ -1,0 +1,26 @@
+{
+  "bill_id": "B1002",
+  "customer_id": "C001",
+  "customer_name": "Rahul Sharma",
+  "timestamp": "2026-04-09T11:00:00",
+  "items": [
+    {
+      "product_id": "P001",
+      "name": "atta",
+      "quantity": 2,
+      "price": 500
+    },
+    {
+      "product_id": "P002",
+      "name": "chawal",
+      "quantity": 1,
+      "price": 600
+    },
+    {
+      "product_id": "P003",
+      "name": "dal",
+      "quantity": 3,
+      "price": 300
+    }
+  ]
+}

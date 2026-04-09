@@ -334,6 +334,112 @@ async def get_customer_trends():
         raise HTTPException(status_code=500, detail=f"Failed to load customer trends: {e}")
 
 
+class BillUploadRequest(BaseModel):
+    """Schema for bill upload."""
+    bill_id: str
+    customer_id: str
+    customer_name: str
+    timestamp: str
+    items: list
+
+
+class BillUploadResponse(BaseModel):
+    """Response after bill processing."""
+    success: bool
+    bill_id: str
+    message: str
+    items_processed: int
+    sales_records_created: int
+    inventory_updated: bool
+    trends_refreshed: bool
+    warnings: Optional[list] = None
+    error: Optional[str] = None
+
+
+@app.post("/api/upload-bill", response_model=BillUploadResponse)
+async def upload_bill(bill: BillUploadRequest):
+    """
+    Process shopkeeper-uploaded JSON bill.
+    
+    Updates inventory and records sales in real-time.
+    Automatically triggers trends recalculation.
+    
+    Input:
+    {
+        "bill_id": "B1002",
+        "customer_id": "C001",
+        "customer_name": "Rahul",
+        "timestamp": "2026-04-09T11:00:00",
+        "items": [
+            {"product_id": "P001", "name": "Atta 50kg", "quantity": 2, "price": 500},
+            {"product_id": "P002", "name": "Sugar 5kg", "quantity": 1, "price": 300}
+        ]
+    }
+    
+    Output:
+    {
+        "success": true,
+        "bill_id": "B1002",
+        "message": "✅ Bill B1002 processed. 2 items recorded. Inventory updated.",
+        "items_processed": 2,
+        "sales_records_created": 2,
+        "inventory_updated": true,
+        "trends_refreshed": true
+    }
+    """
+    try:
+        from app.bill_processor import BillProcessor, refresh_trends_after_bill
+        
+        # Convert request to dict
+        bill_dict = bill.dict()
+        
+        # Process bill
+        processor = BillProcessor()
+        result = processor.process_bill(bill_dict)
+        
+        if not result.success:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "success": False,
+                    "bill_id": result.bill_id,
+                    "message": result.message,
+                    "error": result.error,
+                    "items_processed": result.items_processed,
+                    "sales_records_created": result.sales_records_created,
+                    "inventory_updated": result.inventory_updated,
+                }
+            )
+        
+        # Refresh trends after successful bill processing
+        trends_refreshed = refresh_trends_after_bill(str(DB_PATH))
+        
+        return BillUploadResponse(
+            success=True,
+            bill_id=result.bill_id,
+            message=result.message,
+            items_processed=result.items_processed,
+            sales_records_created=result.sales_records_created,
+            inventory_updated=result.inventory_updated,
+            trends_refreshed=trends_refreshed,
+            warnings=result.warnings if hasattr(result, 'warnings') else None,
+        )
+    
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        log_msg = traceback.format_exc()
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "message": "Internal server error processing bill",
+                "error": str(e),
+            }
+        )
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "VoiceSQL"}

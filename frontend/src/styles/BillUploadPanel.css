@@ -1,0 +1,382 @@
+/* BillUploadPanel.css - Dark Theme */
+
+.bill-upload-panel {
+  background: transparent;
+  border-radius: 12px;
+  padding: 24px;
+  margin: 16px 0;
+}
+
+.bill-upload-panel h2 {
+  color: #ffffff;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.bill-upload-container {
+  background: #1a1a1a;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2d2d2d;
+}
+
+.bill-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-section h3 {
+  color: #4a9eff;
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  border-bottom: 2px solid #4a9eff;
+  padding-bottom: 8px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  color: #b0b0b0;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.form-group input {
+  padding: 10px 12px;
+  border: 1px solid #3d3d3d;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: all 0.2s;
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.form-group input::placeholder {
+  color: #666666;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #4a9eff;
+  background-color: #333333;
+  box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.15);
+}
+
+.form-group input:disabled {
+  background-color: #1f1f1f;
+  cursor: not-allowed;
+  color: #555555;
+}
+
+/* Items List */
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: #252525;
+  padding: 16px;
+  border-radius: 6px;
+  border: 1px solid #3d3d3d;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1.2fr 2fr 0.8fr 0.8fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .item-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.item-row input {
+  padding: 8px 10px;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #2a2a2a;
+  color: #ffffff;
+}
+
+.item-row input::placeholder {
+  color: #666666;
+}
+
+.item-row input:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 2px rgba(74, 158, 255, 0.15);
+}
+
+.btn-remove {
+  padding: 6px 10px;
+  background: #c1392b;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.btn-remove:hover:not(:disabled) {
+  background: #a02f22;
+  transform: scale(1.1);
+}
+
+.btn-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Buttons */
+.btn-add-item {
+  padding: 10px 16px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+  margin-top: 8px;
+  align-self: flex-start;
+}
+
+.btn-add-item:hover:not(:disabled) {
+  background: #229954;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(39, 174, 96, 0.3);
+}
+
+.btn-add-item:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Form Actions */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn-submit,
+.btn-sample {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.btn-submit {
+  background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.btn-submit:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.5);
+}
+
+.btn-sample {
+  background: transparent;
+  color: #4a9eff;
+  border: 2px solid #4a9eff;
+}
+
+.btn-sample:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.1);
+  transform: translateY(-3px);
+}
+
+.btn-submit:disabled,
+.btn-sample:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-export {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  background: rgba(74, 158, 255, 0.1);
+  color: #4a9eff;
+  border: 1px solid #4a9eff;
+  min-width: 120px;
+}
+
+.btn-export:hover:not(:disabled) {
+  background: rgba(74, 158, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+}
+
+.btn-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-import {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  background: rgba(74, 158, 255, 0.1);
+  color: #4a9eff;
+  border: 1px solid #4a9eff;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-import:hover {
+  background: rgba(74, 158, 255, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 158, 255, 0.2);
+}
+
+.btn-import:has(input:disabled) {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Messages */
+.error-message {
+  padding: 12px 16px;
+  background: #3d1f1f;
+  border: 1px solid #5c2c2c;
+  border-radius: 6px;
+  color: #ff6b6b;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+.result-message {
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 12px;
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-message.success {
+  background: #1f3a2a;
+  border-left-color: #27ae60;
+  color: #5eead4;
+}
+
+.result-message.failure {
+  background: #3d1f1f;
+  border-left-color: #c1392b;
+  color: #ff8787;
+}
+
+.result-details {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+
+.result-details p {
+  margin: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-detail {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+  .bill-upload-panel {
+    padding: 16px;
+  }
+
+  .bill-upload-container {
+    padding: 16px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .item-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-submit,
+  .btn-sample {
+    width: 100%;
+  }
+
+  .bill-upload-panel h2 {
+    font-size: 20px;
+  }
+}
