@@ -160,6 +160,119 @@ async def get_inventory():
     return {"items": get_all_items()}
 
 
+@app.get("/trends/all")
+async def get_all_trends():
+    """Get all 13 trend analyses."""
+    try:
+        from app.trends.engine import TrendsEngine
+        from app.trends.formatter import format_trend_response
+        from config import DB_PATH
+        
+        engine = TrendsEngine(DB_PATH)
+        
+        trend_analyses = [
+            ("sales_trend", lambda: engine.sales_trend(days=7)),
+            ("hourly_rush", lambda: engine.hourly_rush()),
+            ("product_demand", lambda: engine.product_demand()),
+            ("seasonal_trend", lambda: engine.seasonal_trend()),
+            ("stock_depletion", lambda: engine.stock_depletion()),
+            ("smart_reorder", lambda: engine.smart_reorder()),
+            ("dead_stock", lambda: engine.dead_stock()),
+            ("profit_trend", lambda: engine.profit_trend()),
+            ("festival_trend", lambda: engine.festival_trend()),
+            ("market_basket", lambda: engine.market_basket()),
+            ("customer_pattern", lambda: engine.customer_pattern()),
+            ("auto_subscription", lambda: engine.auto_subscription()),
+            ("weather_trend", lambda: engine.weather_trend()),
+        ]
+        
+        trends = []
+        for trend_type, fn in trend_analyses:
+            try:
+                raw_data = fn()
+                formatted = format_trend_response(trend_type, raw_data)
+                insight = raw_data.get("insight", "") if isinstance(raw_data, dict) else ""
+                
+                trends.append({
+                    "type": trend_type,
+                    "raw": raw_data,
+                    "formatted": formatted,
+                    "insight": insight,
+                })
+            except Exception as e:
+                trends.append({
+                    "type": trend_type,
+                    "error": str(e),
+                    "formatted": f"❌ Error loading {trend_type}: {str(e)}",
+                })
+        
+        return {"trends": trends}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to load trends: {e}")
+
+
+@app.get("/trends/export-json")
+async def export_trends_json():
+    """Export all trends as JSON."""
+    try:
+        from app.trends.engine import TrendsEngine
+        from config import DB_PATH
+        from datetime import datetime
+        
+        engine = TrendsEngine(DB_PATH)
+        
+        report = {
+            "generated_at": datetime.now().isoformat(),
+            "trends": {
+                "sales_trend": engine.sales_trend(days=7),
+                "hourly_rush": engine.hourly_rush(),
+                "product_demand": engine.product_demand(),
+                "seasonal_trend": engine.seasonal_trend(),
+                "stock_depletion": engine.stock_depletion(),
+                "smart_reorder": engine.smart_reorder(),
+                "dead_stock": engine.dead_stock(),
+                "profit_trend": engine.profit_trend(),
+                "festival_trend": engine.festival_trend(),
+                "market_basket": engine.market_basket(),
+                "customer_pattern": engine.customer_pattern(),
+                "auto_subscription": engine.auto_subscription(),
+                "weather_trend": engine.weather_trend(),
+            }
+        }
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export JSON: {e}")
+
+
+@app.get("/trends/export-pdf")
+async def export_trends_pdf():
+    """Export trends as PDF."""
+    try:
+        from app.trends.monthly_report import generate_monthly_report
+        from config import DB_PATH
+        from datetime import datetime
+        
+        # Generate latest month report
+        today = datetime.now()
+        year, month = today.year, today.month
+        
+        report = generate_monthly_report(DB_PATH, year, month)
+        
+        # Return as file
+        from fastapi.responses import FileResponse
+        import os
+        
+        # Report should be saved to reports/ directory
+        report_path = f"reports/report_{year:04d}_{month:02d}.json"
+        if os.path.exists(report_path):
+            return FileResponse(report_path, media_type='application/json', filename=f'trends-report-{year:04d}-{month:02d}.json')
+        
+        # Fallback: Return as JSON response
+        return report
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to export PDF: {e}")
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "service": "VoiceSQL"}

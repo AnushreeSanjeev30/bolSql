@@ -4,6 +4,7 @@ const NAV = [
   { id: 'voice',     icon: '🎙️', label: 'Voice Query'  },
   { id: 'inventory', icon: '📦', label: 'Inventory'    },
   { id: 'history',   icon: '🕒', label: 'History'      },
+  { id: 'trends',    icon: '📈', label: 'Trends'       },
 ]
 
 const styles = {

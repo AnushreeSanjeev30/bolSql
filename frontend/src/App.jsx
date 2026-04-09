@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar'
 import VoicePanel from './components/VoicePanel'
 import InventoryPanel from './components/InventoryPanel'
 import HistoryPanel from './components/HistoryPanel'
+import TrendsPanel from './components/TrendsPanel'
 import { getHealth } from './api'
 import { jsPDF } from "jspdf";
 import html2canvas from "html2canvas";
@@ -90,6 +91,7 @@ const LABELS = {
   voice: 'Voice Query',
   inventory: 'Inventory',
   history: 'History',
+  trends: 'Trends & Reports',
 }
 
 export default function App() {
@@ -105,6 +107,7 @@ export default function App() {
     voice:     <VoicePanel onRefresh={triggerRefresh} />,
     inventory: <InventoryPanel key={refreshKey} />,
     history:   <HistoryPanel />,
+    trends:    <TrendsPanel />,
   }
 
   useEffect(() => {

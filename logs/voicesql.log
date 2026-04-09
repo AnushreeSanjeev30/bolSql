@@ -323,3 +323,22 @@
 2026-04-08 18:34:55 [INFO] db: Database ready
 2026-04-08 18:35:09 [INFO] pipeline: Processing: 'month ka report dikhao'
 2026-04-08 18:35:09 [INFO] pipeline: Intent=QUERY item=month report qty=None unit=None conf=1.00
+2026-04-09 09:22:46 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 09:22:46 [INFO] db: Database ready
+2026-04-09 09:22:48 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 09:22:48 [INFO] db: Database ready
+2026-04-09 09:22:59 [INFO] pipeline: Processing: '10 packet biscuit becha' (voice=False)
+2026-04-09 09:22:59 [INFO] pipeline: Intent=SELL item=biscuit qty=10.0 unit=packet conf=1.00
+2026-04-09 09:22:59 [INFO] db: Sold biscuit: -10.0 packet → 80.0 remaining
+2026-04-09 09:23:16 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
+2026-04-09 09:23:16 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
+2026-04-09 09:23:16 [INFO] db: Restocked atta: +50.0 kg → 200.0 total
+2026-04-09 09:52:31 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 09:52:31 [INFO] db: Database ready
+2026-04-09 09:52:32 [INFO] db: Initializing database at /Users/bhavana/bolSql/kirana.db
+2026-04-09 09:52:32 [INFO] db: Database ready
+2026-04-09 09:57:18 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 09:57:18 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 09:57:20 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
+2026-04-09 09:57:20 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
+2026-04-09 09:57:20 [INFO] db: Restocked atta: +50.0 kg → 250.0 total

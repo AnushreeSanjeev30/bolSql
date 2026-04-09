@@ -19,3 +19,19 @@ export async function getHealth() {
   const { data } = await api.get('/health')
   return data
 }
+
+export async function getAllTrends() {
+  const { data } = await api.get('/trends/all')
+  return data
+}
+
+export async function exportTrendsJSON() {
+  const { data } = await api.get('/trends/export-json')
+  return data
+}
+
+export async function exportTrendsPDF() {
+  const { data } = await api.get('/trends/export-pdf')
+  return data
+}
+
