@@ -365,6 +365,13 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
     item = parsed.item_name
     raw_lower = parsed.raw_text.lower()
 
+    # If the query is clearly about customers (jin customers, customer list, etc.),
+    # skip direct inventory handling and let the LLM+RAG path or customer analytics
+    # handle it. This avoids returning "poora stock" for customer-based questions
+    # like "jin customers ne ek hi din dal aur chawal dono kharida...".
+    if any(w in raw_lower for w in ["customer", "customers", "grahak", "client"]):
+        return None
+
     # Pending orders (e.g., "aaj ke pending orders dikhao")
     if "pending" in raw_lower and ("order" in raw_lower or "orders" in raw_lower):
         try:

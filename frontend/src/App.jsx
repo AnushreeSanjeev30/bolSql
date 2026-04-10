@@ -165,7 +165,7 @@ export default function App() {
     inventory: <InventoryPanel key={refreshKey} language={language} />,
     history:   <HistoryPanel language={language} />,
     trends:    <TrendsPanel language={language} />,
-    customer:  <CustomerTrendsPanel />,
+    customer:  <CustomerTrendsPanel refreshKey={refreshKey} />,
     bill:      <BillUploadPanel onBillProcessed={triggerRefresh} />,
   }
 

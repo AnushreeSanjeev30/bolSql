@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { getCustomerTrends } from '../api'
 
-export default function CustomerTrendsPanel() {
+export default function CustomerTrendsPanel({ refreshKey }) {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -21,7 +21,7 @@ export default function CustomerTrendsPanel() {
       }
     }
     load()
-  }, [])
+  }, [refreshKey])
 
   const styles = {
     container: {
