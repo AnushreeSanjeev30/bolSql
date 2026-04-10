@@ -26,6 +26,7 @@ from app.db.database import (
     run_safe_query,
     sell_item,
     upsert_item,
+    correct_stock,
 )
 
 from app.trends import TrendsPipeline
@@ -191,6 +192,55 @@ def _handle_sell(parsed: ParsedQuery, language: str = "hinglish") -> PipelineRes
         )
 
 
+def _handle_stock_correction(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
+    """Handle manual stock corrections like 'dal ka stock 30 kg hai/correct karo'."""
+    if not parsed.item_name or parsed.quantity is None:
+        response_map = {
+            "hinglish": "Kaunsa item aur kitna stock? E.g., 'dal ka stock 30 kg hai correcct karo'",
+            "tamil": "Yaar item, evlo stock? Example: 'dal stock 30 kg correct pannunga'",
+        }
+        return PipelineResult(
+            success=False,
+            response=response_map.get(language, response_map["hinglish"]),
+            error="missing item or quantity",
+        )
+
+    # Prefer the parsed unit, else fall back to existing item's unit, else 'piece'.
+    unit = parsed.unit
+    try:
+        existing = get_item(parsed.item_name)
+    except Exception:
+        existing = None
+    if not unit and existing:
+        unit = existing.get("unit")
+    if not unit:
+        unit = "piece"
+
+    try:
+        row = correct_stock(parsed.item_name, float(parsed.quantity), unit)
+        if language == "tamil":
+            response = f"✓ {row['name']} stock correct pannathu: {row['quantity']} {row['unit']}"
+        else:
+            response = f"✓ {row['name']} ka stock correct ho gaya: {row['quantity']} {row['unit']}"
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="CORRECTION",
+            db_rows=[row],
+        )
+    except Exception as e:
+        log.error("Stock correction failed: %s", e)
+        response_map = {
+            "hinglish": f"Stock correction mein problem aayi: {e}",
+            "tamil": f"Stock correct panna problem: {e}",
+        }
+        return PipelineResult(
+            success=False,
+            response=response_map.get(language, response_map["hinglish"]),
+            error=str(e),
+        )
+
+
 def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Optional[PipelineResult]:
     """Handle simple QUERY directly from DB (no LLM needed).
 
@@ -266,9 +316,10 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
     # Specific item query
     row = get_item(item)
     if row:
-        qty = row["quantity"]
-        unit = row["unit"]
-        name = row["name"]
+        qty = row.get("quantity", 0)
+        # Older databases might not have a 'unit' column; default gracefully
+        unit = row.get("unit", "piece")
+        name = row.get("name", item)
         if qty == 0:
             response = f"⚠️  {name} ka stock khatam ho gaya hai! Restock karo." if language == "hinglish" else f"⚠️  {name} stock over. Restock panna."
         elif qty < 5:
@@ -469,7 +520,9 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
             raw_l = parsed.raw_text.lower()
             current_price = float(item.get("price") or 0.0)
 
-            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "increase"])
+            # Handle common Hinglish / Devanagari-transliterated variants.
+            # Devanagari "बढ़ाओ" often becomes "bdhao" after transliteration.
+            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "bdhao", "badho", "increase"])
             is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata"])
 
             if is_increase:
@@ -730,6 +783,9 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
             )
 
     # Step 2: route by intent + confidence (general inventory/cart operations)
+    if parsed.intent == "CORRECTION" and parsed.item_name and parsed.quantity is not None:
+        return _handle_stock_correction(parsed, language=language)
+
     if parsed.intent == "ADD" and parsed.item_name and parsed.confidence >= 0.4:
         return _handle_add(parsed, language=language)
 

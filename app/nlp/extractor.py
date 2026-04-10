@@ -75,10 +75,15 @@ QUERY_KEYWORDS = [
 
 # Price and correction keywords
 PRICE_KEYWORDS = [
-    r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\bkya\s+rate\b",
-    r"\bbadha\b", r"\bbadhao\b", r"\bkam\b.*karo",
+    # Core price words + common ASR / transliteration variants
+    r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\bkya\s+rate\b",
+    # Increase / decrease verbs (Hindi + English + transliteration glitches)
+    r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bkam\b.*karo",
     r"\bupdate\b.*price\b", r"\bchange\b.*price\b", r"\bundo\b", r"\brollback\b",
     r"\bincrease\b", r"\bdecrease\b", r"\bset\b.*price\b",
+    # Talking about things being expensive / cheap is also price intent
+    r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
+    # Question-style price queries
     r"\bprice.*kya\b", r"\bprice.*kitna\b", r"\brate.*kya\b", r"\brate.*kitna\b",
     r"\bkitna.*rate\b", r"\bkitna.*price\b", r"\bkitna.*daam\b",
     r"\bprice.*hai\b", r"\brate.*hai\b", r"\bdaam.*hai\b",
@@ -87,6 +92,8 @@ PRICE_KEYWORDS = [
 CORRECTION_KEYWORDS = [
     r"\bcorrect\b", r"\bfix\b", r"\bupdate\b", r"\bhai\b.*correct\b",
     r"\bstock\s+count\b", r"\bmanual\b.*count",
+    # Hinglish/ASR variants of "correct" (e.g., "karek", "krekt", "karrekt")
+    r"\bkarek?t\b", r"\bkrekt\b", r"\bkar+ekt\b",
 ]
 
 ORDER_KEYWORDS = [
@@ -121,6 +128,8 @@ UNIT_MAP = {
     # Kilograms
     "kg": "kg", "kilo": "kg", "kilogram": "kg", "kilograms": "kg",
     "kgs": "kg", "किलो": "kg", "किलोग्राम": "kg",
+    # Common Devanagari transliteration of "kg" (केजी → kejee)
+    "kejee": "kg",
     # Litres
     "litre": "litre", "liter": "litre", "litres": "litre", "liters": "litre",
     "l": "litre", "lt": "litre", "ltr": "litre", "लीटर": "litre",
@@ -315,15 +324,22 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bstock\b", r"\bmein\b", r"\bme\b", r"\bka\b", r"\bki\b",
         r"\bke\b", r"\bkya\b", r"\blist\b", r"\bsab\b",
         r"\bsabhi\b", r"\bavailable\b", r"\bbaaki\b", r"\bdikha\b",
-        r"\bdikhao\b", r"\baaj\b", r"\bkal\b", r"\bpachas\b",
+        r"\bdikhao\b", r"\bshow\b", r"\baaj\b", r"\bkal\b", r"\bpachas\b",
         r"\bpahuncha\b", r"\baaya\b", r"\bnikala\b", r"\bnikali\b",
         r"\bbika\b", r"\bbiki\b", r"\bgayi\b", r"\bgaye\b",
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
-        r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
-        r"\bbadha\b", r"\bbadhao\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b",
+        r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
+        r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
         r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
+        # Category / percentage price-change helpers
+        r"\bcategory\b", r"\btype\b", r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
+        r"%",
+        # Quantifiers like "saari"/"sara" (all) should not be part of item/category names
+        r"\bsaari\b", r"\bsari\b", r"\bsaare\b", r"\bsaarey\b", r"\bsaara\b", r"\bsara\b", r"\bpura\b", r"\bpoora\b",
+        # High-level words that describe transactions, not items
+        r"\bsale\b", r"\border\b", r"\borders\b", r"\bordar\b", r"\bpending\b",
         # English glue words that should not be part of item name
         r"\bthe\b", r"\bof\b", r"\bto\b", r"\bfor\b", r"\bon\b",
         r"\bcan\b", r"\byou\b", r"\baap\b", r"\bplease\b", r"\bplz\b",
@@ -368,6 +384,16 @@ def parse(text: str) -> ParsedQuery:
     if not text:
         return ParsedQuery(intent="UNKNOWN", raw_text=text)
 
+    # If the text contains Devanagari characters (Hindi script),
+    # transliterate it first so the same Hinglish rules apply to
+    # both voice and typed Hindi input.
+    if any("\u0900" <= ch <= "\u097F" for ch in text):
+        try:
+            text = _transliterate_devanagari(text)
+        except Exception:
+            # Fail-soft: if transliteration breaks, continue with raw text
+            pass
+
     log.debug("NLP parsing: '%s'", text)
 
     # Score intents
@@ -392,11 +418,38 @@ def parse(text: str) -> ParsedQuery:
         "EXPIRY": expiry_score,
         "CATEGORY": category_score,
     }
-    
-    # If PRICE keywords found, strongly prefer PRICE over ADD
+
+    # If PRICE keywords found, strongly prefer PRICE over basic stock intents
     if price_score > 0:
         scores["ADD"] = max(0, scores["ADD"] - price_score)
         scores["SELL"] = max(0, scores["SELL"] - price_score)
+
+    text_l = text.lower()
+
+    # If CATEGORY keywords are present, downweight ADD/SELL and
+    # strongly favour CATEGORY when combined with percentage /
+    # "mahenga" style words (category price updates).
+    if category_score > 0:
+        scores["ADD"] = max(0, scores["ADD"] - category_score)
+        scores["SELL"] = max(0, scores["SELL"] - category_score)
+        if any(kw in text_l for kw in ["%", "percent", "percentage", "mehenga", "mehengi", "mahenga", "mahengi"]):
+            # Give CATEGORY a bigger boost so it wins ties against PRICE
+            scores["CATEGORY"] += 2
+
+    # Queries with "dikhao/dikha/show" are almost always lookup,
+    # not stock movement. Boost QUERY so it wins ties against SELL.
+    if any(w in text_l for w in ["dikhao", "dikha", "show"]):
+        scores["QUERY"] += 2
+
+    # Sentences like "dal ka stock 30 kg hai" or
+    # "दाल का स्टॉक 30 केजी है" are usually stock CORRECTION,
+    # not additive restock. When we see 'stock' + a number and
+    # 'hai', prefer CORRECTION over ADD/SELL.
+    if ("stock" in text_l or "stok" in text_l) and "hai" in text_l:
+        if re.search(r"\b\d+(?:\.\d+)?\b", text_l):
+            scores["CORRECTION"] += 3
+            scores["ADD"] = max(0, scores["ADD"] - 2)
+            scores["SELL"] = max(0, scores["SELL"] - 1)
     
     intent = max(scores, key=scores.get)
     max_score = scores[intent]

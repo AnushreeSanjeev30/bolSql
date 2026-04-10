@@ -12,9 +12,13 @@ load_dotenv()
 # === Paths ===
 BASE_DIR = Path(__file__).parent
 
-# Single unified DB file for both core pipeline and trends
+# Core application DB (inventory, transactions, etc.)
 DB_PATH = BASE_DIR / os.getenv("DB_PATH", "kirana_trends.db")
-TRENDS_DB_PATH = DB_PATH
+
+# Separate trends / customer-analytics DB. By default this is the
+# legacy kirana.db file, as requested, but can be overridden via
+# TRENDS_DB_PATH in .env when needed.
+TRENDS_DB_PATH = BASE_DIR / os.getenv("TRENDS_DB_PATH", "kirana.db")
 
 LOG_FILE = BASE_DIR / os.getenv("LOG_FILE", "logs/voicesql.log")
 RAG_INDEX_PATH = BASE_DIR / "app" / "rag" / "faiss_index"

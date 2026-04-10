@@ -227,7 +227,46 @@ def sell_item(name: str, quantity: float) -> dict:
     conn.commit()
     row = conn.execute("SELECT * FROM inventory WHERE id=?", (existing["id"],)).fetchone()
     conn.close()
-    log.info("Sold %s: -%.1f %s → %.1f remaining", norm, quantity, existing["unit"], new_qty)
+    return dict(row)
+
+
+def correct_stock(name: str, quantity: float, unit: Optional[str] = None) -> dict:
+    """Set absolute stock level for an item (manual correction).
+
+    - If the item exists, overwrite its quantity (and optionally unit).
+    - If it doesn't exist, create it with the given quantity and unit.
+    This does NOT insert a sale/restock transaction to avoid skewing
+    demand analytics; it is meant for counting/correction only.
+    """
+    norm = normalize_name(name)
+    conn = get_conn()
+    existing = conn.execute(
+        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
+    ).fetchone()
+
+    chosen_unit = unit
+    if existing and not chosen_unit:
+        # Preserve existing unit if caller didn't specify one
+        chosen_unit = existing.get("unit") if isinstance(existing, dict) else existing["unit"]
+    if not chosen_unit:
+        chosen_unit = "piece"
+
+    if existing:
+        conn.execute(
+            "UPDATE inventory SET quantity=?, unit=? WHERE id=?",
+            (quantity, chosen_unit, existing["id"]),
+        )
+        item_id = existing["id"]
+    else:
+        cur = conn.execute(
+            "INSERT INTO inventory (name, quantity, unit, price) VALUES (?,?,?,?)",
+            (norm, quantity, chosen_unit, 0.0),
+        )
+        item_id = cur.lastrowid
+
+    conn.commit()
+    row = conn.execute("SELECT * FROM inventory WHERE id=?", (item_id,)).fetchone()
+    conn.close()
     return dict(row)
 
 

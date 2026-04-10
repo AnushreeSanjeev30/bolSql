@@ -21,7 +21,7 @@ except ImportError:
 from app.db.database import init_db, get_all_items
 from pipeline import process
 from app.trends.classifier import detect_language
-from config import DB_PATH
+from config import TRENDS_DB_PATH
 
 from app.trends.customer_engine import (
     compute_rfm,
@@ -303,7 +303,7 @@ async def get_customer_trends():
     try:
         from datetime import datetime
 
-        db_path = DB_PATH
+        db_path = str(TRENDS_DB_PATH)
 
         rfm = compute_rfm(db_path)
         ltv = compute_ltv(db_path)
