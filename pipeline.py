@@ -27,6 +27,7 @@ from app.db.database import (
     sell_item,
     upsert_item,
     correct_stock,
+    get_orders_by_status,
 )
 
 from app.trends import TrendsPipeline
@@ -121,6 +122,92 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
             error="item_name missing",
         )
 
+    # First, try to detect multiple "qty + unit + item" patterns in a single
+    # sentence, e.g. "5 packets biscuit aur 10 pieces chocolate add karo".
+    # If we find more than one, treat this as a multi-item ADD.
+    raw_l = parsed.raw_text.lower()
+    multi_pattern = re.compile(
+        r"(\d+(?:\.\d+)?)\s+"  # quantity
+        r"(kg|kgs|kilo|kilogram|kilograms|litre|liter|litres|liters|l|lt|ltr|"
+        r"packet|packets|pack|pkt|piece|pieces|pc|pcs|dozen|doz)\s+"  # unit
+        r"([a-zA-Z ]+?)(?=\s+aur\b|\s+and\b|\s+add\b|\s+karo\b|$)",
+    )
+    matches = list(multi_pattern.finditer(raw_l))
+
+    def _normalize_unit(u: str) -> str:
+        u = u.lower()
+        if u in {"kg", "kgs", "kilo", "kilogram", "kilograms"}:
+            return "kg"
+        if u in {"litre", "liter", "litres", "liters", "l", "lt", "ltr"}:
+            return "litre"
+        if u in {"packet", "packets", "pack", "pkt"}:
+            return "packet"
+        if u in {"piece", "pieces", "pc", "pcs"}:
+            return "piece"
+        if u in {"dozen", "doz"}:
+            return "dozen"
+        return u
+
+    if len(matches) > 1:
+        rows = []
+        lines = []
+        for m in matches:
+            qty_str, unit_raw, name_raw = m.groups()
+            qty = float(qty_str)
+            unit = _normalize_unit(unit_raw)
+            item_name = name_raw.strip()
+            # Clean trailing filler words that may stick to the item segment
+            for suffix in ["add", "karo", "kr", "kar", "please", "na"]:
+                if item_name.endswith(" " + suffix):
+                    item_name = item_name[: -len(suffix) - 1].strip()
+
+            try:
+                row = upsert_item(item_name, qty, unit)
+                rows.append(row)
+                if language == "tamil":
+                    lines.append(
+                        f"✓ {qty} {unit} {item_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
+                    )
+                else:
+                    lines.append(
+                        f"✓ {qty} {unit} {item_name} add ho gaya. Ab total {row['quantity']} {row['unit']} hai."
+                    )
+            except Exception as e:
+                log.error("Multi-ADD failed for %s: %s", item_name, e)
+
+        response = "\n".join(lines) if lines else (
+            "Kuch bhi add nahi ho paya." if language == "hinglish" else "Yedhume add panna mudiyala."
+        )
+
+        # Optionally still add weather-based suggestions using the last item
+        if rows:
+            try:
+                weather_data = get_weather()
+                if weather_data:
+                    suggestions = get_weather_suggestions(
+                        weather_data.get("condition", "clear"),
+                        rows[-1]["name"],
+                        language,
+                    )
+                    if suggestions:
+                        response += "\n\n" + suggestions["message"]
+                        if suggestions.get("products"):
+                            products_str = ", ".join(suggestions["products"][:3])
+                            if language == "tamil":
+                                response += f"\n💡 {products_str} la stoch pannunga!"
+                            else:
+                                response += f"\n💡 {products_str} ka bhi stock dekh lena!"
+            except Exception as e:  # pragma: no cover - defensive
+                log.warning("Weather suggestion addition failed (multi-add): %s", e)
+
+        return PipelineResult(
+            success=bool(rows),
+            response=response,
+            intent="ADD",
+            db_rows=rows,
+        )
+
+    # Fallback: single-item ADD using parsed entities
     qty = parsed.quantity or 1.0
     unit = parsed.unit or "piece"
 
@@ -277,6 +364,54 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
     """
     item = parsed.item_name
     raw_lower = parsed.raw_text.lower()
+
+    # Pending orders (e.g., "aaj ke pending orders dikhao")
+    if "pending" in raw_lower and ("order" in raw_lower or "orders" in raw_lower):
+        try:
+            orders = get_orders_by_status(status="pending")
+        except Exception as e:
+            log.error("Pending orders query failed: %s", e)
+            response_map = {
+                "hinglish": "Pending orders dekhne mein problem aayi.",
+                "tamil": "Pending orders paarthathula problem irukku.",
+            }
+            return PipelineResult(
+                success=False,
+                response=response_map.get(language, response_map["hinglish"]),
+                error=str(e),
+            )
+
+        if not orders:
+            response_map = {
+                "hinglish": "Aaj koi pending order nahi hai.",
+                "tamil": "Innikki pending order illa.",
+            }
+            return PipelineResult(
+                success=True,
+                response=response_map.get(language, response_map["hinglish"]),
+                intent="QUERY",
+                db_rows=[],
+            )
+
+        lines = []
+        for o in orders:
+            item_name = o.get("item_name", "?")
+            qty = o.get("quantity", 0)
+            order_id = o.get("order_id", "?")
+            delivery = o.get("delivery_date") or "-"
+            lines.append(f"  • {order_id}: {item_name} {qty} (delivery: {delivery})")
+
+        response_map = {
+            "hinglish": "📦 Pending orders:\n",
+            "tamil": "📦 Pending orders:\n",
+        }
+        response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="QUERY",
+            db_rows=orders,
+        )
     if any(word in raw_lower for word in ["kam", "low", "khatam", "shortage"]):
         rows = get_all_items()
         # Filter for items where quantity is low (e.g., < 5)
@@ -370,24 +505,27 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
 
 def _handle_price_rollback(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Rollback price to previous value from price_history."""
-    if not parsed.item_name:
-        response_map = {
-            "hinglish": "Kaunsa item? Item naam bataao.",
-            "tamil": "Yaar item? Item name solgal."
-        }
-        return PipelineResult(
-            success=False,
-            response=response_map.get(language, response_map["hinglish"]),
-            error="missing item name",
-        )
-    
     try:
-        from app.db.database import rollback_item_price
-        item = rollback_item_price(parsed.item_name)
-        if language == "tamil":
-            response = f"✓ {parsed.item_name.title()} price rollback pannathu: ₹{item['price']}"
+        from app.db.database import rollback_item_price, rollback_last_price_change
+
+        # If the NLP couldn't cleanly extract an item name (or picked up
+        # stray tokens like 'aj/aaj'), treat it as a global "last change"
+        # rollback instead of forcing the user to repeat the item.
+        item_name = (parsed.item_name or "").strip() if parsed.item_name else ""
+        if item_name.lower() in {"aj", "aaj", "aaj ki", "aj ki", "price", "change"}:
+            item_name = ""
+
+        if item_name:
+            item = rollback_item_price(item_name)
+            label = item_name.title()
         else:
-            response = f"✓ {parsed.item_name.title()} ka price rollback ho gaya: ₹{item['price']}"
+            item = rollback_last_price_change()
+            label = item.get("name", "item")
+
+        if language == "tamil":
+            response = f"✓ {label} price rollback pannathu: ₹{item['price']}"
+        else:
+            response = f"✓ {label} ka price rollback ho gaya: ₹{item['price']}"
         return PipelineResult(
             success=True,
             response=response,
@@ -479,7 +617,65 @@ def _handle_category_update(parsed: ParsedQuery, language: str = "hinglish") -> 
     
     try:
         # Extract category from item_name (fuzzy match against categories)
-        category = parsed.item_name
+        # For some common phrases, map product words to their logical
+        # category so that queries like "saari milk category 10% mehengi karo"
+        # correctly target the "dairy" category instead of looking for an
+        # item called "doodh".
+        raw_l = parsed.raw_text.lower()
+        category = (parsed.item_name or "").lower()
+
+        category_aliases = {
+            "milk": "dairy",
+            "doodh": "dairy",
+            "dairy": "dairy",
+            "oil": "oils",
+            "tel": "oils",
+            "oils": "oils",
+            "sugar": "sweeteners",
+            "chini": "sweeteners",
+            "namak": "seasonings",
+            "salt": "seasonings",
+            "biscuit": "snacks",
+            "biscuits": "snacks",
+            "snacks": "snacks",
+            "mirchi": "spices",
+            "haldi": "spices",
+            "spice": "spices",
+            "spices": "spices",
+            "sabzi": "vegetables",
+            "vegetable": "vegetables",
+            "vegetables": "vegetables",
+            "fruit": "fruits",
+            "fruits": "fruits",
+            "apple": "fruits",
+            "mango": "fruits",
+        }
+
+        # Try to map either the extracted item_name or any keyword
+        # in the raw text to a known category label.
+        for key, cat in category_aliases.items():
+            if key in category or key in raw_l:
+                category = cat
+                break
+
+        # If user said things like "dairy items" or "milk products",
+        # strip generic suffixes so LIKE matches the stored category.
+        for suffix in [" items", " item", " products", " product"]:
+            if category.endswith(suffix):
+                category = category.replace(suffix, "").strip()
+
+        if not category:
+            response = (
+                "Category samajh nahi aayi. E.g., 'spices', 'dairy', 'snacks'."
+                if language == "hinglish"
+                else "Category puriyala. E.g., 'spices', 'dairy', 'snacks' solunga."
+            )
+            return PipelineResult(
+                success=False,
+                response=response,
+                error="unknown category",
+            )
+
         percentage = parsed.quantity  # Used as percentage multiplier
         
         # Execute update
@@ -630,17 +826,21 @@ def _handle_quantity_update(parsed: ParsedQuery, language: str = "hinglish") -> 
     try:
         item = get_item(parsed.item_name)
         if not item:
-            response = f"❌ '{parsed.item_name}' nahi mila inventory mein" if language == "hinglish" else f"❌ '{parsed.item_name}' inventory le kanukkala"
+            response = (
+                f"❌ '{parsed.item_name}' nahi mila inventory mein"
+                if language == "hinglish"
+                else f"❌ '{parsed.item_name}' inventory le kanukkala"
+            )
             return PipelineResult(
                 success=False,
                 response=response,
                 error="item not found",
             )
-        
+
         # If quantity provided with QUANTITY intent, it's a quantity UPDATE.
         if parsed.quantity is not None:
             from app.db.database import execute_safe_sql
-            
+
             raw_l = parsed.raw_text.lower()
             current_qty = float(item.get("quantity") or 0.0)
             item_unit = item.get("unit", "piece")

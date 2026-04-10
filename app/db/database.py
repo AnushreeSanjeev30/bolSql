@@ -374,6 +374,66 @@ def rollback_item_price(name: str) -> dict:
     return dict(updated)
 
 
+def rollback_last_price_change() -> dict:
+    """Rollback the most recent price change across all items.
+
+    Looks at price_history ordered by changed_at and reverts the latest
+    change by setting the item's price back to that row's old_price.
+    """
+    conn = get_conn()
+
+    # Get the most recent price change event
+    last_change = conn.execute(
+        "SELECT * FROM price_history ORDER BY changed_at DESC LIMIT 1"
+    ).fetchone()
+
+    if not last_change:
+        conn.close()
+        raise ValueError("Pehle se koi price change nahi hua hai, toh undo kuch nahi hai")
+
+    item_id = last_change["item_id"]
+
+    item = conn.execute(
+        "SELECT * FROM inventory WHERE id=?",
+        (item_id,),
+    ).fetchone()
+
+    if not item:
+        conn.close()
+        raise ValueError("Last price change ka item inventory mein nahi mila")
+
+    old_price = float(item["price"] or 0.0)
+    new_price = float(last_change["old_price"] or 0.0)
+    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    # Apply rollback to inventory
+    conn.execute(
+        "UPDATE inventory SET price=? WHERE id=?",
+        (new_price, item_id),
+    )
+
+    # Log the rollback event as another price_history entry
+    conn.execute(
+        "INSERT INTO price_history (item_id, item_name, old_price, new_price, changed_by, changed_at) VALUES (?,?,?,?,?,?)",
+        (item_id, item["name"], old_price, new_price, "rollback", ts),
+    )
+
+    conn.commit()
+    updated = conn.execute(
+        "SELECT * FROM inventory WHERE id=?",
+        (item_id,),
+    ).fetchone()
+    conn.close()
+
+    log.info(
+        "Global price rollback for %s: %.1f → %.1f",
+        item["name"],
+        old_price,
+        new_price,
+    )
+    return dict(updated)
+
+
 def add_order(customer_id: str, item_id: int, quantity: float, price: float, delivery_date: str = None) -> dict:
     """Add new order to orders table."""
     conn = get_conn()

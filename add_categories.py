@@ -67,4 +67,4 @@ for row in rows:
     print(f"  {row['name']:12} | {row['quantity']:5.1f} {row['unit']:6} | ₹{row['price']:6.1f} | {row['category']:12} | {row['expiry_date'] or 'N/A'}")
 
 conn.close()
-print("\n✅ Categories and expiry dates added!")
+print("\nCategories and expiry dates added!")

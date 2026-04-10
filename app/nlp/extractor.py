@@ -107,7 +107,9 @@ ORDER_KEYWORDS = [
 
 ROLLBACK_KEYWORDS = [
     r"\brollback\b", r"\bunundo\b", r"\brevert\b",
-    r"\bundo\b", r"\bprevious\b.*price\b", r"\bphle\b.*rate\b",
+    # Explicit undo words should strongly indicate rollback intent
+    r"\bundo\b", r"\bundo karo\b", r"\bundo kar do\b",
+    r"\bprevious\b.*price\b", r"\bphle\b.*rate\b",
     r"\bback\b.*price\b", r"\bpichle\b", r"\bpehle\b",
 ]
 
@@ -188,9 +190,9 @@ ITEM_ALIASES = {
     # Salt
     "salt": "namak", "namak": "namak",
     "nummak": "namak",
-    # Milk
-    "milk": "doodh", "dud": "doodh",
-    "dhudh": "doodh", "doodh": "doodh",
+    # Milk (canonical: "milk" to align with cleaned inventory names)
+    "milk": "milk", "dud": "milk",
+    "dhudh": "milk", "doodh": "milk",
     # Tea
     "tea": "chai", "chai patti": "chai", "tea leaves": "chai",
     "chai": "chai", "chay": "chai",
@@ -331,6 +333,25 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     """
     text_l = text.lower()
 
+    # Special handling: commands like
+    #   "5 packets biscuit aur 10 pieces chocolate add karo"
+    # currently end up creating a fake item "biscuit aur chocolate".
+    # For now, we intentionally support only the *first* item in a
+    # single command and ignore any extra "aur <qty> <item>" tail.
+    #
+    # We therefore truncate the text at the first "aur" that is
+    # followed by another quantity (a digit). This keeps:
+    #   "5 packets biscuit"  from the above example, so the item
+    # extracted is just "biscuit".
+    #
+    # We do *not* truncate for phrases like "thoda aur atta add karo"
+    # because there is no quantity after "aur" there.
+    aur_match = re.search(r"\baur\b", text_l)
+    if aur_match:
+        tail = text_l[aur_match.end():]
+        if re.search(r"\d", tail):
+            text_l = text_l[:aur_match.start()]
+
     # Remove numbers + units
     unit_pattern = "|".join(re.escape(u) for u in sorted(UNIT_MAP.keys(), key=len, reverse=True))
     cleaned = re.sub(rf"\d+(?:\.\d+)?\s*(?:{unit_pattern})?\b", "", text_l)
@@ -339,7 +360,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     fillers = [
         r"\badd\b", r"\baid\b", r"\bkaro\b", r"\bkro\b", r"\bdaal\b", r"\bdo\b",  # Note: dalo/dalon are item names, not removed here
         r"\bbecho\b", r"\bbecha\b", r"\bdiya\b", r"\bgaya\b",
-        r"\bkitna\b", r"\bkitni\b", r"\bbacha\b", r"\bhai\b",
+        r"\bkitna\b", r"\bkitni\b", r"\bkitne\b", r"\bbacha\b", r"\bhai\b",
         r"\bcheck\b", r"\bdekhna\b", r"\bbatao\b", r"\benter\b",
         r"\bstock\b", r"\bmein\b", r"\bme\b", r"\bka\b", r"\bki\b", r"\bkee\b",  # Hindi possessives: ki/ kee
         r"\bke\b", r"\bkya\b", r"\blist\b", r"\bsab\b",
@@ -358,6 +379,8 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
         r"\bquantity\b", r"\bqty\b", r"\bqts\b",  # Quantity keywords should be removed from item name
         r"\bmatra\b", r"\bparimaan\b", r"\bporshan\b",  # Hindi: quantity words
+        # Generic unit words should not be part of item names
+        r"\bunit\b", r"\bunits\b",
         # Category / percentage price-change helpers
         r"\bcategory\b", r"\btype\b", r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
         r"%",
@@ -379,6 +402,15 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     # Remove leading/trailing punctuation
     cleaned = cleaned.strip(".,?!।-")
 
+    # Post-fix for stock-correction style phrases like
+    #   "dal ka stock 40kg hai, correct karo"
+    # After filler-stripping this can leave
+    #   "dal , correct"
+    # which then flows through as the item name.
+    # Trim any trailing ", correct" / " correct" chunk so we
+    # get a clean canonical item ("dal").
+    cleaned = re.sub(r",?\s*correct\b.*$", "", cleaned).strip()
+
     if not cleaned:
         return None
 
@@ -393,7 +425,16 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
                 db_item_names = [row['name'].lower() for row in db_items]
                 fuzzy_match = _fuzzy_match_item(item, db_item_names, threshold=0.65)
                 if fuzzy_match:
-                    log.debug("Fuzzy matched item: '%s' → '%s' (from DB)", item, fuzzy_match)
+                    # Defensive cleanup: if the DB name itself still
+                    # carries artefacts from an old stock-correction
+                    # bug (e.g. "dal , correct"), trim that suffix so
+                    # NLP returns a clean canonical item name.
+                    cleaned_fuzzy = re.sub(r",?\s*correct\b.*$", "", fuzzy_match.lower()).strip()
+                    if cleaned_fuzzy:
+                        normalized = _normalize_item(cleaned_fuzzy)
+                        log.debug("Fuzzy matched item: '%s' → '%s' (cleaned from '%s')", item, normalized, fuzzy_match)
+                        return normalized
+                    log.debug("Fuzzy matched item (raw DB name): '%s' → '%s'", item, fuzzy_match)
                     return fuzzy_match
         except Exception as e:
             log.debug("Fuzzy matching against DB failed: %s", e)
@@ -450,6 +491,13 @@ def parse(text: str) -> ParsedQuery:
     if price_score > 0:
         scores["ADD"] = max(0, scores["ADD"] - price_score)
         scores["SELL"] = max(0, scores["SELL"] - price_score)
+
+        # If rollback/undo words are present, this is almost certainly a
+        # ROLLBACK intent rather than a fresh PRICE update. Boost ROLLBACK
+        # so it can win against the generic PRICE patterns.
+        if rollback_score > 0:
+            scores["ROLLBACK"] += rollback_score * 2
+            scores["PRICE"] = max(0, scores["PRICE"] - rollback_score)
     
     # If QUANTITY keywords found, strongly prefer QUANTITY over ADD/SELL
     if quantity_score > 0:
@@ -468,7 +516,7 @@ def parse(text: str) -> ParsedQuery:
             scores["ADD"] = max(0, scores["ADD"] - 2)
     
     # If CATEGORY keywords are present, downweight ADD/SELL and
-    # strongly favour CATEGORY when combined with percentage /
+    # favour CATEGORY when combined with percentage /
     # "mahenga" style words (category price updates).
     if category_score > 0:
         scores["ADD"] = max(0, scores["ADD"] - category_score)
@@ -481,9 +529,20 @@ def parse(text: str) -> ParsedQuery:
             # Give CATEGORY a bigger boost so it wins ties against PRICE
             scores["CATEGORY"] += 2
         elif has_percentage and has_price_keyword:
-            # If both PRICE and CATEGORY present with percentage, PRICE wins for item-level updates
-            # Only boost CATEGORY if it's explicitly a "category" or "type" in the text
-            if not any(kw in text_l for kw in ["category", "type", "masala", "spices", "grains", "pulses"]):
+            # If both PRICE and CATEGORY present with percentage, default is item-level PRICE.
+            # However, when the user explicitly talks about a "category" update (e.g.
+            #   "saari milk category 10% mehengi karo") we still want CATEGORY intent
+            # to win, otherwise the system tries to treat it as a single item price
+            # change and fails with "'<item>' nahi mila inventory mein".
+            explicit_category_words = [
+                "category", "type", "masala", "spices", "grains", "pulses",
+                "vegetable", "vegetables", "fruit", "fruits", "dairy",
+            ]
+            if any(kw in text_l for kw in explicit_category_words):
+                # Small boost so CATEGORY can beat PRICE when both apply
+                scores["CATEGORY"] += 3
+            else:
+                # No explicit category word – slightly down-weight CATEGORY so PRICE wins
                 scores["CATEGORY"] = max(0, scores["CATEGORY"] - 1)
 
     # Queries with "dikhao/dikha/show" are almost always lookup,

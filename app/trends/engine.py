@@ -186,12 +186,27 @@ class TrendsEngine:
 
         # Get current stock
         if item_name:
-            cur.execute("SELECT name, quantity FROM inventory WHERE LOWER(name) LIKE LOWER(?)",
-                        (f"%{item_name}%",))
+            cur.execute(
+                "SELECT name, quantity FROM inventory WHERE LOWER(name) LIKE LOWER(?)",
+                (f"%{item_name}%",),
+            )
         else:
             cur.execute("SELECT name, quantity FROM inventory")
         stock_rows = cur.fetchall()
         conn.close()
+
+        # If the specific pattern (e.g. "product", "items") didn't
+        # match anything in inventory, fall back to checking the full
+        # inventory so that generic questions like
+        #   "kaunsa product khatam hone wala hai?"
+        # still show the items closest to stockout instead of
+        # "All items stock fine".
+        if not stock_rows:
+            conn = self._conn()
+            cur = conn.cursor()
+            cur.execute("SELECT name, quantity FROM inventory")
+            stock_rows = cur.fetchall()
+            conn.close()
 
         results = []
         for name, qty in stock_rows:
