@@ -83,6 +83,10 @@ PRICE_KEYWORDS = [
     r"\bincrease\b", r"\bdecrease\b", r"\bset\b.*price\b",
     # Talking about things being expensive / cheap is also price intent
     r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
+    # Hindi keywords for price changes (transliterated from Devanagari)
+    r"\bvriddhi\b", r"\bvridhi\b",  # वृद्धि = growth/increase
+    r"\bkamzori\b", r"\bkomzori\b",  # कमजोरी could mean decrease (weakening)
+    r"\bkeet\b", r"\bkeemt\b",  # कीमत = price
     # Question-style price queries
     r"\bprice.*kya\b", r"\bprice.*kitna\b", r"\brate.*kya\b", r"\brate.*kitna\b",
     r"\bkitna.*rate\b", r"\bkitna.*price\b", r"\bkitna.*daam\b",
@@ -119,6 +123,16 @@ EXPIRY_KEYWORDS = [
 CATEGORY_KEYWORDS = [
     r"\bcategory\b", r"\btype\b", r"\bmasala\b", r"\bvegetable\b",
     r"\bfruit\b", r"\bbesan\b", r"\bgrains\b", r"\bpulses\b",
+]
+
+QUANTITY_KEYWORDS = [
+    r"\bquantity\b", r"\bqty\b", r"\bstock\b.*quantity\b",
+    r"\bquantity\b.*inc", r"\bquantity\b.*increase", r"\bquantity\b.*dec",
+    r"\bquantity\b.*decrease", r"\bquantity\b.*badha", r"\bquantity\b.*kam",
+    # Hindi transliterated quantity keywords
+    r"\bmatra\b", r"\bparimaan\b", r"\bporshan\b",
+    # Common Hinglish phrases
+    r"\bstock\b.*badha", r"\bstock\b.*increase", r"\bstock\b.*dec",
 ]
 
 
@@ -163,7 +177,7 @@ ITEM_ALIASES = {
     "chaawal": "chawal", "chaol": "chawal",
     # Lentils
     "lentil": "dal", "daal": "dal", "lentils": "dal",
-    "dahal": "dal", "dahl": "dal",
+    "dahal": "dal", "dahl": "dal", "dalo": "dal", "dalon": "dal",  # plural forms
     # Oil
     "oil": "tel", "teel": "tel", "cooking oil": "tel",
     "sarso tel": "sarso tel", "mustard oil": "sarso tel",
@@ -261,7 +275,7 @@ def _score_intent(text: str, patterns: list) -> int:
 def _extract_quantity_unit(text: str) -> tuple[Optional[float], Optional[str]]:
     """
     Extract quantity and unit from text.
-    Handles: '50kg', '50 kg', '50 kilo', '5.5 litre', 'ek kilo', etc.
+    Handles: '50kg', '50 kg', '50 kilo', '5.5 litre', 'ek kilo', '10%', etc.
     """
     text_l = text.lower()
 
@@ -278,6 +292,12 @@ def _extract_quantity_unit(text: str) -> tuple[Optional[float], Optional[str]]:
 
     # Build unit pattern
     unit_pattern = "|".join(re.escape(u) for u in sorted(UNIT_MAP.keys(), key=len, reverse=True))
+
+    # Pattern 0: Percentage (e.g. "10%", "10 percent")
+    m = re.search(r"(\d+(?:\.\d+)?)\s*(?:%|percent|percentage)", text_l, re.IGNORECASE)
+    if m:
+        qty = float(m.group(1))
+        return qty, "percent"
 
     # Pattern 1: number + optional space + unit (e.g. "50kg", "5 kilo")
     m = re.search(
@@ -317,11 +337,11 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
 
     # Remove intent words and common fillers (Hindi + English helpers)
     fillers = [
-        r"\badd\b", r"\baid\b", r"\bkaro\b", r"\bkro\b", r"\bdaal\b", r"\bdalo\b", r"\bdo\b",
+        r"\badd\b", r"\baid\b", r"\bkaro\b", r"\bkro\b", r"\bdaal\b", r"\bdo\b",  # Note: dalo/dalon are item names, not removed here
         r"\bbecho\b", r"\bbecha\b", r"\bdiya\b", r"\bgaya\b",
         r"\bkitna\b", r"\bkitni\b", r"\bbacha\b", r"\bhai\b",
         r"\bcheck\b", r"\bdekhna\b", r"\bbatao\b", r"\benter\b",
-        r"\bstock\b", r"\bmein\b", r"\bme\b", r"\bka\b", r"\bki\b",
+        r"\bstock\b", r"\bmein\b", r"\bme\b", r"\bka\b", r"\bki\b", r"\bkee\b",  # Hindi possessives: ki/ kee
         r"\bke\b", r"\bkya\b", r"\blist\b", r"\bsab\b",
         r"\bsabhi\b", r"\bavailable\b", r"\bbaaki\b", r"\bdikha\b",
         r"\bdikhao\b", r"\bshow\b", r"\baaj\b", r"\bkal\b", r"\bpachas\b",
@@ -330,9 +350,14 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
         r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
-        r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b",
+        r"\bkeemt\b", r"\bkeet\b",  # कीमत = price (Hindi transliterated)
+        r"\bvriddhi\b", r"\bvridhi\b",  # वृद्धि = increase/growth
+        r"\bkre\b", r"\bkaren\b",  # करें/करे = do (Hindi verb)
+        r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b", r"\binc\b", r"\bdec\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
         r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
+        r"\bquantity\b", r"\bqty\b", r"\bqts\b",  # Quantity keywords should be removed from item name
+        r"\bmatra\b", r"\bparimaan\b", r"\bporshan\b",  # Hindi: quantity words
         # Category / percentage price-change helpers
         r"\bcategory\b", r"\btype\b", r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
         r"%",
@@ -406,6 +431,7 @@ def parse(text: str) -> ParsedQuery:
     rollback_score = _score_intent(text, ROLLBACK_KEYWORDS)
     expiry_score = _score_intent(text, EXPIRY_KEYWORDS)
     category_score = _score_intent(text, CATEGORY_KEYWORDS)
+    quantity_score = _score_intent(text, QUANTITY_KEYWORDS)
 
     scores = {
         "ADD": add_score,
@@ -417,24 +443,48 @@ def parse(text: str) -> ParsedQuery:
         "ROLLBACK": rollback_score,
         "EXPIRY": expiry_score,
         "CATEGORY": category_score,
+        "QUANTITY": quantity_score,
     }
 
     # If PRICE keywords found, strongly prefer PRICE over basic stock intents
     if price_score > 0:
         scores["ADD"] = max(0, scores["ADD"] - price_score)
         scores["SELL"] = max(0, scores["SELL"] - price_score)
+    
+    # If QUANTITY keywords found, strongly prefer QUANTITY over ADD/SELL
+    if quantity_score > 0:
+        scores["ADD"] = max(0, scores["ADD"] - quantity_score)
+        scores["SELL"] = max(0, scores["SELL"] - quantity_score)
 
     text_l = text.lower()
 
+    # If QUANTITY keywords are present and we have a percentage, strongly prefer QUANTITY
+    # E.g., "dal ka quantity 10% inc karo" → QUANTITY (not ADD)
+    if quantity_score > 0:
+        has_percentage = any(kw in text_l for kw in ["%", "percent", "percentage"])
+        if has_percentage:
+            # Boost QUANTITY when percentage is detected
+            scores["QUANTITY"] += 3
+            scores["ADD"] = max(0, scores["ADD"] - 2)
+    
     # If CATEGORY keywords are present, downweight ADD/SELL and
     # strongly favour CATEGORY when combined with percentage /
     # "mahenga" style words (category price updates).
     if category_score > 0:
         scores["ADD"] = max(0, scores["ADD"] - category_score)
         scores["SELL"] = max(0, scores["SELL"] - category_score)
-        if any(kw in text_l for kw in ["%", "percent", "percentage", "mehenga", "mehengi", "mahenga", "mahengi"]):
+        # CRITICAL: Only boost CATEGORY if we don't have PRICE keywords + percentage
+        # E.g., "spices 10% badha" → CATEGORY, but "dal ka price 10% badha" → PRICE
+        has_percentage = any(kw in text_l for kw in ["%", "percent", "percentage"])
+        has_price_keyword = price_score > 0
+        if has_percentage and not has_price_keyword:
             # Give CATEGORY a bigger boost so it wins ties against PRICE
             scores["CATEGORY"] += 2
+        elif has_percentage and has_price_keyword:
+            # If both PRICE and CATEGORY present with percentage, PRICE wins for item-level updates
+            # Only boost CATEGORY if it's explicitly a "category" or "type" in the text
+            if not any(kw in text_l for kw in ["category", "type", "masala", "spices", "grains", "pulses"]):
+                scores["CATEGORY"] = max(0, scores["CATEGORY"] - 1)
 
     # Queries with "dikhao/dikha/show" are almost always lookup,
     # not stock movement. Boost QUERY so it wins ties against SELL.

@@ -739,3 +739,351 @@
 2026-04-09 12:43:54 [INFO] db: Sold biscuit: -10.0 packet → 60.0 remaining
 2026-04-09 12:44:11 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
 2026-04-09 12:44:11 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-10 09:29:14 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:29:14 [INFO] db: Running database migrations
+2026-04-10 09:29:14 [INFO] db: Database ready
+2026-04-10 09:29:17 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:29:17 [INFO] db: Running database migrations
+2026-04-10 09:29:17 [INFO] db: Database ready
+2026-04-10 09:33:14 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-10 09:33:14 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-10 09:33:31 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:33:31 [INFO] pipeline: Intent=PRICE item=dal % inc qty=10.0 unit=piece conf=1.00
+2026-04-10 09:39:47 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:39:47 [INFO] db: Running database migrations
+2026-04-10 09:39:47 [INFO] db: Database ready
+2026-04-10 09:39:47 [INFO] db: Restocked dal: +10.0 kg → 149.0 total
+2026-04-10 09:39:47 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:39:47 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:39:47 [ERROR] pipeline: Price check error: No item with that key
+2026-04-10 09:39:54 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:39:54 [INFO] db: Running database migrations
+2026-04-10 09:39:54 [INFO] db: Database ready
+2026-04-10 09:41:48 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:41:48 [INFO] db: Running database migrations
+2026-04-10 09:41:48 [INFO] db: Database ready
+2026-04-10 09:41:48 [INFO] db: Restocked dal: +10.0 kg → 159.0 total
+2026-04-10 09:41:48 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:41:48 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:41:48 [INFO] db: Price updated for dal: 0.0 → 0.0
+2026-04-10 09:43:14 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:43:14 [INFO] db: Running database migrations
+2026-04-10 09:43:14 [INFO] db: Database ready
+2026-04-10 09:43:14 [INFO] db: Restocked dal: +1.0 kg → 160.0 total
+2026-04-10 09:43:14 [INFO] db: Price updated for dal: 0.0 → 100.0
+2026-04-10 09:43:14 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:43:14 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:43:14 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:43:22 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:43:22 [INFO] db: Running database migrations
+2026-04-10 09:43:22 [INFO] db: Database ready
+2026-04-10 09:43:22 [INFO] db: Restocked dal: +1.0 kg → 161.0 total
+2026-04-10 09:43:22 [INFO] db: Price updated for dal: 110.0 → 100.0
+2026-04-10 09:43:22 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:43:22 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:43:22 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:44:02 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:44:02 [INFO] db: Running database migrations
+2026-04-10 09:44:02 [INFO] db: Database ready
+2026-04-10 09:44:02 [INFO] db: New item dal ka price 10% inc karo: 1.0 kg added
+2026-04-10 09:44:02 [INFO] db: New item chawal ka price 5% badha do: 1.0 kg added
+2026-04-10 09:44:02 [INFO] db: New item atta ka price 20% dec karo: 1.0 kg added
+2026-04-10 09:44:02 [INFO] db: New item tel ka price 15% decrease karo: 1.0 kg added
+2026-04-10 09:44:02 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:44:02 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:44:02 [INFO] db: Price updated for dal: 110.0 → 121.0
+2026-04-10 09:44:02 [INFO] pipeline: Processing: 'chawal ka price 5% badha do' (voice=False)
+2026-04-10 09:44:02 [INFO] pipeline: Intent=PRICE item=chawal qty=5.0 unit=percent conf=1.00
+2026-04-10 09:44:02 [INFO] db: Price updated for chawal: 0.0 → 0.0
+2026-04-10 09:44:02 [INFO] pipeline: Processing: 'atta ka price 20% dec karo' (voice=False)
+2026-04-10 09:44:02 [INFO] pipeline: Intent=PRICE item=atta qty=20.0 unit=percent conf=1.00
+2026-04-10 09:44:02 [INFO] db: Price updated for atta: 0.0 → 0.0
+2026-04-10 09:44:02 [INFO] pipeline: Processing: 'tel ka price 15% decrease karo' (voice=False)
+2026-04-10 09:44:02 [INFO] pipeline: Intent=PRICE item=tel qty=15.0 unit=percent conf=1.00
+2026-04-10 09:44:02 [ERROR] pipeline: Price check error: could not convert string to float: 'Decrease by 15%'
+2026-04-10 09:44:18 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:44:18 [INFO] db: Running database migrations
+2026-04-10 09:44:18 [INFO] db: Database ready
+2026-04-10 09:44:18 [INFO] db: Restocked dal ka price 10% inc karo: +1.0 kg → 2.0 total
+2026-04-10 09:44:18 [INFO] db: Restocked chawal ka price 5% badha do: +1.0 kg → 2.0 total
+2026-04-10 09:44:18 [INFO] db: Restocked atta ka price 20% dec karo: +1.0 kg → 2.0 total
+2026-04-10 09:44:18 [INFO] db: Restocked tel ka price 15% decrease karo: +1.0 kg → 2.0 total
+2026-04-10 09:44:18 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:44:18 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:44:18 [INFO] db: Price updated for dal: 121.0 → 133.1
+2026-04-10 09:44:18 [INFO] pipeline: Processing: 'chawal ka price 5% badha do' (voice=False)
+2026-04-10 09:44:18 [INFO] pipeline: Intent=PRICE item=chawal qty=5.0 unit=percent conf=1.00
+2026-04-10 09:44:18 [INFO] db: Price updated for chawal: 0.0 → 0.0
+2026-04-10 09:44:18 [INFO] pipeline: Processing: 'atta ka price 20% dec karo' (voice=False)
+2026-04-10 09:44:18 [INFO] pipeline: Intent=PRICE item=atta qty=20.0 unit=percent conf=1.00
+2026-04-10 09:44:18 [INFO] db: Price updated for atta: 0.0 → 0.0
+2026-04-10 09:44:18 [INFO] pipeline: Processing: 'tel ka price 15% decrease karo' (voice=False)
+2026-04-10 09:44:18 [INFO] pipeline: Intent=PRICE item=tel qty=15.0 unit=percent conf=1.00
+2026-04-10 09:44:18 [ERROR] pipeline: Price check error: could not convert string to float: 'Decrease by 15%'
+2026-04-10 09:44:35 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:44:35 [INFO] db: Seeding sample inventory data
+2026-04-10 09:44:35 [INFO] db: Running database migrations
+2026-04-10 09:44:35 [INFO] db: Database ready
+2026-04-10 09:44:35 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:44:35 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 09:44:35 [INFO] db: Restocked chawal: +1.0 kg → 31.0 total
+2026-04-10 09:44:35 [INFO] db: Price updated for chawal: 60.0 → 50.0
+2026-04-10 09:44:35 [INFO] db: Restocked atta: +1.0 kg → 51.0 total
+2026-04-10 09:44:35 [INFO] db: Price updated for atta: 35.0 → 40.0
+2026-04-10 09:44:35 [INFO] db: Restocked tel: +1.0 kg → 16.0 total
+2026-04-10 09:44:35 [INFO] db: Price updated for tel: 130.0 → 200.0
+2026-04-10 09:44:35 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:44:35 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:44:35 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:44:35 [INFO] pipeline: Processing: 'chawal ka price 5% badha do' (voice=False)
+2026-04-10 09:44:35 [INFO] pipeline: Intent=PRICE item=chawal qty=5.0 unit=percent conf=1.00
+2026-04-10 09:44:35 [INFO] db: Price updated for chawal: 50.0 → 52.5
+2026-04-10 09:44:35 [INFO] pipeline: Processing: 'atta ka price 20% dec karo' (voice=False)
+2026-04-10 09:44:35 [INFO] pipeline: Intent=PRICE item=atta qty=20.0 unit=percent conf=1.00
+2026-04-10 09:44:35 [INFO] db: Price updated for atta: 40.0 → 32.0
+2026-04-10 09:44:35 [INFO] pipeline: Processing: 'tel ka price 15% decrease karo' (voice=False)
+2026-04-10 09:44:35 [INFO] pipeline: Intent=PRICE item=tel qty=15.0 unit=percent conf=1.00
+2026-04-10 09:44:35 [INFO] db: Price updated for tel: 200.0 → 170.0
+2026-04-10 09:45:02 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:45:02 [INFO] pipeline: Intent=PRICE item=dal % inc qty=10.0 unit=piece conf=1.00
+2026-04-10 09:47:02 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:47:02 [INFO] db: Running database migrations
+2026-04-10 09:47:02 [INFO] db: Database ready
+2026-04-10 09:47:02 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:47:02 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:47:03 [INFO] db: Price updated for dal: 110.0 → 121.0
+2026-04-10 09:47:14 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:47:14 [INFO] db: Running database migrations
+2026-04-10 09:47:14 [INFO] db: Database ready
+2026-04-10 09:47:14 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:47:14 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:47:14 [INFO] db: Price updated for dal: 121.0 → 133.1
+2026-04-10 09:47:32 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:47:32 [INFO] pipeline: Intent=PRICE item=dal % inc qty=10.0 unit=piece conf=1.00
+2026-04-10 09:47:42 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:47:42 [INFO] db: Running database migrations
+2026-04-10 09:47:42 [INFO] db: Database ready
+2026-04-10 09:47:42 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:47:42 [INFO] db: Running database migrations
+2026-04-10 09:47:42 [INFO] db: Database ready
+2026-04-10 09:47:52 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:47:52 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:47:52 [INFO] db: Price updated for dal: 133.1 → 146.4
+2026-04-10 09:47:57 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:47:57 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:47:57 [INFO] db: Price updated for dal: 146.4 → 161.1
+2026-04-10 09:48:28 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:48:28 [INFO] pipeline: Intent=ADD item=kee keemt kee vriddhi kre qty=10.0 unit=percent conf=1.00
+2026-04-10 09:48:28 [INFO] db: New item kee keemt kee vriddhi kre: 10.0 percent added
+2026-04-10 09:52:44 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:52:44 [INFO] db: Seeding sample inventory data
+2026-04-10 09:52:44 [INFO] db: Running database migrations
+2026-04-10 09:52:44 [INFO] db: Database ready
+2026-04-10 09:52:44 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:52:44 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:52:44 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:52:44 [INFO] db: Price updated for dal: 90.0 → 99.0
+2026-04-10 09:53:18 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:53:18 [INFO] db: Seeding sample inventory data
+2026-04-10 09:53:18 [INFO] db: Running database migrations
+2026-04-10 09:53:18 [INFO] db: Database ready
+2026-04-10 09:53:18 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:53:18 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 09:53:18 [INFO] db: Restocked chawal: +1.0 kg → 31.0 total
+2026-04-10 09:53:18 [INFO] db: Price updated for chawal: 60.0 → 50.0
+2026-04-10 09:53:18 [INFO] db: Restocked atta: +1.0 kg → 51.0 total
+2026-04-10 09:53:18 [INFO] db: Price updated for atta: 35.0 → 40.0
+2026-04-10 09:53:18 [INFO] db: Restocked tel: +1.0 kg → 16.0 total
+2026-04-10 09:53:18 [INFO] db: Price updated for tel: 130.0 → 200.0
+2026-04-10 09:53:18 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:53:18 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:53:18 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:53:18 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:53:18 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:53:18 [INFO] db: Price updated for dal: 110.0 → 121.0
+2026-04-10 09:53:18 [INFO] pipeline: Processing: 'chawal ka price 5% badha do' (voice=False)
+2026-04-10 09:53:18 [INFO] pipeline: Intent=PRICE item=chawal qty=5.0 unit=percent conf=1.00
+2026-04-10 09:53:18 [INFO] db: Price updated for chawal: 50.0 → 52.5
+2026-04-10 09:53:18 [INFO] pipeline: Processing: 'चावल की कीमत में 5% की बढ़ोतरी करें' (voice=False)
+2026-04-10 09:53:18 [INFO] pipeline: Intent=PRICE item=chawal bdhotree qty=5.0 unit=percent conf=1.00
+2026-04-10 09:53:58 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:53:58 [INFO] db: Seeding sample inventory data
+2026-04-10 09:53:58 [INFO] db: Running database migrations
+2026-04-10 09:53:58 [INFO] db: Database ready
+2026-04-10 09:53:58 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:53:58 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 09:53:58 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:53:58 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:53:58 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:54:04 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:54:04 [INFO] db: Seeding sample inventory data
+2026-04-10 09:54:04 [INFO] db: Running database migrations
+2026-04-10 09:54:04 [INFO] db: Database ready
+2026-04-10 09:54:04 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:54:04 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 09:54:04 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:54:04 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:54:04 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:54:20 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:54:20 [INFO] db: Seeding sample inventory data
+2026-04-10 09:54:20 [INFO] db: Running database migrations
+2026-04-10 09:54:20 [INFO] db: Database ready
+2026-04-10 09:54:20 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 09:54:20 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 09:54:20 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:54:20 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:54:20 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 09:54:33 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:54:33 [INFO] db: Running database migrations
+2026-04-10 09:54:33 [INFO] db: Database ready
+2026-04-10 09:54:34 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 09:54:34 [INFO] db: Running database migrations
+2026-04-10 09:54:34 [INFO] db: Database ready
+2026-04-10 09:54:44 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:54:44 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:54:44 [INFO] db: Price updated for dal: 110.0 → 121.0
+2026-04-10 09:54:59 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 09:54:59 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:54:59 [INFO] db: Price updated for dal: 121.0 → 133.1
+2026-04-10 09:57:30 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:57:30 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:57:30 [INFO] db: Price updated for dal: 133.1 → 146.4
+2026-04-10 09:57:35 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:57:35 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:57:35 [INFO] db: Price updated for dal: 146.4 → 161.1
+2026-04-10 09:57:50 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 09:57:50 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 09:57:50 [INFO] db: Price updated for dal: 161.1 → 177.2
+2026-04-10 09:58:08 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 09:58:08 [INFO] pipeline: Intent=ADD item=dal quantity qty=10.0 unit=percent conf=1.00
+2026-04-10 09:58:08 [INFO] db: New item dal quantity: 10.0 percent added
+2026-04-10 10:01:38 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:01:38 [INFO] pipeline: Intent=QUANTITY item=dal quantity qty=10.0 unit=percent conf=1.00
+2026-04-10 10:01:38 [INFO] db: Restocked dal quantity: +1.0 percent → 11.0 total
+2026-04-10 10:01:38 [INFO] pipeline: Processing: 'chawal ka quantity 5% badha do' (voice=False)
+2026-04-10 10:01:38 [INFO] pipeline: Intent=QUANTITY item=dal quantity qty=5.0 unit=percent conf=0.83
+2026-04-10 10:01:38 [INFO] db: Restocked dal quantity: +0.6 percent → 11.6 total
+2026-04-10 10:01:38 [INFO] pipeline: Processing: 'atta ka quantity 20% dec karo' (voice=False)
+2026-04-10 10:01:38 [INFO] pipeline: Intent=QUANTITY item=dal quantity qty=20.0 unit=percent conf=1.00
+2026-04-10 10:01:38 [INFO] db: Restocked dal quantity: +-2.3 percent → 9.2 total
+2026-04-10 10:01:38 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:01:38 [INFO] pipeline: Intent=QUANTITY item=dal matra qty=10.0 unit=percent conf=0.80
+2026-04-10 10:02:33 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:02:33 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:02:33 [INFO] pipeline: Processing: 'chawal ka quantity 5% badha do' (voice=False)
+2026-04-10 10:02:33 [INFO] pipeline: Intent=QUANTITY item=chawal qty=5.0 unit=percent conf=0.83
+2026-04-10 10:02:33 [INFO] pipeline: Processing: 'atta ka quantity 20% dec karo' (voice=False)
+2026-04-10 10:02:33 [INFO] pipeline: Intent=QUANTITY item=atta qty=20.0 unit=percent conf=1.00
+2026-04-10 10:02:33 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:02:33 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:02:39 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:02:39 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:02:52 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 10:02:52 [INFO] db: Running database migrations
+2026-04-10 10:02:52 [INFO] db: Database ready
+2026-04-10 10:02:53 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 10:02:53 [INFO] db: Running database migrations
+2026-04-10 10:02:53 [INFO] db: Database ready
+2026-04-10 10:03:01 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:03:01 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:03:07 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:03:07 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal ke quantity 10% badha do' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.83
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'chawal ki quantity 15 percent inc karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=chawal percent qty=15.0 unit=percent conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'atta quantity 12% dec karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=atta qty=12.0 unit=percent conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'stock quantity 8% increase karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=None qty=8.0 unit=percent conf=0.89
+2026-04-10 10:03:13 [WARNING] rag: FAISS/sentence-transformers not available (No module named 'faiss'). Using keyword fallback.
+2026-04-10 10:03:13 [WARNING] llm: GROQ_API_KEY not set. LLM features will be limited.
+2026-04-10 10:03:13 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-10 10:03:13 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-10 10:03:13 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-10 10:03:13 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'चावल मात्रा 5% वृद्धि करें' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=chawal qty=5.0 unit=percent conf=0.80
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal ka quantity' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=dal qty=None unit=None conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'chawal quantity 25%' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUANTITY item=chawal qty=25.0 unit=percent conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal add karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=ADD item=dal qty=None unit=None conf=1.00
+2026-04-10 10:03:13 [INFO] db: Restocked dal: +1.0 piece → 41.9 total
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal 5kg sell karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=ADD item=dal sell qty=5.0 unit=kg conf=1.00
+2026-04-10 10:03:13 [INFO] db: New item dal sell: 5.0 kg added
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal kitna bacha hai' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=QUERY item=dal qty=None unit=None conf=1.00
+2026-04-10 10:03:13 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 10:03:13 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:03:13 [INFO] db: Price updated for dal: 177.2 → 194.9
+2026-04-10 10:04:15 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:04:15 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:04:30 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:04:30 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:05:06 [INFO] db: Initializing database at /Users/ankanamandal/Desktop/bolSql/kirana_trends.db
+2026-04-10 10:05:06 [INFO] db: Seeding sample inventory data
+2026-04-10 10:05:06 [INFO] db: Running database migrations
+2026-04-10 10:05:06 [INFO] db: Database ready
+2026-04-10 10:05:06 [INFO] db: Restocked dal: +1.0 kg → 21.0 total
+2026-04-10 10:05:06 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 10:05:06 [INFO] pipeline: Processing: 'दालों की कीमत में 10% की वृद्धि करें' (voice=False)
+2026-04-10 10:05:06 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:05:06 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal ke quantity 10% badha do' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.83
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'chawal ki quantity 15 percent inc karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=chawal percent qty=15.0 unit=percent conf=1.00
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'atta quantity 12% dec karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=atta qty=12.0 unit=percent conf=1.00
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'stock quantity 8% increase karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=None qty=8.0 unit=percent conf=0.89
+2026-04-10 10:05:20 [WARNING] rag: FAISS/sentence-transformers not available (No module named 'faiss'). Using keyword fallback.
+2026-04-10 10:05:20 [WARNING] llm: GROQ_API_KEY not set. LLM features will be limited.
+2026-04-10 10:05:20 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-10 10:05:20 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-10 10:05:20 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-10 10:05:20 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'चावल मात्रा 5% वृद्धि करें' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=chawal qty=5.0 unit=percent conf=0.80
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal ka quantity' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=dal qty=None unit=None conf=1.00
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'chawal quantity 25%' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUANTITY item=chawal qty=25.0 unit=percent conf=1.00
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal add karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=ADD item=dal qty=None unit=None conf=1.00
+2026-04-10 10:05:20 [INFO] db: Restocked dal: +1.0 piece → 26.4 total
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal 5kg sell karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=ADD item=dal sell qty=5.0 unit=kg conf=1.00
+2026-04-10 10:05:20 [INFO] db: New item dal sell: 5.0 kg added
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal kitna bacha hai' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=QUERY item=dal qty=None unit=None conf=1.00
+2026-04-10 10:05:20 [INFO] pipeline: Processing: 'dal ka price 10% inc karo' (voice=False)
+2026-04-10 10:05:20 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:05:20 [INFO] db: Price updated for dal: 110.0 → 121.0
+2026-04-10 10:06:06 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:06:06 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:06:14 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:06:14 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:06:22 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:06:22 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:06:56 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:06:56 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:07:23 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:07:23 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:07:23 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:07:23 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:07:23 [INFO] pipeline: Processing: 'dal ka quantity 5% dec karo' (voice=False)
+2026-04-10 10:07:23 [INFO] pipeline: Intent=QUANTITY item=dal qty=5.0 unit=percent conf=1.00
+2026-04-10 10:07:28 [INFO] pipeline: Processing: 'dal ka quantity 10% inc karo' (voice=False)
+2026-04-10 10:07:28 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=1.00
+2026-04-10 10:07:28 [INFO] pipeline: Processing: 'दाल की मात्रा 10% बढ़ाओ' (voice=False)
+2026-04-10 10:07:28 [INFO] pipeline: Intent=QUANTITY item=dal qty=10.0 unit=percent conf=0.80
+2026-04-10 10:07:28 [INFO] pipeline: Processing: 'dal ka quantity 5% dec karo' (voice=False)
+2026-04-10 10:07:28 [INFO] pipeline: Intent=QUANTITY item=dal qty=5.0 unit=percent conf=1.00

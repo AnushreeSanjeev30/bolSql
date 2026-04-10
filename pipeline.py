@@ -522,22 +522,41 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
 
             # Handle common Hinglish / Devanagari-transliterated variants.
             # Devanagari "बढ़ाओ" often becomes "bdhao" after transliteration.
-            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "bdhao", "badho", "increase"])
-            is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata"])
+            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "bdhao", "badho", "increase", "inc"])
+            is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata", "dec"])
 
-            if is_increase:
-                new_price = current_price + float(parsed.quantity)
-            elif is_decrease:
-                new_price = max(0.0, current_price - float(parsed.quantity))
+            # Check if this is a percentage-based update
+            if parsed.unit == "percent":
+                percentage = float(parsed.quantity)
+                if is_increase:
+                    new_price = current_price * (1 + (percentage / 100))
+                elif is_decrease:
+                    new_price = max(0.0, current_price * (1 - (percentage / 100)))
+                else:
+                    # Default to increase if not specified
+                    new_price = current_price * (1 + (percentage / 100))
+                
+                updated = update_item_price(parsed.item_name, new_price, reason="voice_command")
+                response = (
+                    f"✓ {item['name']} ka price {percentage}% {'badha' if is_increase or not is_decrease else 'kam'} diya: ₹{updated['price']:.2f}"
+                    if language == "hinglish"
+                    else f"✓ {item['name']} price {percentage}% {'increase' if is_increase or not is_decrease else 'decrease'} pannathu: ₹{updated['price']:.2f}"
+                )
             else:
-                new_price = float(parsed.quantity)
+                # Absolute or delta price change
+                if is_increase:
+                    new_price = current_price + float(parsed.quantity)
+                elif is_decrease:
+                    new_price = max(0.0, current_price - float(parsed.quantity))
+                else:
+                    new_price = float(parsed.quantity)
 
-            updated = update_item_price(parsed.item_name, new_price, reason="voice_command")
-            response = (
-                f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}"
-                if language == "hinglish"
-                else f"✓ {item['name']} price update pannathu: ₹{updated['price']}"
-            )
+                updated = update_item_price(parsed.item_name, new_price, reason="voice_command")
+                response = (
+                    f"✓ {item['name']} ka price update ho gaya: ₹{updated['price']}"
+                    if language == "hinglish"
+                    else f"✓ {item['name']} price update pannathu: ₹{updated['price']}"
+                )
             return PipelineResult(
                 success=True,
                 response=response,
@@ -558,6 +577,113 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
         response_map = {
             "hinglish": "Price check mein dikkat aayi",
             "tamil": "Price check vela problem"
+        }
+        return PipelineResult(
+            success=False,
+            response=response_map.get(language, response_map["hinglish"]),
+            error=str(e),
+        )
+
+
+def _handle_quantity_update(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
+    """Handle percentage-based or absolute quantity updates (e.g., 'dal ka quantity 10% inc karo')."""
+    if not parsed.item_name:
+        response_map = {
+            "hinglish": "Kaunsa item? Item naam bataao.",
+            "tamil": "Yaar item? Item name solgal."
+        }
+        return PipelineResult(
+            success=False,
+            response=response_map.get(language, response_map["hinglish"]),
+            error="missing item name",
+        )
+    
+    try:
+        item = get_item(parsed.item_name)
+        if not item:
+            response = f"❌ '{parsed.item_name}' nahi mila inventory mein" if language == "hinglish" else f"❌ '{parsed.item_name}' inventory le kanukkala"
+            return PipelineResult(
+                success=False,
+                response=response,
+                error="item not found",
+            )
+        
+        # If quantity provided with QUANTITY intent, it's a quantity UPDATE.
+        if parsed.quantity is not None:
+            from app.db.database import execute_safe_sql
+            
+            raw_l = parsed.raw_text.lower()
+            current_qty = float(item.get("quantity") or 0.0)
+            item_unit = item.get("unit", "piece")
+
+            # Determine if increase or decrease
+            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "bdhao", "badho", "increase", "inc"])
+            is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata", "dec"])
+
+            # Check if this is a percentage-based update
+            if parsed.unit == "percent":
+                percentage = float(parsed.quantity)
+                if is_increase:
+                    new_qty = current_qty * (1 + (percentage / 100))
+                elif is_decrease:
+                    new_qty = max(0.0, current_qty * (1 - (percentage / 100)))
+                else:
+                    # Default to increase if not specified
+                    new_qty = current_qty * (1 + (percentage / 100))
+                
+                # Update quantity directly in inventory
+                execute_safe_sql(
+                    "UPDATE inventory SET quantity = ? WHERE LOWER(name) = ?",
+                    (new_qty, parsed.item_name.lower())
+                )
+                
+                # Fetch updated item
+                updated = get_item(parsed.item_name)
+                response = (
+                    f"✓ {item['name']} ka quantity {percentage}% {'badha' if is_increase or not is_decrease else 'kam'} diya: {new_qty:.1f} {item_unit}"
+                    if language == "hinglish"
+                    else f"✓ {item['name']} quantity {percentage}% {'increase' if is_increase or not is_decrease else 'decrease'} pannathu: {new_qty:.1f} {item_unit}"
+                )
+            else:
+                # Absolute or delta quantity change
+                if is_increase:
+                    new_qty = current_qty + float(parsed.quantity)
+                elif is_decrease:
+                    new_qty = max(0.0, current_qty - float(parsed.quantity))
+                else:
+                    new_qty = float(parsed.quantity)
+
+                execute_safe_sql(
+                    "UPDATE inventory SET quantity = ? WHERE LOWER(name) = ?",
+                    (new_qty, parsed.item_name.lower())
+                )
+                
+                updated = get_item(parsed.item_name)
+                response = (
+                    f"✓ {item['name']} ka quantity update ho gaya: {new_qty:.1f} {item_unit}"
+                    if language == "hinglish"
+                    else f"✓ {item['name']} quantity update pannathu: {new_qty:.1f} {item_unit}"
+                )
+            return PipelineResult(
+                success=True,
+                response=response,
+                intent="QUANTITY",
+                db_rows=[updated] if updated else [item],
+            )
+        else:
+            # Just QUANTITY CHECK - no quantity means show current quantity
+            response = f"{item['name']} ka current quantity: {item.get('quantity', 0)} {item.get('unit', 'piece')}" if language == "hinglish" else f"{item['name']} current quantity: {item.get('quantity', 0)} {item.get('unit', 'piece')}"
+            return PipelineResult(
+                success=True,
+                response=response,
+                intent="QUANTITY",
+                db_rows=[item],
+            )
+    except Exception as e:
+        log.error("Quantity update error: %s", e)
+        response_map = {
+            "hinglish": "Quantity update mein dikkat aayi",
+            "tamil": "Quantity update vela problem"
         }
         return PipelineResult(
             success=False,
@@ -806,6 +932,9 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
     
     if parsed.intent == "CATEGORY":
         return _handle_category_update(parsed, language=language)
+    
+    if parsed.intent == "QUANTITY" and parsed.item_name:
+        return _handle_quantity_update(parsed, language=language)
     
     if parsed.intent == "PRICE" and parsed.item_name:
         return _handle_price_check(parsed, language=language)
