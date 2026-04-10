@@ -207,7 +207,9 @@ async def get_all_trends():
             ("market_basket", lambda: engine.market_basket()),
             ("customer_pattern", lambda: engine.customer_pattern()),
             ("auto_subscription", lambda: engine.auto_subscription()),
-            ("weather_trend", lambda: engine.weather_trend()),
+            # Use auto-detected season for the dashboard's weather card so it
+            # reflects current weather instead of a hard-coded "rain" view.
+            ("weather_trend", lambda: engine.weather_trend(season="general")),
         ]
         
         trends = []
@@ -412,6 +414,7 @@ async def upload_bill(bill: BillUploadRequest):
             )
         
         # Refresh trends after successful bill processing
+        from config import DB_PATH  # Local import to avoid NameError
         trends_refreshed = refresh_trends_after_bill(str(DB_PATH))
         
         return BillUploadResponse(

@@ -9,7 +9,10 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import math
 
+import requests
+
 from app.trends.demand_model import predict_demand_ema
+from config import WEATHER_API_KEY, WEATHER_CITY, WEATHER_UNITS, WEATHER_PROVIDER
 
 
 class TrendsEngine:
@@ -614,13 +617,124 @@ class TrendsEngine:
         "diwali": ["diya", "mithai", "dry fruits", "pooja samagri"],
     }
 
+    def _get_realtime_weather(self):
+        """Fetch current weather and map it to a coarse season.
+
+        Uses OpenWeatherMap-style API when WEATHER_API_KEY is set. If the
+        API call fails, returns (None, meta) so we can gracefully fall back
+        to the static WEATHER_MAP logic.
+        """
+        if not WEATHER_API_KEY:
+            return None, None
+
+        try:
+            provider = (WEATHER_PROVIDER or "").lower()
+
+            # OpenWeatherMap provider
+            if provider == "openweathermap":
+                resp = requests.get(
+                    "https://api.openweathermap.org/data/2.5/weather",
+                    params={
+                        "q": WEATHER_CITY,
+                        "appid": WEATHER_API_KEY,
+                        "units": WEATHER_UNITS,
+                    },
+                    timeout=5,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+
+                main = (data.get("weather", [{}])[0].get("main") or "").lower()
+                desc = (data.get("weather", [{}])[0].get("description") or "").lower()
+                temp = data.get("main", {}).get("temp")
+                city = data.get("name") or WEATHER_CITY
+
+                # Very simple mapping: rain/summer/winter
+                if "rain" in main or "drizzle" in main or "thunder" in main:
+                    season = "rain"
+                elif temp is not None and temp >= 30:
+                    season = "summer"
+                elif temp is not None and temp <= 20:
+                    season = "winter"
+                else:
+                    season = "summer"
+
+                meta = {
+                    "provider": WEATHER_PROVIDER,
+                    "city": city,
+                    "temp": temp,
+                    "description": desc or main,
+                }
+                return season, meta
+
+            # WeatherAPI.com provider
+            if provider == "weatherapi":
+                resp = requests.get(
+                    "https://api.weatherapi.com/v1/current.json",
+                    params={
+                        "key": WEATHER_API_KEY,
+                        "q": WEATHER_CITY,
+                        "aqi": "no",
+                    },
+                    timeout=5,
+                )
+                resp.raise_for_status()
+                data = resp.json()
+
+                loc = data.get("location", {})
+                cur = data.get("current", {})
+                temp = cur.get("temp_c")
+                cond = (cur.get("condition", {}) or {}).get("text", "")
+                city = loc.get("name") or WEATHER_CITY
+
+                text_l = (cond or "").lower()
+                precip = cur.get("precip_mm") or 0
+
+                if "rain" in text_l or precip > 0:
+                    season = "rain"
+                elif temp is not None and temp >= 30:
+                    season = "summer"
+                elif temp is not None and temp <= 20:
+                    season = "winter"
+                else:
+                    season = "summer"
+
+                meta = {
+                    "provider": WEATHER_PROVIDER,
+                    "city": city,
+                    "temp": temp,
+                    "description": cond,
+                }
+                return season, meta
+
+        except Exception:
+            # Fail-soft: just ignore API errors and fall back
+            return None, None
+
+        return None, None
+
     def weather_trend(self, season: str = "rain", days: int = 90) -> dict:
+        """Correlate weather/season keywords with actual historical sales.
+
+        If season is "general"/"auto" or empty, we first call the live
+        weather API (when configured) to detect a suitable season.
         """
-        Correlate weather/season keywords with actual historical sales.
-        """
+        meta = None
+        if not season or season.lower() in {"general", "auto"}:
+            detected, meta = self._get_realtime_weather()
+            if detected:
+                season = detected
+
         keywords = self.WEATHER_MAP.get(season.lower(), [])
         if not keywords:
-            return {"trend": "weather", "insight": "Season samajh nahi aaya."}
+            return {
+                "trend": "weather",
+                "season": season,
+                "expected_items": [],
+                "sales_data": [],
+                "current_weather": meta,
+                "insight": "Season samajh nahi aaya.",
+            }
 
         conn = self._conn()
         cur = conn.cursor()
@@ -648,7 +762,8 @@ class TrendsEngine:
             "season": season,
             "expected_items": keywords,
             "sales_data": results[:10],
-            "insight": f"{season.title()} mein {top} sabse zyada bikta hai."
+            "current_weather": meta,
+            "insight": f"{season.title()} mein {top} sabse zyada bikta hai.",
         }
 
     def demand_stock_risk(self, days_ahead: int = 3):

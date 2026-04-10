@@ -157,7 +157,7 @@ UNIT_MAP = {
 ITEM_ALIASES = {
     # Wheat flour
     "aata": "atta", "aatta": "atta", "wheat flour": "atta", "maida": "maida",
-    "aata": "atta", "aatto": "atta",
+    "aata": "atta", "aatto": "atta", "ata": "atta",
     # Rice
     "rice": "chawal", "chaawal": "chawal", "chaval": "chawal",
     "chaawal": "chawal", "chaol": "chawal",
@@ -296,10 +296,11 @@ def _extract_quantity_unit(text: str) -> tuple[Optional[float], Optional[str]]:
             unit = UNIT_MAP.get(m.group(1), m.group(1))
             return float(num), unit
 
-    # Pattern 3: bare number (no unit) — treat as pieces
+    # Pattern 3: bare number (no unit)
+    # Let callers decide the default unit (e.g., keep existing unit for corrections).
     m = re.search(r"\b(\d+(?:\.\d+)?)\b", text)
     if m:
-        return float(m.group(1)), "piece"
+        return float(m.group(1)), None
 
     return None, None
 
@@ -328,11 +329,15 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bpahuncha\b", r"\baaya\b", r"\bnikala\b", r"\bnikali\b",
         r"\bbika\b", r"\bbiki\b", r"\bgayi\b", r"\bgaye\b",
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
+        # Generic measurement words that should not be part of item names
+        r"\bunit\b", r"\bunits\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
         r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
         r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
-        r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
+        r"\bcorrect\b", r"\bfix\b",
+        # Helper verbs / variants: kar, kare, kre, etc.
+        r"\bkar\b", r"\bkarna\b", r"\bkar do\b", r"\bkre\b", r"\bkare\b", r"\bkaren\b",
         # Category / percentage price-change helpers
         r"\bcategory\b", r"\btype\b", r"\bmehenga\b", r"\bmehengi\b", r"\bmahenga\b", r"\bmahengi\b",
         r"%",
@@ -536,6 +541,11 @@ ITEM_NAME_MAP = {
     'चावल': 'chawal', 'दाल': 'dal', 'अता': 'atta', 'आटा': 'atta',
     'तेल': 'tel', 'नमक': 'namak', 'चीनी': 'chini',
     'प्याज': 'pyaj', 'लहसुन': 'lahsun',
+    # Common Devanagari unit words → ASCII so UNIT_MAP can catch them
+    'लीटर': 'litre', 'किलो': 'kilo', 'ग्राम': 'gram',
+    'पैकेट': 'packet', 'दर्जन': 'dozen', 'नग': 'piece', 'नंबर': 'piece',
+    # Devanagari "oil" spelling
+    'ऑइल': 'oil',
 }
 
 

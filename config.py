@@ -40,6 +40,18 @@ SAMPLE_RATE = int(os.getenv("SAMPLE_RATE", "16000"))
 # === RAG ===
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "3"))
 
+# === Weather (for weather-based trends) ===
+# Configure a live weather provider like OpenWeatherMap.
+# Example .env:
+#   WEATHER_API_KEY=your_openweather_key
+#   WEATHER_CITY=Mumbai,IN
+#   WEATHER_UNITS=metric
+#   WEATHER_PROVIDER=openweathermap
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
+WEATHER_CITY = os.getenv("WEATHER_CITY", "Mumbai,IN")
+WEATHER_UNITS = os.getenv("WEATHER_UNITS", "metric")
+WEATHER_PROVIDER = os.getenv("WEATHER_PROVIDER", "openweathermap")
+
 # === Logging ===
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 

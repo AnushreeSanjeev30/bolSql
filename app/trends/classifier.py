@@ -22,18 +22,32 @@ def _days(m) -> dict:
 
 
 def _item(m) -> dict:
+    """Extract an item name from group 1, ignoring generic words.
+
+    Queries like "Kaunsa product khatam hone wala hai?" should analyse
+    all items, not literally look for an item called "product". Same for
+    generic placeholders like "item" or "maal".
+    """
     try:
-        return {"item_name": m.group(1).strip()}
+        raw = (m.group(1) or "").strip().lower()
     except Exception:
         return {}
+
+    # Treat generic placeholders as "no specific item" so the
+    # trend engine runs on the full inventory.
+    generic = {"item", "items", "product", "products", "maal", "saman", "samaan"}
+    if raw in generic or not raw:
+        return {}
+
+    return {"item_name": raw}
 
 
 def _season(m) -> dict:
     raw = m.group(1).lower()
     mapping = {
         "baarish": "rain", "rain": "rain", "barsat": "rain",
-        "garmi": "summer", "summer": "summer", "garam": "summer",
-        "sardi": "winter", "winter": "winter", "thand": "winter",
+        "garmi": "summer", "summer": "summer", "garam": "summer", "heat": "summer",
+        "sardi": "winter", "winter": "winter", "thand": "winter", "cold": "winter",
         "holi": "holi", "diwali": "diwali",
     }
     return {"season": mapping.get(raw, raw)}
@@ -77,6 +91,16 @@ TREND_PATTERNS = [
     (r"kaunse?\s*(?:time|waqt|baje|ghante)\s*(?:sabse)?\s*(?:busy|rush)", "hourly_rush", lambda m: {}),
     (r"kab\s*sabse\s*(?:zyada|ber|busy|log)", "hourly_rush", lambda m: {}),
     (r"(?:rush|busy|peak|crowd)\s*(?:time|neram|hora)", "hourly_rush", lambda m: {}),  # Tamil: neram (time), hora (hour)
+
+    # 13. Weather Trend  (prioritised before product/seasonal so 'weather/mausam/baarish' queries don't fall back)
+    # Flexible "weather ke hisaab se kya bik raha" style queries
+    (r"(?:weather|mausam)[^\n]*\bkya\b[^\n]*\bbik", "weather_trend", lambda m: {"season": "general"}),
+    # Explicit season words like baarish/garmi/sardi + 'kya bikta hai'
+    (r"(baarish|monsoon|garmi|summer|sardi|winter|rain|heat|cold|mausam|weather)\s*(?:mein)?\s*(?:kya|what|kaun sa)\s*(?:bik|sell)", "weather_trend", _season),
+    # Generic weather/season sales/trend queries
+    (r"(?:weather|mausam|season)\s*(?:mein)?\s*(?:kya|sales?|trends?|demand)", "weather_trend", lambda m: {"season": "general"}),
+    # Seasonal demand/trend phrasing should also go to weather trend
+    (r"seasonal\s*(?:demand|trends?|patterns?)", "weather_trend", lambda m: {}),
 
     # 3. Product Demand
     (r"(?:sabse|most|sab se|top)\s*(?:zyada)?\s*(?:bik|sell|demand|popular|chalta)", "product_demand", lambda m: {}),
@@ -164,12 +188,6 @@ TREND_PATTERNS = [
     (r"mera\s*(?:weekly|monthly|regular|biweekly)\s*(?:order|delivery)", "auto_subscription",
      lambda m: {"customer_id": "default"}),
     (r"predict\s*(?:order|next purchase|delivery)", "auto_subscription", lambda m: {}),
-
-    # 13. Weather Trend
-    (r"(baarish|monsoon|garmi|summer|sardi|winter|rain|heat|cold|mausam|weather)\s*(?:mein)?\s*(?:kya|what|kaun sa)\s*(?:bik|sell)", "weather_trend", _season),
-    (r"(?:weather|mausam|season)\s*(?:mein)?\s*(?:kya|sales?|trends?|demand)", "weather_trend", lambda m: {"season": "general"}),
-    (r"seasonal\s*(?:demand|trends?|patterns?)", "weather_trend", lambda m: {}),
-
     # 14. Demand & Stock Risk
     (r"(?:future|aane wala|next)\s*(?:demand|jaroorat|requirement|zaroorat)", "demand_stock_risk", lambda m: {}),
     (r"(?:next|aane wale)\s*(\d+)\s*(?:din|day)\s*(?:ka)?\s*(?:demand|jaroorat)", "demand_stock_risk", _days),

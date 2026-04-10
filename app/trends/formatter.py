@@ -311,6 +311,22 @@ def _fmt_subscription(d: dict, language: str = "hinglish") -> str:
 
 def _fmt_weather(d: dict, language: str = "hinglish") -> str:
     lines = [f"🌧️ Weather Trend — {d.get('season', '').title()}:\n"]
+
+    # Optional live weather metadata (when API configured)
+    cw = d.get("current_weather") or {}
+    city = cw.get("city")
+    temp = cw.get("temp")
+    desc = cw.get("description")
+    if city or temp is not None or desc:
+        parts = []
+        if city:
+            parts.append(str(city))
+        if temp is not None:
+            parts.append(f"{temp}°C")
+        if desc:
+            parts.append(desc)
+        lines.append("  Current weather: " + ", ".join(parts) + "\n")
+
     expected = d.get("expected_items", [])
     if expected:
         lines.append(f"  Expected items: {', '.join(expected)}\n")

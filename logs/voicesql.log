@@ -739,3 +739,471 @@
 2026-04-09 12:43:54 [INFO] db: Sold biscuit: -10.0 packet → 60.0 remaining
 2026-04-09 12:44:11 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
 2026-04-09 12:44:11 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-09 23:23:24 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:23:45 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:26:29 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:26:29 [INFO] db: Running database migrations
+2026-04-09 23:26:30 [INFO] db: Database ready
+2026-04-09 23:26:45 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:26:45 [INFO] db: Running database migrations
+2026-04-09 23:26:45 [INFO] db: Database ready
+2026-04-09 23:26:46 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:26:46 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:28:36 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:28:36 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:28:43 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:28:43 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:28:47 [INFO] pipeline: Processing: 'kaunsa saman kam hai' (voice=False)
+2026-04-09 23:28:47 [INFO] pipeline: Intent=QUERY item=None qty=None unit=None conf=1.00
+2026-04-09 23:28:53 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:28:53 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:30:13 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:30:13 [INFO] db: Running database migrations
+2026-04-09 23:30:13 [INFO] db: Database ready
+2026-04-09 23:30:15 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-09 23:30:15 [INFO] db: Running database migrations
+2026-04-09 23:30:15 [INFO] db: Database ready
+2026-04-09 23:30:23 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:30:23 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:30:57 [INFO] pipeline: Processing: 'aata ka stock kitna bacha hai?' (voice=False)
+2026-04-09 23:30:57 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-09 23:31:09 [INFO] pipeline: Processing: 'स्टॉक कितना बचा है?' (voice=False)
+2026-04-09 23:31:09 [INFO] pipeline: Intent=QUERY item=bcha qty=None unit=None conf=1.00
+2026-04-09 23:34:02 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-09 23:34:08 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 23:34:09 [WARNING] llm: GROQ_API_KEY not set. LLM features will be limited.
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 23:34:09 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 23:34:09 [INFO] pipeline: Processing: 'आटा का स्टॉक कितना बचा है?' (voice=False)
+2026-04-09 23:34:09 [INFO] pipeline: Intent=QUERY item=atta bcha qty=None unit=None conf=1.00
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 23:34:09 [WARNING] llm: LLM returned empty response (attempt 3)
+2026-04-09 23:34:09 [ERROR] llm: SQL generation failed after 3 attempts
+2026-04-09 23:37:35 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-09 23:37:35 [INFO] db: Running database migrations
+2026-04-09 23:37:35 [INFO] db: Database ready
+2026-04-09 23:37:36 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-09 23:37:36 [INFO] db: Running database migrations
+2026-04-09 23:37:36 [INFO] db: Database ready
+2026-04-09 23:37:50 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-09 23:37:50 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-09 23:38:24 [INFO] pipeline: Processing: 'aata ka stock kitna bacha hai' (voice=False)
+2026-04-09 23:38:24 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-09 23:38:31 [INFO] pipeline: Processing: 'यानी कॉटन आटा का स्टॉक कितना बचा?' (voice=False)
+2026-04-09 23:38:31 [INFO] pipeline: Intent=QUERY item=yanee atta bcha qty=None unit=None conf=1.00
+2026-04-09 23:38:52 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-09 23:39:00 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-09 23:39:02 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-09 23:39:04 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%atta%'
+2026-04-09 23:39:19 [INFO] pipeline: Processing: '70kg chawal aaya, add karo' (voice=False)
+2026-04-09 23:39:19 [INFO] pipeline: Intent=ADD item=chawal qty=70.0 unit=kg conf=1.00
+2026-04-09 23:39:19 [INFO] db: Restocked chawal: +70.0 kg → 151.0 total
+2026-04-09 23:39:33 [INFO] pipeline: Processing: '70 केजी चावल आया ऐड करो।' (voice=False)
+2026-04-09 23:39:33 [INFO] pipeline: Intent=ADD item=chawal qty=70.0 unit=piece conf=1.00
+2026-04-09 23:39:33 [INFO] db: Restocked chawal: +70.0 piece → 221.0 total
+2026-04-09 23:40:07 [INFO] pipeline: Processing: 'दाल का स्टॉक आया।' (voice=False)
+2026-04-09 23:40:07 [INFO] pipeline: Intent=ADD item=dal qty=None unit=None conf=1.00
+2026-04-09 23:40:07 [INFO] db: Restocked dal: +1.0 piece → 61.0 total
+2026-04-09 23:40:22 [INFO] pipeline: Processing: 'दाल का स्टॉक 30 केजी है। अपडेट करो।' (voice=False)
+2026-04-09 23:40:22 [INFO] pipeline: Intent=ADD item=dal kejee apdet qty=30.0 unit=piece conf=0.50
+2026-04-09 23:40:22 [INFO] db: New item dal kejee apdet: 30.0 piece added
+2026-04-09 23:40:47 [INFO] pipeline: Processing: 'kaunsa product khatam hone wala hai' (voice=False)
+2026-04-09 23:41:06 [INFO] pipeline: Processing: 'next 3 din ka demand dikhao' (voice=False)
+2026-04-09 23:41:56 [INFO] pipeline: Processing: 's hafte kaunsa item expire hoga' (voice=False)
+2026-04-09 23:41:56 [INFO] pipeline: Intent=QUERY item=hafte expire hoga qty=None unit=None conf=0.50
+2026-04-09 23:42:33 [ERROR] llm: Groq API call failed: Connection error.
+2026-04-09 23:42:33 [WARNING] llm: LLM returned empty response (attempt 1)
+2026-04-09 23:42:58 [ERROR] llm: Groq API call failed: Connection error.
+2026-04-09 23:42:58 [WARNING] llm: LLM returned empty response (attempt 2)
+2026-04-09 23:43:02 [INFO] llm: LLM generated SQL (attempt 3): SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= d
+2026-04-09 23:43:11 [INFO] pipeline: Processing: 'iss hafte kaunsa item expire hoga' (voice=False)
+2026-04-09 23:43:11 [INFO] pipeline: Intent=QUERY item=iss hafte expire hoga qty=None unit=None conf=0.50
+2026-04-09 23:43:12 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= d
+2026-04-09 23:43:38 [INFO] pipeline: Processing: 'sab items ka expiry dikhao' (voice=False)
+2026-04-09 23:43:39 [INFO] pipeline: Intent=QUERY item=items expiry qty=None unit=None conf=0.75
+2026-04-09 23:44:23 [INFO] pipeline: Processing: 'बिस्किट का प्राइस ₹5 बढ़ा दो।' (voice=False)
+2026-04-09 23:44:23 [INFO] pipeline: Intent=ADD item=biskit prais ba qty=5.0 unit=piece conf=1.00
+2026-04-09 23:44:23 [INFO] db: New item biskit prais ba: 5.0 piece added
+2026-04-09 23:46:03 [INFO] pipeline: Processing: 'biscuit ka price 5 rupay badhao' (voice=False)
+2026-04-09 23:46:03 [INFO] pipeline: Intent=PRICE item=biscuit qty=5.0 unit=piece conf=1.00
+2026-04-09 23:46:03 [INFO] db: Price updated for biscuit: 20.0 → 25.0
+2026-04-09 23:46:14 [INFO] pipeline: Processing: 'बिस्किट का प्राइस ₹5 बढ़ाओ?' (voice=False)
+2026-04-09 23:46:14 [INFO] pipeline: Intent=QUERY item=biskit prais ba qty=5.0 unit=piece conf=0.30
+2026-04-09 23:46:28 [INFO] pipeline: Processing: 'बिस्किट का प्राइस ₹5 बढ़ाओ?' (voice=False)
+2026-04-09 23:46:28 [INFO] pipeline: Intent=QUERY item=biskit prais ba qty=5.0 unit=piece conf=0.30
+2026-04-09 23:47:06 [INFO] pipeline: Processing: 'saari dal category 10% mehengi karo' (voice=False)
+2026-04-09 23:47:06 [INFO] pipeline: Intent=ADD item=saari dal category % mehengi qty=10.0 unit=piece conf=0.50
+2026-04-09 23:47:06 [INFO] db: New item saari dal category % mehengi: 10.0 piece added
+2026-04-09 23:48:46 [INFO] pipeline: Processing: 'chawal ka kya rate hai?' (voice=False)
+2026-04-09 23:48:46 [INFO] pipeline: Intent=PRICE item=chawal qty=None unit=None conf=0.75
+2026-04-09 23:49:02 [INFO] pipeline: Processing: 'aaj ki price change undo karo' (voice=False)
+2026-04-09 23:49:02 [INFO] pipeline: Intent=PRICE item=None qty=None unit=None conf=0.67
+2026-04-09 23:49:03 [INFO] llm: LLM generated SQL (attempt 1): SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory) ORDER BY changed_at D
+2026-04-09 23:49:23 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-09 23:49:23 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.80
+2026-04-09 23:49:24 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_name, quantity, timestamp FROM transactions WHERE DATE(timestamp) = DATE('now') AND type
+2026-04-09 23:50:07 [INFO] pipeline: Processing: '4 kg chawal ka order book karo' (voice=False)
+2026-04-09 23:50:07 [INFO] pipeline: Intent=ADD item=chawal order book qty=4.0 unit=piece conf=0.50
+2026-04-09 23:50:07 [INFO] db: New item chawal order book: 4.0 piece added
+2026-04-09 23:50:31 [INFO] pipeline: Processing: 'chawal order book nikalo' (voice=False)
+2026-04-09 23:50:31 [INFO] pipeline: Intent=ORDER item=chawal order book qty=None unit=None conf=1.00
+2026-04-09 23:50:31 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_id, quantity, timestamp FROM transactions WHERE LOWER((SELECT name FROM inventory WHERE 
+2026-04-09 23:50:52 [INFO] pipeline: Processing: 'sara sale dikhao' (voice=False)
+2026-04-09 23:50:52 [INFO] pipeline: Intent=SELL item=sara sale qty=None unit=None conf=0.50
+2026-04-09 23:50:52 [WARNING] pipeline: SELL rejected: Item 'sara sale' not found in inventory
+2026-04-09 23:51:04 [INFO] pipeline: Processing: 'poora sale dikhao' (voice=False)
+2026-04-09 23:51:04 [INFO] pipeline: Intent=SELL item=poora sale qty=None unit=None conf=0.50
+2026-04-09 23:51:04 [WARNING] pipeline: SELL rejected: Item 'poora sale' not found in inventory
+2026-04-09 23:53:15 [INFO] pipeline: Processing: 'saari dal category 10% mehengi karo' (voice=False)
+2026-04-09 23:53:15 [INFO] pipeline: Intent=ADD item=saari dal category % mehengi qty=10.0 unit=piece conf=0.50
+2026-04-09 23:53:15 [INFO] db: Restocked saari dal category % mehengi: +10.0 piece → 20.0 total
+2026-04-09 23:53:56 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-09 23:53:56 [INFO] db: Running database migrations
+2026-04-09 23:53:56 [INFO] db: Database ready
+2026-04-09 23:53:57 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-09 23:53:57 [INFO] db: Running database migrations
+2026-04-09 23:53:57 [INFO] db: Database ready
+2026-04-09 23:54:09 [INFO] pipeline: Processing: 'poora sale dikhao' (voice=False)
+2026-04-09 23:54:09 [INFO] pipeline: Intent=QUERY item=None qty=None unit=None conf=0.75
+2026-04-10 07:19:02 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:19:02 [INFO] db: Running database migrations
+2026-04-10 07:19:02 [INFO] db: Database ready
+2026-04-10 07:19:14 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:19:14 [INFO] db: Running database migrations
+2026-04-10 07:19:14 [INFO] db: Database ready
+2026-04-10 07:20:25 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-10 07:20:25 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-10 07:20:32 [INFO] pipeline: Processing: 'arisi kitna irukku' (voice=False)
+2026-04-10 07:20:32 [INFO] pipeline: Intent=QUERY item=arisi irukku qty=None unit=None conf=1.00
+2026-04-10 07:23:07 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 07:23:15 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 07:23:17 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 07:23:19 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%arisi%'
+2026-04-10 07:26:12 [INFO] pipeline: Processing: 'कितना बचा है?' (voice=False)
+2026-04-10 07:26:12 [INFO] pipeline: Intent=QUERY item=bcha qty=None unit=None conf=1.00
+2026-04-10 07:26:13 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%bcha%'
+2026-04-10 07:26:20 [INFO] pipeline: Processing: 'आटा का स्टॉक कितना बचा है?' (voice=False)
+2026-04-10 07:26:20 [INFO] pipeline: Intent=QUERY item=atta bcha qty=None unit=None conf=1.00
+2026-04-10 07:26:20 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%atta%'
+2026-04-10 07:26:51 [INFO] pipeline: Processing: 'टीके जी, चावल आया ऐड करो।' (voice=False)
+2026-04-10 07:26:51 [INFO] pipeline: Intent=ADD item=teeke jee, chawal qty=None unit=None conf=1.00
+2026-04-10 07:26:51 [INFO] db: New item teeke jee, chawal: 1.0 piece added
+2026-04-10 07:27:07 [INFO] pipeline: Processing: '50 केजी चावल आया।' (voice=False)
+2026-04-10 07:27:07 [INFO] pipeline: Intent=ADD item=teeke jee, chawal qty=50.0 unit=piece conf=1.00
+2026-04-10 07:27:07 [INFO] db: Restocked teeke jee, chawal: +50.0 piece → 51.0 total
+2026-04-10 07:27:44 [INFO] pipeline: Processing: 'दाल का स्टॉक।' (voice=False)
+2026-04-10 07:27:44 [INFO] pipeline: Intent=QUERY item=dal qty=None unit=None conf=0.30
+2026-04-10 07:28:02 [INFO] pipeline: Processing: 'दाल का स्टॉक 30 केजी हैं। करेक्ट करो।' (voice=False)
+2026-04-10 07:28:02 [INFO] pipeline: Intent=ADD item=dal kejee krekt qty=30.0 unit=piece conf=0.50
+2026-04-10 07:28:02 [INFO] db: New item dal kejee krekt: 30.0 piece added
+2026-04-10 07:28:28 [INFO] pipeline: Processing: 'dal ka stock 30 kg hai add karo' (voice=False)
+2026-04-10 07:28:28 [INFO] pipeline: Intent=ADD item=dal qty=30.0 unit=piece conf=0.67
+2026-04-10 07:28:28 [INFO] db: Restocked dal: +30.0 piece → 91.0 total
+2026-04-10 07:29:16 [INFO] pipeline: Processing: 'future demand' (voice=False)
+2026-04-10 07:32:41 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:32:41 [INFO] db: Running database migrations
+2026-04-10 07:32:41 [INFO] db: Database ready
+2026-04-10 07:32:43 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:32:43 [INFO] db: Running database migrations
+2026-04-10 07:32:43 [INFO] db: Database ready
+2026-04-10 07:32:55 [INFO] pipeline: Processing: 'dal ka stock 30 kg hai add karo' (voice=False)
+2026-04-10 07:32:55 [INFO] pipeline: Intent=CORRECTION item=dal qty=30.0 unit=piece conf=0.75
+2026-04-10 07:33:04 [INFO] pipeline: Processing: 'dal ka stock 60 kg hai add karo' (voice=False)
+2026-04-10 07:33:04 [INFO] pipeline: Intent=CORRECTION item=dal qty=60.0 unit=piece conf=0.75
+2026-04-10 07:33:24 [INFO] pipeline: Processing: 'माल का स्टॉक 60 केजी है ऐड करो।' (voice=False)
+2026-04-10 07:33:24 [INFO] pipeline: Intent=ADD item=dal qty=60.0 unit=kg conf=0.67
+2026-04-10 07:33:24 [INFO] db: Restocked dal: +60.0 kg → 120.0 total
+2026-04-10 07:34:24 [INFO] pipeline: Processing: 'कौन सा आइटम एक्सपाइर होने वाला है?' (voice=False)
+2026-04-10 07:34:24 [INFO] pipeline: Intent=QUERY item=kaun sa aaitm ekspair hone vala qty=None unit=None conf=1.00
+2026-04-10 07:34:49 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 07:34:55 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 07:34:56 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 07:34:56 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= d
+2026-04-10 07:36:27 [INFO] pipeline: Processing: 'कौन सा आइटम एक्सपाइर होने वाला है?' (voice=False)
+2026-04-10 07:36:27 [INFO] pipeline: Intent=QUERY item=kaun sa aaitm ekspair hone vala qty=None unit=None conf=1.00
+2026-04-10 07:36:27 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= d
+2026-04-10 07:37:45 [INFO] pipeline: Processing: 'dal ka price 10% badho do' (voice=False)
+2026-04-10 07:37:45 [INFO] pipeline: Intent=PRICE item=dal badho qty=10.0 unit=piece conf=1.00
+2026-04-10 07:39:15 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:39:15 [INFO] db: Running database migrations
+2026-04-10 07:39:15 [INFO] db: Database ready
+2026-04-10 07:39:26 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 07:39:26 [INFO] db: Running database migrations
+2026-04-10 07:39:26 [INFO] db: Database ready
+2026-04-10 07:39:26 [INFO] pipeline: Processing: 'dal ka price 10% badho do' (voice=False)
+2026-04-10 07:39:26 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=piece conf=1.00
+2026-04-10 07:39:26 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 07:39:33 [INFO] pipeline: Processing: 'dal ka price 10% badho do' (voice=False)
+2026-04-10 07:39:33 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=piece conf=1.00
+2026-04-10 07:39:34 [INFO] db: Price updated for dal: 100.0 → 110.0
+2026-04-10 07:39:42 [INFO] pipeline: Processing: 'साल का प्राइस 10% बढ़ा दो।' (voice=False)
+2026-04-10 07:39:42 [INFO] pipeline: Intent=PRICE item=sal ba qty=10.0 unit=piece conf=1.00
+2026-04-10 07:39:52 [INFO] pipeline: Processing: 'साल का प्राइस 10% बढ़ा दो।' (voice=False)
+2026-04-10 07:39:52 [INFO] pipeline: Intent=PRICE item=sal ba qty=10.0 unit=piece conf=1.00
+2026-04-10 07:40:00 [INFO] pipeline: Processing: 'दाल का प्राइस 10% बढ़ा दो।' (voice=False)
+2026-04-10 07:40:00 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=piece conf=1.00
+2026-04-10 07:40:00 [INFO] db: Price updated for dal: 110.0 → 10.0
+2026-04-10 07:41:58 [INFO] pipeline: Processing: 'aaj ka price undo kar do' (voice=False)
+2026-04-10 07:41:58 [INFO] pipeline: Intent=PRICE item=None qty=None unit=None conf=0.67
+2026-04-10 07:43:57 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 07:44:04 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 07:44:05 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 07:44:07 [INFO] llm: LLM generated SQL (attempt 1): SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory) ORDER BY changed_at D
+2026-04-10 07:44:15 [INFO] pipeline: Processing: 'aaj ka price undo kar d' (voice=False)
+2026-04-10 07:44:15 [INFO] pipeline: Intent=PRICE item=None qty=None unit=None conf=0.67
+2026-04-10 07:44:15 [INFO] llm: LLM generated SQL (attempt 1): SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory) ORDER BY changed_at D
+2026-04-10 07:45:31 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-10 07:45:31 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.86
+2026-04-10 07:45:31 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_name, quantity, timestamp FROM transactions WHERE DATE(timestamp) = DATE('now') AND type
+2026-04-10 07:45:42 [INFO] pipeline: Processing: 'आज का पेंडिंग ऑर्डर्स दिखाओ।' (voice=False)
+2026-04-10 07:45:42 [INFO] pipeline: Intent=QUERY item=pedig rdrs qty=None unit=None conf=1.00
+2026-04-10 07:45:42 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_id, quantity, timestamp FROM transactions WHERE DATE(timestamp) = DATE('now') AND item_i
+2026-04-10 07:58:00 [INFO] pipeline: Processing: 'aaj ke pending orders dikhao' (voice=False)
+2026-04-10 07:58:00 [INFO] pipeline: Intent=QUERY item=pending orders qty=None unit=None conf=0.86
+2026-04-10 07:58:01 [INFO] llm: LLM generated SQL (attempt 1): SELECT item_name, quantity, timestamp FROM transactions WHERE DATE(timestamp) = DATE('now') AND type
+2026-04-10 09:48:32 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 09:48:32 [INFO] db: Running database migrations
+2026-04-10 09:48:32 [INFO] db: Database ready
+2026-04-10 09:48:34 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 09:48:34 [INFO] db: Running database migrations
+2026-04-10 09:48:34 [INFO] db: Database ready
+2026-04-10 09:49:27 [INFO] pipeline: Processing: 'dal ka price kya hai?' (voice=False)
+2026-04-10 09:49:27 [INFO] pipeline: Intent=PRICE item=dal qty=None unit=None conf=0.60
+2026-04-10 09:49:41 [INFO] pipeline: Processing: 'dal ka price 40 kar do' (voice=False)
+2026-04-10 09:49:41 [INFO] pipeline: Intent=PRICE item=dal qty=40.0 unit=piece conf=1.00
+2026-04-10 09:49:41 [INFO] db: Price updated for dal: 10.0 → 40.0
+2026-04-10 09:50:15 [INFO] pipeline: Processing: 'dal ka price 10% badhado' (voice=False)
+2026-04-10 09:50:15 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=piece conf=1.00
+2026-04-10 09:50:15 [INFO] db: Price updated for dal: 40.0 → 50.0
+2026-04-10 10:26:06 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana_trends.db
+2026-04-10 10:27:55 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 10:27:55 [INFO] db: Running database migrations
+2026-04-10 10:27:55 [INFO] db: Database ready
+2026-04-10 10:27:57 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 10:27:57 [INFO] db: Running database migrations
+2026-04-10 10:27:57 [INFO] db: Database ready
+2026-04-10 10:29:36 [INFO] pipeline: Processing: 'chawal kitna bacha hai' (voice=False)
+2026-04-10 10:29:36 [INFO] pipeline: Intent=QUERY item=chawal qty=None unit=None conf=1.00
+2026-04-10 10:29:40 [INFO] pipeline: Processing: 'sab items ki list dikhao' (voice=False)
+2026-04-10 10:29:40 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-10 10:29:49 [INFO] pipeline: Processing: 'future demand' (voice=False)
+2026-04-10 10:29:52 [INFO] pipeline: Processing: '50kg atta add karo' (voice=False)
+2026-04-10 10:29:52 [INFO] pipeline: Intent=ADD item=atta qty=50.0 unit=kg conf=1.00
+2026-04-10 10:29:52 [INFO] db: Restocked atta: +50.0 kg → 201.0 total
+2026-04-10 10:30:03 [INFO] pipeline: Processing: 'atta kitna hai' (voice=False)
+2026-04-10 10:30:03 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-10 10:30:15 [INFO] pipeline: Processing: '10 packet biscuit becha' (voice=False)
+2026-04-10 10:30:15 [INFO] pipeline: Intent=SELL item=biscuit qty=10.0 unit=packet conf=1.00
+2026-04-10 10:34:08 [INFO] pipeline: Processing: 'aata ka stock kitna bacha ha' (voice=False)
+2026-04-10 10:34:08 [INFO] pipeline: Intent=QUERY item=aata ha qty=None unit=None conf=1.00
+2026-04-10 10:34:41 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 10:34:49 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 10:34:50 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 10:34:51 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 10:34:51 [INFO] pipeline: Processing: 'aata ka stock kitna bacha ha' (voice=False)
+2026-04-10 10:34:51 [INFO] pipeline: Intent=QUERY item=aata ha qty=None unit=None conf=1.00
+2026-04-10 10:34:51 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 10:35:20 [INFO] pipeline: Processing: 'aata ka stock kitna bacha hai' (voice=False)
+2026-04-10 10:35:20 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-10 10:35:41 [INFO] pipeline: Processing: '50kg chawal aaya, add karo' (voice=False)
+2026-04-10 10:35:41 [INFO] pipeline: Intent=ADD item=chawal qty=50.0 unit=kg conf=1.00
+2026-04-10 10:35:41 [INFO] db: Restocked chawal: +50.0 kg → 131.0 total
+2026-04-10 10:36:08 [INFO] pipeline: Processing: 'dal ka stock 30kg hai, correct karo' (voice=False)
+2026-04-10 10:36:08 [INFO] pipeline: Intent=CORRECTION item=dal , correct qty=30.0 unit=kg conf=0.50
+2026-04-10 10:36:29 [INFO] pipeline: Processing: 'kaunsa product khatam hone wala hai?' (voice=False)
+2026-04-10 10:36:44 [INFO] pipeline: Processing: 's hafte kaunsa item expire hoga?' (voice=False)
+2026-04-10 10:36:44 [INFO] pipeline: Intent=QUERY item=hafte expire hoga qty=None unit=None conf=0.50
+2026-04-10 10:36:44 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= d
+2026-04-10 10:36:59 [INFO] pipeline: Processing: 'sab items ki list dikhao”' (voice=False)
+2026-04-10 10:36:59 [INFO] pipeline: Intent=QUERY item=items qty=None unit=None conf=1.00
+2026-04-10 10:37:22 [INFO] pipeline: Processing: 'subse zyada profit kaun sa item de raha hai?' (voice=False)
+2026-04-10 10:38:58 [INFO] pipeline: Processing: 'Diwali mein kya bikta hai?' (voice=False)
+2026-04-10 10:39:19 [INFO] pipeline: Processing: 'baarish mein kya bikta hai?' (voice=False)
+2026-04-10 10:41:36 [INFO] pipeline: Processing: 'chawal ka price 5 rupay badha do' (voice=False)
+2026-04-10 10:41:36 [INFO] pipeline: Intent=PRICE item=chawal qty=5.0 unit=piece conf=1.00
+2026-04-10 10:41:36 [INFO] db: Price updated for chawal: 55.0 → 60.0
+2026-04-10 10:42:06 [INFO] pipeline: Processing: 'dal ka price kya hai' (voice=False)
+2026-04-10 10:42:06 [INFO] pipeline: Intent=PRICE item=dal qty=None unit=None conf=0.60
+2026-04-10 10:42:45 [INFO] pipeline: Processing: 'dal ka price 10% badhao' (voice=False)
+2026-04-10 10:42:45 [INFO] pipeline: Intent=PRICE item=dal qty=10.0 unit=piece conf=1.00
+2026-04-10 10:42:45 [INFO] db: Price updated for dal: 90.0 → 100.0
+2026-04-10 10:44:10 [INFO] pipeline: Processing: 'biscuit ka kya rate hai' (voice=False)
+2026-04-10 10:44:10 [INFO] pipeline: Intent=PRICE item=biscuit qty=None unit=None conf=0.75
+2026-04-10 11:40:48 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:40:48 [INFO] db: Running database migrations
+2026-04-10 11:40:48 [INFO] db: Database ready
+2026-04-10 11:40:51 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:40:51 [INFO] db: Running database migrations
+2026-04-10 11:40:51 [INFO] db: Database ready
+2026-04-10 11:41:22 [INFO] pipeline: Processing: 'Aata ka stock kitna bacha hai?' (voice=False)
+2026-04-10 11:41:22 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-10 11:41:43 [INFO] pipeline: Processing: 'ata ka stock kitna bacha hai' (voice=False)
+2026-04-10 11:41:43 [INFO] pipeline: Intent=QUERY item=atta qty=None unit=None conf=1.00
+2026-04-10 11:41:56 [INFO] pipeline: Processing: 'आटा का स्टॉक कितना बचा है?' (voice=False)
+2026-04-10 11:41:56 [INFO] pipeline: Intent=QUERY item=atta bcha qty=None unit=None conf=1.00
+2026-04-10 11:42:13 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 11:42:22 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 11:42:22 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 11:42:23 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%atta%'
+2026-04-10 11:43:18 [INFO] pipeline: Processing: 'Chawal ka current quantity batao' (voice=False)
+2026-04-10 11:43:18 [INFO] pipeline: Intent=QUERY item=chawal current quantity qty=None unit=None conf=1.00
+2026-04-10 11:43:18 [INFO] llm: LLM generated SQL (attempt 1): SELECT quantity, unit FROM inventory WHERE LOWER(name) = 'chawal'
+2026-04-10 11:43:28 [INFO] pipeline: Processing: 'चावल का करंट क्वांटिटी बताओ।' (voice=False)
+2026-04-10 11:43:28 [INFO] pipeline: Intent=QUERY item=chawal kvatitee btao qty=None unit=None conf=0.30
+2026-04-10 11:43:29 [INFO] llm: LLM generated SQL (attempt 1): SELECT quantity, unit FROM inventory WHERE LOWER(name) LIKE '%chawal%'
+2026-04-10 11:44:06 [INFO] pipeline: Processing: '50kg chawal aaya hai, add karo' (voice=False)
+2026-04-10 11:44:06 [INFO] pipeline: Intent=ADD item=chawal qty=50.0 unit=kg conf=0.75
+2026-04-10 11:44:06 [INFO] db: Restocked chawal: +50.0 kg → 181.0 total
+2026-04-10 11:44:25 [INFO] pipeline: Processing: 'abb chawal itna hai?' (voice=False)
+2026-04-10 11:44:25 [INFO] pipeline: Intent=QUERY item=abb chawal itna qty=None unit=None conf=1.00
+2026-04-10 11:44:26 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%chawal%'
+2026-04-10 11:44:50 [INFO] pipeline: Processing: '10 litre tel add karo' (voice=False)
+2026-04-10 11:44:50 [INFO] pipeline: Intent=ADD item=tel qty=10.0 unit=litre conf=1.00
+2026-04-10 11:44:51 [INFO] db: New item tel: 10.0 litre added
+2026-04-10 11:45:00 [INFO] pipeline: Processing: '10 लीटर तेल ऐड।' (voice=False)
+2026-04-10 11:45:00 [INFO] pipeline: Intent=ADD item=leetr tel qty=10.0 unit=piece conf=1.00
+2026-04-10 11:45:00 [INFO] db: New item leetr tel: 10.0 piece added
+2026-04-10 11:46:01 [INFO] pipeline: Processing: '10 लीटर ऑइल ऐंड करो।' (voice=False)
+2026-04-10 11:46:01 [INFO] pipeline: Intent=ADD item=leetr il qty=10.0 unit=piece conf=1.00
+2026-04-10 11:46:01 [INFO] db: New item leetr il: 10.0 piece added
+2026-04-10 11:48:45 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:48:45 [INFO] db: Running database migrations
+2026-04-10 11:48:45 [INFO] db: Database ready
+2026-04-10 11:48:46 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:48:46 [INFO] db: Running database migrations
+2026-04-10 11:48:46 [INFO] db: Database ready
+2026-04-10 11:49:09 [INFO] pipeline: Processing: '10 litre tel add karo' (voice=False)
+2026-04-10 11:49:09 [INFO] pipeline: Intent=ADD item=tel qty=10.0 unit=litre conf=1.00
+2026-04-10 11:49:09 [INFO] db: Restocked tel: +10.0 litre → 20.0 total
+2026-04-10 11:49:22 [INFO] pipeline: Processing: '10 litre oil add karo' (voice=False)
+2026-04-10 11:49:22 [INFO] pipeline: Intent=ADD item=tel qty=10.0 unit=litre conf=1.00
+2026-04-10 11:49:22 [INFO] db: Restocked tel: +10.0 litre → 30.0 total
+2026-04-10 11:49:42 [INFO] pipeline: Processing: '10 लीटर तेल 8,00,00,000।' (voice=False)
+2026-04-10 11:49:42 [INFO] pipeline: Intent=QUERY item=tel qty=10.0 unit=litre conf=0.30
+2026-04-10 11:49:51 [INFO] pipeline: Processing: '10 लीटर तेल ऐड करें।' (voice=False)
+2026-04-10 11:49:51 [INFO] pipeline: Intent=ADD item=tel kre qty=10.0 unit=litre conf=1.00
+2026-04-10 11:49:51 [INFO] db: New item tel kre: 10.0 litre added
+2026-04-10 11:51:54 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:51:54 [INFO] db: Running database migrations
+2026-04-10 11:51:54 [INFO] db: Database ready
+2026-04-10 11:51:55 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 11:51:55 [INFO] db: Running database migrations
+2026-04-10 11:51:55 [INFO] db: Database ready
+2026-04-10 11:52:22 [INFO] pipeline: Processing: '10 लीटर तेल ऐड करें' (voice=False)
+2026-04-10 11:52:22 [INFO] pipeline: Intent=ADD item=tel qty=10.0 unit=litre conf=1.00
+2026-04-10 11:52:22 [INFO] db: Restocked tel: +10.0 litre → 40.0 total
+2026-04-10 11:52:40 [INFO] pipeline: Processing: 'Dal ka stock 30kg hai, correct karo' (voice=False)
+2026-04-10 11:52:40 [INFO] pipeline: Intent=CORRECTION item=dal , correct qty=30.0 unit=kg conf=0.50
+2026-04-10 11:52:50 [INFO] pipeline: Processing: 'Dal ka stock 60kg hai, correct karo' (voice=False)
+2026-04-10 11:52:50 [INFO] pipeline: Intent=CORRECTION item=dal , correct qty=60.0 unit=kg conf=0.50
+2026-04-10 11:53:41 [INFO] pipeline: Processing: 'Sugar ka stock 0 hai, update karo' (voice=False)
+2026-04-10 11:53:42 [INFO] pipeline: Intent=CORRECTION item=chini qty=0.0 unit=piece conf=0.80
+2026-04-10 11:54:42 [INFO] pipeline: Processing: 'Kaunsa item sabse kam quantity mein hai?' (voice=False)
+2026-04-10 11:54:42 [INFO] pipeline: Intent=QUERY item=sabse quantity qty=None unit=None conf=1.00
+2026-04-10 11:54:55 [INFO] pipeline: Processing: 'Kaunsa product khatam hone wala hai?' (voice=False)
+2026-04-10 12:03:36 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:03:36 [INFO] db: Running database migrations
+2026-04-10 12:03:36 [INFO] db: Database ready
+2026-04-10 12:03:37 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:03:37 [INFO] db: Running database migrations
+2026-04-10 12:03:37 [INFO] db: Database ready
+2026-04-10 12:03:58 [INFO] pipeline: Processing: 'Kaunsa item sabse kam quantity mein hai?' (voice=False)
+2026-04-10 12:03:58 [INFO] pipeline: Intent=QUERY item=sabse quantity qty=None unit=None conf=1.00
+2026-04-10 12:04:06 [INFO] pipeline: Processing: 'Kaunsa product khatam hone wala hai?' (voice=False)
+2026-04-10 12:04:24 [INFO] pipeline: Processing: 'Full inventory list dikhao' (voice=False)
+2026-04-10 12:04:24 [INFO] pipeline: Intent=QUERY item=full inventory qty=None unit=None conf=1.00
+2026-04-10 12:04:48 [INFO] pipeline: Processing: 'Aata kitne unit mein available hai?' (voice=False)
+2026-04-10 12:04:48 [INFO] pipeline: Intent=QUERY item=aata kitne unit qty=None unit=None conf=1.00
+2026-04-10 12:05:08 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 12:05:15 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 12:05:16 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 12:05:17 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 12:10:54 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:10:54 [INFO] db: Running database migrations
+2026-04-10 12:10:54 [INFO] db: Database ready
+2026-04-10 12:10:56 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:10:56 [INFO] db: Running database migrations
+2026-04-10 12:10:56 [INFO] db: Database ready
+2026-04-10 12:11:15 [INFO] pipeline: Processing: 'Aata kitne unit mein available hai' (voice=False)
+2026-04-10 12:11:15 [INFO] pipeline: Intent=QUERY item=aata kitne qty=None unit=None conf=1.00
+2026-04-10 12:11:34 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 12:11:41 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 12:11:42 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 12:11:43 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 12:12:43 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:12:43 [INFO] db: Running database migrations
+2026-04-10 12:12:43 [INFO] db: Database ready
+2026-04-10 12:12:44 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:12:44 [INFO] db: Running database migrations
+2026-04-10 12:12:44 [INFO] db: Database ready
+2026-04-10 12:13:06 [INFO] pipeline: Processing: 'Aata kitne unit mein available hai' (voice=False)
+2026-04-10 12:13:06 [INFO] pipeline: Intent=QUERY item=aata kitne qty=None unit=None conf=1.00
+2026-04-10 12:13:34 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 12:13:42 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 12:13:44 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 12:13:45 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 12:13:45 [INFO] pipeline: Processing: 'Aata kitne unit mein available hai' (voice=False)
+2026-04-10 12:13:45 [INFO] pipeline: Intent=QUERY item=aata kitne qty=None unit=None conf=1.00
+2026-04-10 12:13:46 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%aata%'
+2026-04-10 12:15:08 [INFO] bill_processor: Auto-created customer: C366
+2026-04-10 12:15:08 [INFO] bill_processor: Updated inventory: atta qty=2.0, new_stock=199.0
+2026-04-10 12:15:08 [INFO] bill_processor: Recorded sale: atta qty=2.0 price=1000.0
+2026-04-10 12:15:08 [INFO] bill_processor: Updated inventory: chawal qty=1.0, new_stock=180.0
+2026-04-10 12:15:08 [INFO] bill_processor: Recorded sale: chawal qty=1.0 price=600.0
+2026-04-10 12:15:08 [INFO] bill_processor: Bill B499 processed successfully: 2 items
+2026-04-10 12:17:48 [INFO] bill_processor: Auto-created customer: C239
+2026-04-10 12:17:48 [INFO] bill_processor: Updated inventory: atta qty=2.0, new_stock=197.0
+2026-04-10 12:17:48 [INFO] bill_processor: Recorded sale: atta qty=2.0 price=1000.0
+2026-04-10 12:17:48 [INFO] bill_processor: Updated inventory: chawal qty=1.0, new_stock=179.0
+2026-04-10 12:17:48 [INFO] bill_processor: Recorded sale: chawal qty=1.0 price=600.0
+2026-04-10 12:17:48 [INFO] bill_processor: Bill B8873 processed successfully: 2 items
+2026-04-10 12:17:52 [ERROR] bill_processor: Bill validation failed: Bill ID 'B8873' already processed (duplicate)
+2026-04-10 12:17:53 [ERROR] bill_processor: Bill validation failed: Bill ID 'B8873' already processed (duplicate)
+2026-04-10 12:18:16 [ERROR] bill_processor: Bill validation failed: Bill ID 'B8873' already processed (duplicate)
+2026-04-10 12:18:34 [INFO] bill_processor: Updated inventory: atta qty=2.0, new_stock=195.0
+2026-04-10 12:18:34 [INFO] bill_processor: Recorded sale: atta qty=2.0 price=1000.0
+2026-04-10 12:18:34 [INFO] bill_processor: Updated inventory: chawal qty=1.0, new_stock=178.0
+2026-04-10 12:18:34 [INFO] bill_processor: Recorded sale: chawal qty=1.0 price=600.0
+2026-04-10 12:18:34 [INFO] bill_processor: Bill B8879 processed successfully: 2 items
+2026-04-10 12:21:07 [INFO] pipeline: Processing: 'Bhai 5kg chawal add karo aur uska price bhi 2 rupaye badha do' (voice=False)
+2026-04-10 12:21:07 [INFO] pipeline: Intent=PRICE item=bhai chawal aur uska bhi qty=5.0 unit=kg conf=0.67
+2026-04-10 12:37:24 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:37:24 [INFO] db: Running database migrations
+2026-04-10 12:37:24 [INFO] db: Database ready
+2026-04-10 12:37:26 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:37:26 [INFO] db: Running database migrations
+2026-04-10 12:37:26 [INFO] db: Database ready
+2026-04-10 12:37:49 [INFO] pipeline: Processing: 'weather ke hisaab se kya bik raha hai?' (voice=False)
+2026-04-10 12:38:40 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:38:40 [INFO] db: Running database migrations
+2026-04-10 12:38:40 [INFO] db: Database ready
+2026-04-10 12:38:42 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:38:42 [INFO] db: Running database migrations
+2026-04-10 12:38:42 [INFO] db: Database ready
+2026-04-10 12:38:49 [INFO] pipeline: Processing: 'weather ke hisaab se kya bik raha hai?' (voice=False)
+2026-04-10 12:39:24 [INFO] pipeline: Processing: 'baarish mein kya bikta hai' (voice=False)
+2026-04-10 12:39:51 [INFO] pipeline: Processing: 'mausam ke hisaab se kya bikta hai' (voice=False)
+2026-04-10 12:42:10 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:42:10 [INFO] db: Running database migrations
+2026-04-10 12:42:10 [INFO] db: Database ready
+2026-04-10 12:42:12 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:42:12 [INFO] db: Running database migrations
+2026-04-10 12:42:12 [INFO] db: Database ready
+2026-04-10 12:42:25 [INFO] pipeline: Processing: 'mausam ke hisaab se kya bikta hai' (voice=False)
+2026-04-10 12:42:32 [INFO] pipeline: Processing: 'weather ke hisaab se kya bik raha hai?' (voice=False)
+2026-04-10 12:42:45 [INFO] pipeline: Processing: 'baarish mein kya bikta hai' (voice=False)
+2026-04-10 12:43:22 [INFO] pipeline: Processing: 'garami mein kya bikta hain?' (voice=False)
+2026-04-10 12:43:23 [INFO] pipeline: Intent=QUERY item=garami bikta hain qty=None unit=None conf=1.00
+2026-04-10 12:43:43 [INFO] rag: Loading existing FAISS index from C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\app\rag\faiss_index.faiss
+2026-04-10 12:43:55 [INFO] rag: RAG retriever ready (FAISS mode)
+2026-04-10 12:43:56 [INFO] llm: Groq LLM client initialized (model: llama-3.3-70b-versatile)
+2026-04-10 12:43:57 [INFO] llm: LLM generated SQL (attempt 1): SELECT name, quantity, unit FROM inventory WHERE LOWER(name) LIKE '%garami%'
+2026-04-10 12:46:30 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:46:30 [INFO] db: Running database migrations
+2026-04-10 12:46:30 [INFO] db: Database ready
+2026-04-10 12:46:32 [INFO] db: Initializing database at C:\Users\Anushree\Desktop\Sem6\genAI\project_clone2\bolSql\kirana.db
+2026-04-10 12:46:32 [INFO] db: Running database migrations
+2026-04-10 12:46:32 [INFO] db: Database ready
