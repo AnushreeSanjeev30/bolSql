@@ -21,7 +21,7 @@ except ImportError:
 from app.db.database import init_db, get_all_items
 from pipeline import process
 from app.trends.classifier import detect_language
-from config import TRENDS_DB_PATH
+from config import TRENDS_DB_PATH, DB_PATH
 
 from app.trends.customer_engine import (
     compute_rfm,
@@ -398,21 +398,22 @@ async def upload_bill(bill: BillUploadRequest):
         result = processor.process_bill(bill_dict)
         
         if not result.success:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "success": False,
-                    "bill_id": result.bill_id,
-                    "message": result.message,
-                    "error": result.error,
-                    "items_processed": result.items_processed,
-                    "sales_records_created": result.sales_records_created,
-                    "inventory_updated": result.inventory_updated,
-                }
+            # Return error response (don't raise HTTPException)
+            return BillUploadResponse(
+                success=False,
+                bill_id=result.bill_id,
+                message=result.message,
+                items_processed=result.items_processed,
+                sales_records_created=result.sales_records_created,
+                inventory_updated=result.inventory_updated,
+                trends_refreshed=False,
+                warnings=result.warnings if hasattr(result, 'warnings') else None,
+                error=result.error,
             )
         
         # Refresh trends after successful bill processing
-        trends_refreshed = refresh_trends_after_bill(str(DB_PATH))
+        from config import DB_PATH as CONFIG_DB_PATH
+        trends_refreshed = refresh_trends_after_bill(str(CONFIG_DB_PATH))
         
         return BillUploadResponse(
             success=True,
@@ -425,18 +426,18 @@ async def upload_bill(bill: BillUploadRequest):
             warnings=result.warnings if hasattr(result, 'warnings') else None,
         )
     
-    except HTTPException:
-        raise
     except Exception as e:
         import traceback
         log_msg = traceback.format_exc()
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "success": False,
-                "message": "Internal server error processing bill",
-                "error": str(e),
-            }
+        return BillUploadResponse(
+            success=False,
+            bill_id="ERROR",
+            message="Internal server error processing bill",
+            items_processed=0,
+            sales_records_created=0,
+            inventory_updated=False,
+            trends_refreshed=False,
+            error=str(e),
         )
 
 

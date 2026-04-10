@@ -391,12 +391,15 @@ def validate_and_process_bill(bill: Dict) -> Tuple[bool, str]:
     return result.success, result.message
 
 
-def refresh_trends_after_bill(db_path: str = str(DB_PATH)) -> bool:
+def refresh_trends_after_bill(db_path: str = None) -> bool:
     """
     Trigger trends recalculation after bill processing.
     Called automatically after successful bill upload.
     Recalculates customer-level and core trends.
     """
+    if db_path is None:
+        db_path = str(DB_PATH)
+    
     try:
         from app.trends.customer_engine import compute_rfm, compute_ltv, predict_churn
         from app.trends.engine import TrendsEngine
