@@ -82,6 +82,11 @@ export default function BillUploadPanel({ onBillProcessed }) {
 
       setResult(response)
       
+      // Handle error response
+      if (!response.success) {
+        throw new Error(response.error || response.message || 'Bill processing failed')
+      }
+      
       // Reset form on success
       if (response.success) {
         setBill({
@@ -98,6 +103,7 @@ export default function BillUploadPanel({ onBillProcessed }) {
         }
       }
     } catch (err) {
+      console.error('Bill upload error:', err)
       setError(err.message || 'Failed to process bill')
     } finally {
       setLoading(false)
@@ -160,7 +166,7 @@ export default function BillUploadPanel({ onBillProcessed }) {
         bill_id: String(importedBill.bill_id || ''),
         customer_id: String(importedBill.customer_id || ''),
         customer_name: String(importedBill.customer_name || ''),
-        timestamp: importedBill.timestamp || new Date().toISOString().slice(0, 16),
+        timestamp: importedBill.timestamp || new Date().toISOString().slice(0, 19),
         items: formattedItems,
       })
 
