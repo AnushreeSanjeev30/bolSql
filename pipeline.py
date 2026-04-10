@@ -43,6 +43,8 @@ from app.trends.customer_engine import (
     basket_size_trend,
 )
 from app.trends.formatter import format_customer_result, get_greeting
+from app.weather.weather import get_weather
+from app.weather.suggestions import get_weather_suggestions, format_weather_suggestion
 
 log = get_logger("pipeline")
 
@@ -104,7 +106,10 @@ class PipelineResult:
 
 
 def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
-    """Direct ADD: no LLM needed when NLP extracted enough info."""
+    """Direct ADD: no LLM needed when NLP extracted enough info.
+    
+    Includes weather-based product suggestions when available.
+    """
     if not parsed.item_name:
         response_map = {
             "hinglish": "Kaunsa item add karna hai? Dobara boliye.",
@@ -121,10 +126,34 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
 
     try:
         row = upsert_item(parsed.item_name, qty, unit)
+        
+        # Get base response
         if language == "tamil":
             response = f"✓ {qty} {unit} {parsed.item_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
         else:
             response = f"✓ {qty} {unit} {parsed.item_name} add ho gaya. Ab total {row['quantity']} {row['unit']} hai."
+        
+        # Try to add weather-based suggestions
+        try:
+            weather_data = get_weather()
+            if weather_data:
+                suggestions = get_weather_suggestions(
+                    weather_data.get("condition", "clear"),
+                    parsed.item_name,
+                    language
+                )
+                if suggestions:
+                    response += "\n\n" + suggestions["message"]
+                    if suggestions.get("products"):
+                        products_str = ", ".join(suggestions["products"][:3])
+                        if language == "tamil":
+                            response += f"\n💡 {products_str} la stoch pannunga!"
+                        else:
+                            response += f"\n💡 {products_str} ka bhi stock dekh lena!"
+        except Exception as e:
+            log.warning(f"Weather suggestion addition failed: {e}")
+            pass  # Continue without weather suggestions if API fails
+        
         return PipelineResult(
             success=True,
             response=response,
