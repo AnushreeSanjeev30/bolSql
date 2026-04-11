@@ -636,8 +636,9 @@ DEVANAGARI_SPECIAL = {
 # Combined mapping for transliteration
 DEVANAGARI_MAP = {**DEVANAGARI_VOWELS, **DEVANAGARI_MATRAS, **DEVANAGARI_CONSONANTS, **DEVANAGARI_SPECIAL}
 
-# Item-specific mapping (for common food items only)
+# Item / concept-specific mapping (for common food items and key terms)
 ITEM_NAME_MAP = {
+    # Core items
     'पोटोज': 'potaj', 'पोटो': 'poto', 'आलू': 'aloo', 'आलो': 'aalo',
     'मंगोज': 'mangoj', 'मंगो': 'mango', 'आम': 'aam',
     'एप्पल': 'apple', 'सेब': 'seb',
@@ -645,6 +646,12 @@ ITEM_NAME_MAP = {
     'चावल': 'chawal', 'दाल': 'dal', 'अता': 'atta', 'आटा': 'atta',
     'तेल': 'tel', 'नमक': 'namak', 'चीनी': 'chini',
     'प्याज': 'pyaj', 'लहसुन': 'lahsun',
+
+    # Customer / subscription concepts so they survive transliteration
+    'कस्टमर': 'customer',
+    'ग्राहक': 'grahak', 'ग्राहकों': 'grahak',
+    'सब्सक्रिप्शन': 'subscription', 'सबस्क्रिप्शन': 'subscription',
+    'बस्क्रिप्शन': 'subscription',
 }
 
 

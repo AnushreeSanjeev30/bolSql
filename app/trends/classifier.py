@@ -226,6 +226,19 @@ def classify_trend(query: str) -> Tuple[Optional[str], dict]:
         # → ("sales_trend", {"days": 7})
     """
     query_lower = query.lower().strip()
+
+    # Special-case: queries explicitly asking for a *list* of
+    # "subscription customers" / "regular monthly order" customers
+    # are better handled by the LLM+RAG Text-to-SQL path (we have
+    # dedicated SQL examples for these). Avoid classifying them as
+    # auto_subscription trends, which only show a generic pattern
+    # message when data is sparse.
+    if (
+        "subscription" in query_lower and "customer" in query_lower and "list" in query_lower
+    ) or (
+        "regular monthly order" in query_lower and "list" in query_lower
+    ):
+        return None, {}
     for pattern, trend_type, extractor in TREND_PATTERNS:
         m = re.search(pattern, query_lower)
         if m:

@@ -43,6 +43,11 @@ STRICT RULES:
 12. For price rollback: SELECT old_price FROM price_history WHERE item_id = (SELECT id FROM inventory WHERE LOWER(name) LIKE '%item%') ORDER BY changed_at DESC LIMIT 1
 13. For expiry checks: SELECT name, expiry_date FROM inventory WHERE expiry_date IS NOT NULL AND datetime(expiry_date) <= datetime('now', '+7 days')
 14. For viewing orders: SELECT * FROM orders WHERE status = 'pending' ORDER BY order_date DESC
+15. You MAY use JOINs and subqueries. Prefer these joins when needed:
+    - transactions.customer_id = customers.customer_id
+    - transactions.item_id = inventory.id
+    - customer_segments.customer_id = customers.customer_id
+    - orders.customer_id = customers.customer_id
 
 EXAMPLES:
 - Stock correction: UPDATE inventory SET quantity = 30 WHERE LOWER(name) LIKE '%dal%'

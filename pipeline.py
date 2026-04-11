@@ -30,7 +30,7 @@ from app.db.database import (
     get_orders_by_status,
 )
 
-from app.trends import TrendsPipeline
+from app.trends import TrendsPipeline, classify_trend
 from app.trends.monthly_report import maybe_generate_monthly_report, generate_monthly_report
 from app.trends.customer_engine import (
     compute_rfm,
@@ -130,7 +130,8 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
         r"(\d+(?:\.\d+)?)\s+"  # quantity
         r"(kg|kgs|kilo|kilogram|kilograms|litre|liter|litres|liters|l|lt|ltr|"
         r"packet|packets|pack|pkt|piece|pieces|pc|pcs|dozen|doz)\s+"  # unit
-        r"([a-zA-Z ]+?)(?=\s+aur\b|\s+and\b|\s+add\b|\s+karo\b|$)",
+        # Item phrase ends before 'aur/and/or/add/karo' or end of sentence
+        r"([a-zA-Z ]+?)(?=\s+aur\b|\s+and\b|\s+or\b|\s+add\b|\s+karo\b|$)",
     )
     matches = list(multi_pattern.finditer(raw_l))
 
@@ -154,6 +155,9 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
         for m in matches:
             qty_str, unit_raw, name_raw = m.groups()
             qty = float(qty_str)
+            # Ignore no-op segments like "0 packet chai" in multi-add
+            if qty <= 0:
+                continue
             unit = _normalize_unit(unit_raw)
             item_name = name_raw.strip()
             # Clean trailing filler words that may stick to the item segment
@@ -258,6 +262,79 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
             response=response_map.get(language, response_map["hinglish"]),
             error=str(e),
         )
+
+
+def _handle_weather_recommendation(language: str = "hinglish") -> PipelineResult:
+    """Answer high-level "weather ke hisaab se kya saman rakho" style queries.
+
+    Uses the live weather API + suggestion map instead of treating the
+    sentence as an ADD for a fake item name like "weather hisaab se
+    suggestion rakhna chahiye".
+    """
+    try:
+        weather_data = get_weather()
+    except Exception as e:  # pragma: no cover - defensive
+        log.warning("Weather API error: %s", e)
+        weather_data = None
+
+    if not weather_data:
+        if language == "tamil":
+            response = (
+                "Weather data available illa, aana general-aa tea, coffee, biscuits, "
+                "snacks, cold drinks la konjam extra stock vachi irunga."
+            )
+        else:
+            response = (
+                "Weather API se data nahi mila, lekin generally chai, coffee, biscuits, "
+                "snacks aur thande drinks ka stock ready rakhna safe rehta hai."
+            )
+        return PipelineResult(success=True, response=response, intent="QUERY")
+
+    condition = weather_data.get("condition", "unknown")
+    suggestions = get_weather_suggestions(condition, "dukaan", language)
+
+    if not suggestions:
+        if language == "tamil":
+            response = (
+                "Innikki weather normal maathiri irukku. Tea, coffee, biscuits, snacks, "
+                "cold drinks la standard stock podhum."
+            )
+        else:
+            response = (
+                "Aaj ka weather normal lag raha hai. Chai, coffee, biscuits, snacks aur "
+                "cold drinks ka normal stock rakho."
+            )
+        return PipelineResult(success=True, response=response, intent="QUERY")
+
+    products = suggestions.get("products", [])
+    weather_desc = weather_data.get("description", condition).title()
+    temp = weather_data.get("temperature")
+
+    lines = []
+    if language == "tamil":
+        if temp is not None:
+            lines.append(f"Innikki weather: {weather_desc} (~{temp:.1f}°C).")
+        else:
+            lines.append(f"Innikki weather: {weather_desc}.")
+    else:
+        if temp is not None:
+            lines.append(f"Aaj ka weather: {weather_desc} (~{temp:.1f}°C).")
+        else:
+            lines.append(f"Aaj ka weather: {weather_desc}.")
+
+    msg = suggestions.get("message")
+    tip = suggestions.get("weather_tip")
+    if msg:
+        lines.append(msg)
+    if products:
+        if language == "tamil":
+            lines.append("Suggested items stock pannunga: " + ", ".join(products[:6]))
+        else:
+            lines.append("In items ka stock ready rakho: " + ", ".join(products[:6]))
+    if tip:
+        lines.append(f"💡 {tip}")
+
+    return PipelineResult(success=True, response="\n".join(lines), intent="QUERY")
 
 
 def _handle_sell(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
@@ -369,7 +446,15 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
     # skip direct inventory handling and let the LLM+RAG path or customer analytics
     # handle it. This avoids returning "poora stock" for customer-based questions
     # like "jin customers ne ek hi din dal aur chawal dono kharida...".
-    if any(w in raw_lower for w in ["customer", "customers", "grahak", "client"]):
+    #
+    # Include common Hindi script variants as well so queries like
+    # "कस्टमर की लिस्ट दिखाओ" or "सब्सक्रिप्शन कस्टमर" don't trigger
+    # the generic "poora stock" handler.
+    customer_tokens = [
+        "customer", "customers", "grahak", "client",
+        "कस्टमर", "कस्टमर", "ग्राहक", "ग्राहकों",
+    ]
+    if any(w in raw_lower for w in customer_tokens):
         return None
 
     # Pending orders (e.g., "aaj ke pending orders dikhao")
@@ -1050,16 +1135,54 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
 
     log.info("Processing: '%s' (voice=%s)", text, is_voice)
 
+    text_lower = text.lower()
+
     # CRITICAL FIX: Check trends BEFORE transliteration to preserve Hindi patterns
-    # This ensures Hindi market basket queries work correctly
-    if _trends_pipeline is not None and _trends_pipeline.is_trend_query(text):
-        trend_response = _trends_pipeline.process(text, language=language)
-        if trend_response:
-            return PipelineResult(
-                success=True,
-                response=trend_response,
-                intent="TREND",
-            )
+    # This ensures Hindi market basket queries work correctly.
+    #
+    # Additionally, for weather-related trend questions like
+    #   "garmi bahut hai, kaunse thande drinks aur ice cream zyada bikenge"
+    # we want BOTH:
+    #   1) historical analytics from the trends engine, and
+    #   2) a live-weather suggestion line from the WeatherSuggestions helper.
+    #
+    # However, for explicit "weather ke hisaab se suggestion do" style
+    # questions, we *skip* the trends engine and go directly to the
+    # weather suggestion helper further below.
+    is_explicit_weather_suggestion = (
+        ("weather" in text_lower or "mausam" in text_lower)
+        and ("suggestion" in text_lower or "saman" in text_lower or "stock" in text_lower)
+    )
+
+    if _trends_pipeline is not None and not is_explicit_weather_suggestion:
+        trend_type, _ = classify_trend(text)
+        if trend_type and trend_type != "monthly_report":
+            trend_response = _trends_pipeline.process(text, language=language)
+            if trend_response:
+                # For weather_trend, append a live-weather suggestion block
+                # on top of the historical analytics from the trends engine.
+                if trend_type == "weather_trend":
+                    try:
+                        weather_result = _handle_weather_recommendation(language=language)
+                        extra = f"\n\n{weather_result.response}" if weather_result and weather_result.response else ""
+                    except Exception as e:  # pragma: no cover - defensive
+                        log.warning("Weather suggestion for weather_trend failed: %s", e)
+                        extra = ""
+
+                    return PipelineResult(
+                        success=True,
+                        response=trend_response + extra,
+                        intent="TREND",
+                        trend_type=trend_type,
+                    )
+
+                # All other trend types behave as before
+                return PipelineResult(
+                    success=True,
+                    response=trend_response,
+                    intent="TREND",
+                    trend_type=trend_type,
+                )
 
     # Step 1: NLP parsing — route to LLM parser for voice, rule-based for text
     if is_voice:
@@ -1081,6 +1204,18 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
         parsed.unit,
         parsed.confidence,
     )
+
+    # Weather recommendation queries like
+    #   "aaj ke weather ke hisaab se suggestion do ki kya saman rakhna chahiye"
+    # should not be treated as ADD for a fake item name. If the user explicitly
+    # mentions "weather" and asks for a "suggestion" / "kya saman/stock rakhna",
+    # answer via the weather suggestion engine instead of inventory ADD.
+    if (
+        "weather" in text_lower or "mausam" in text_lower
+    ) and (
+        "suggestion" in text_lower or "saman" in text_lower or "stock" in text_lower
+    ):
+        return _handle_weather_recommendation(language=language)
 
     # Step 1.5: customer analytics specific patterns (including monthly report)
     customer_trend_type = _classify_customer_query(text)
