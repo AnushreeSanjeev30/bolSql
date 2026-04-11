@@ -212,6 +212,133 @@ EXAMPLES = [
         "sql": "SELECT name, quantity, unit FROM inventory WHERE LOWER(name) = 'chini'",
         "response": "aapke paas {quantity}kg chini bacha hai"
     },
+
+    # ── ADVANCED JOIN / NESTED ANALYTICS (inventory ↔ transactions) ──
+    {
+        "query": "pichle 7 din mein kaunse items sabse zyada bika, quantity aur revenue ke saath dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "SELECT i.name, "
+            "       SUM(t.quantity) AS total_qty, "
+            "       SUM(t.quantity * t.price) AS revenue "
+            "FROM transactions t "
+            "JOIN inventory i ON i.id = t.item_id "
+            "WHERE t.type = 'sale' "
+            "  AND DATE(t.timestamp) >= DATE('now', '-7 days') "
+            "GROUP BY i.name "
+            "ORDER BY revenue DESC "
+            "LIMIT 20"
+        ),
+        "response": "yeh hai last 7 din ke top selling items with quantity aur revenue"
+    },
+    {
+        "query": "jin items ka stock kam hai lekin pichle 30 din mein sale high tha, unki priority list dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "SELECT i.name, i.quantity, i.unit, "
+            "       COALESCE(s.sold_qty, 0) AS last_30d_sold "
+            "FROM inventory i "
+            "LEFT JOIN ( "
+            "  SELECT item_id, SUM(quantity) AS sold_qty "
+            "  FROM transactions "
+            "  WHERE type = 'sale' AND DATE(timestamp) >= DATE('now', '-30 days') "
+            "  GROUP BY item_id "
+            ") s ON s.item_id = i.id "
+            "WHERE i.quantity < 10 "
+            "  AND COALESCE(s.sold_qty, 0) > 0 "
+            "ORDER BY s.sold_qty DESC, i.quantity ASC "
+            "LIMIT 20"
+        ),
+        "response": "yeh items fast moving hain aur stock kam hai, inko jaldi restock karo"
+    },
+    {
+        "query": "pichle mahine ke total revenue mein se kaunse items 20 percent se zyada contribute kar rahe hain, list dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "WITH item_rev AS ( "
+            "  SELECT i.name, SUM(t.quantity * t.price) AS revenue "
+            "  FROM transactions t "
+            "  JOIN inventory i ON i.id = t.item_id "
+            "  WHERE t.type = 'sale' "
+            "    AND strftime('%Y-%m', t.timestamp) = strftime('%Y-%m', 'now', '-1 month') "
+            "  GROUP BY i.name "
+            "), total AS ( "
+            "  SELECT SUM(revenue) AS total_revenue FROM item_rev "
+            ") "
+            "SELECT ir.name, ir.revenue, "
+            "       ROUND((ir.revenue * 100.0) / total.total_revenue, 1) AS revenue_percent "
+            "FROM item_rev ir, total "
+            "WHERE total.total_revenue > 0 "
+            "  AND (ir.revenue * 100.0) / total.total_revenue >= 20.0 "
+            "ORDER BY ir.revenue DESC"
+        ),
+        "response": "yeh items pichle mahine ke revenue ka 20% se zyada hissa le rahe hain"
+    },
+    {
+        "query": "jin items ka daily average sale high hai aur stock sirf 3 din ke liye bacha hai, unki list dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "WITH daily AS ( "
+            "  SELECT item_id, DATE(timestamp) AS day, SUM(quantity) AS qty "
+            "  FROM transactions "
+            "  WHERE type = 'sale' AND DATE(timestamp) >= DATE('now', '-30 days') "
+            "  GROUP BY item_id, DATE(timestamp) "
+            "), avg_daily AS ( "
+            "  SELECT item_id, AVG(qty) AS avg_per_day "
+            "  FROM daily "
+            "  GROUP BY item_id "
+            ") "
+            "SELECT i.name, i.quantity, i.unit, a.avg_per_day, "
+            "       CASE WHEN a.avg_per_day > 0 THEN ROUND(i.quantity / a.avg_per_day, 1) ELSE NULL END AS days_of_stock "
+            "FROM inventory i "
+            "JOIN avg_daily a ON a.item_id = i.id "
+            "WHERE a.avg_per_day >= 1 "
+            "  AND a.avg_per_day IS NOT NULL "
+            "  AND (i.quantity / a.avg_per_day) <= 3 "
+            "ORDER BY days_of_stock ASC, a.avg_per_day DESC"
+        ),
+        "response": "yeh items high demand mein hain aur sirf 3 din ka stock bacha hai"
+    },
+    {
+        "query": "kaunse din biscuit ki sale uske average daily sale se zyada thi, dates aur quantity dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "WITH daily AS ( "
+            "  SELECT DATE(t.timestamp) AS day, SUM(t.quantity) AS qty "
+            "  FROM transactions t "
+            "  JOIN inventory i ON i.id = t.item_id "
+            "  WHERE t.type = 'sale' AND LOWER(i.name) = 'biscuit' "
+            "  GROUP BY DATE(t.timestamp) "
+            "), avg_val AS ( "
+            "  SELECT AVG(qty) AS avg_qty FROM daily "
+            ") "
+            "SELECT d.day, d.qty, ROUND(a.avg_qty, 2) AS avg_daily_qty "
+            "FROM daily d, avg_val a "
+            "WHERE d.qty > a.avg_qty "
+            "ORDER BY d.day DESC"
+        ),
+        "response": "yeh dates par biscuit ki sale uske average se zyada thi"
+    },
+
+    # ── CUSTOMER + ITEM CO-PURCHASE (joins on customers + transactions + inventory) ──
+    {
+        "query": "jin customers ne ek hi din dal aur chawal dono kharida, unki list dikhao",
+        "intent": "QUERY",
+        "sql": (
+            "SELECT DISTINCT c.customer_id, c.name, DATE(t1.timestamp) AS purchase_date "
+            "FROM transactions t1 "
+            "JOIN transactions t2 ON t1.customer_id = t2.customer_id "
+            "  AND DATE(t1.timestamp) = DATE(t2.timestamp) "
+            "JOIN inventory i1 ON i1.id = t1.item_id "
+            "JOIN inventory i2 ON i2.id = t2.item_id "
+            "LEFT JOIN customers c ON c.customer_id = t1.customer_id "
+            "WHERE LOWER(i1.name) LIKE '%dal%' "
+            "  AND LOWER(i2.name) LIKE '%chawal%' "
+            "  AND t1.type = 'sale' AND t2.type = 'sale' "
+            "ORDER BY purchase_date DESC"
+        ),
+        "response": "yeh customers ne ek hi din dal aur chawal saath kharida hai"
+    },
 ]
 
 
