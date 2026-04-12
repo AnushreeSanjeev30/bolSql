@@ -1,6 +1,4 @@
-Here’s updated README content you can paste into README.md; it reflects the backend, UI, trends, and seeding work you have now.
 
----
 
 # 🏪 VoiceSQL / KiranaSQL — Hinglish Kirana Intelligence
 
