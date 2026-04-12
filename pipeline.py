@@ -23,6 +23,7 @@ from app.safety.validator import validate_sql, safe_error_hinglish
 from app.db.database import (
     get_item,
     get_all_items,
+    get_all_customers,
     run_safe_query,
     sell_item,
     upsert_item,
@@ -72,6 +73,10 @@ def normalize_asr_input(text: str, is_voice: bool = False) -> str:
     if not is_voice:
         return text
     
+    # Fix common ASR glitches before further processing
+    # e.g., "orders" sometimes comes through as "rdrs"
+    text = re.sub(r"\brdrs\b", "orders", text, flags=re.IGNORECASE)
+
     # Remove common Hinglish filler words
     text = ASR_STRIP.sub("", text)
     
@@ -365,11 +370,80 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
     item = parsed.item_name
     raw_lower = parsed.raw_text.lower()
 
+    # Explicit customer list queries (e.g., "grahak ki list dikhao")
+    customer_words = [
+        "customer", "customers", "client",
+        "grahak", "grahk", "graahak",
+        "कस्टमर", "ग्राहक",
+    ]
+    # Support both Latin and Devanagari "list" for phrases like
+    # "grahak ki list dikhao" and "ग्राहक की लिस्ट दिखाओ".
+    list_words = [
+        "list", "list ", "ki list", "ki poori list", "ki puri list",
+        "लिस्ट",
+    ]
+
+    if any(w in raw_lower for w in customer_words) and any(l in raw_lower for l in list_words):
+        try:
+            customers = get_all_customers()
+        except Exception as e:
+            log.error("Customer list query failed: %s", e)
+            response_map = {
+                "hinglish": "Customer list nikaalte waqt problem aayi.",
+                "tamil": "Customer list edukkrathula problem irukku.",
+            }
+            return PipelineResult(
+                success=False,
+                response=response_map.get(language, response_map["hinglish"]),
+                error=str(e),
+            )
+
+        if not customers:
+            response_map = {
+                "hinglish": "Abhi tak koi customer record nahi hua. Jab bill banaoge toh yahan list dikhegi.",
+                "tamil": "Innum yaarum customer record illa. Bill pottathukku apram inga varum.",
+            }
+            return PipelineResult(
+                success=True,
+                response=response_map.get(language, response_map["hinglish"]),
+                intent="QUERY",
+                db_rows=[],
+            )
+
+        lines = []
+        for c in customers:
+            cid = c.get("customer_id") or "?"
+            name = c.get("name") or "Unknown"
+            locality = c.get("locality") or "-"
+            last_visit = c.get("last_visit") or "-"
+            lines.append(f"  • {cid}: {name} ({locality}) - last visit: {last_visit}")
+
+        response_map = {
+            "hinglish": "👥 Aapke customers ki list:\n",
+            "tamil": "👥 Ungal customers list:\n",
+        }
+        response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="QUERY",
+            db_rows=customers,
+        )
+
     # If the query is clearly about customers (jin customers, customer list, etc.),
     # skip direct inventory handling and let the LLM+RAG path or customer analytics
     # handle it. This avoids returning "poora stock" for customer-based questions
     # like "jin customers ne ek hi din dal aur chawal dono kharida...".
-    if any(w in raw_lower for w in ["customer", "customers", "grahak", "client"]):
+    # Include common Devanagari spellings like "कस्टमर" as well.
+    customer_keywords = [
+        # English / Hinglish forms
+        "customer", "customers", "client",
+        # Common Latin transliterations of "ग्राहक"
+        "grahak", "grahk", "graahak",
+        # Devanagari forms (when parse() is bypassed or raw text used)
+        "कस्टमर", "ग्राहक",
+    ]
+    if any(w in raw_lower for w in customer_keywords):
         return None
 
     # Pending orders (e.g., "aaj ke pending orders dikhao")
@@ -752,10 +826,22 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
             raw_l = parsed.raw_text.lower()
             current_price = float(item.get("price") or 0.0)
 
-            # Handle common Hinglish / Devanagari-transliterated variants.
-            # Devanagari "बढ़ाओ" often becomes "bdhao" after transliteration.
-            is_increase = any(kw in raw_l for kw in ["badha", "badhao", "bdhao", "badho", "increase", "inc"])
-            is_decrease = any(kw in raw_l for kw in ["kam kar", "kam karo", "kam kar do", "kam kardo", "decrease", "ghata", "dec"])
+            # Handle common Hinglish / Hindi (Devanagari) variants.
+            # Devanagari "बढ़ा/बढ़ाओ" can appear either as-is or transliterated
+            # as "badha", "bdhao", etc. Similarly, "कम" / "घटा" indicate
+            # price decrease.
+            increase_keywords = [
+                "badha", "badhao", "bdhao", "badho", "increase", "inc",
+                "बढ़ा", "बढ़ाओ", "बढा", "बढाओ",
+            ]
+            decrease_keywords = [
+                "kam kar", "kam karo", "kam kar do", "kam kardo",
+                "decrease", "ghata", "ghatao", "dec",
+                "कम", "कम करो", "कम कर", "घटा", "घटाओ",
+            ]
+
+            is_increase = any(kw in raw_l for kw in increase_keywords)
+            is_decrease = any(kw in raw_l for kw in decrease_keywords)
 
             # Check if this is a percentage-based update
             if parsed.unit == "percent":

@@ -79,13 +79,17 @@ TREND_PATTERNS = [
     (r"(?:rush|busy|peak|crowd)\s*(?:time|neram|hora)", "hourly_rush", lambda m: {}),  # Tamil: neram (time), hora (hour)
 
     # 3. Product Demand
-    (r"(?:sabse|most|sab se|top)\s*(?:zyada)?\s*(?:bik|sell|demand|popular|chalta)", "product_demand", lambda m: {}),
+    # Latin script: "is hafte subse/sabse zyada kya bika" etc.
+    (r"(?:sabse|sab se|subse|sub se|most|top)\s*(?:zyada|jyada)?(?:\s*kya)?\s*(?:bik|sell|demand|popular|chalta)", "product_demand", lambda m: {}),
     (r"popular\s*(?:item|product|maal|saman)", "product_demand", lambda m: {}),
     (r"(?:kya|kaun sa)\s*(?:zyada)?\s*bik\s*(?:raha|rahe|rahe hain)", "product_demand", lambda m: {}),
     (r"top\s*(?:products?|items?|sellers?)", "product_demand", lambda m: {}),
     (r"best\s*selling|highest\s*demand", "product_demand", lambda m: {}),
     (r"(?:most|sabse|top)\s*(?:popular|bikka|villnga)\s*(?:items?|saman)", "product_demand", lambda m: {}),  # Tamil: villnga (selling)
     (r"demand.*recent|recent.*demand|top.*selling", "product_demand", lambda m: {}),
+
+    # Devanagari: "इस हफ्ते सबसे ज्यादा क्या बिका" / "सबसे ज़्यादा क्या बिका"
+    (r"सबसे\s*(?:ज्यादा|ज़्यादा)\s*क्या\s*बिक", "product_demand", lambda m: {}),
 
     # 4. Seasonal Trend
     (r"(?:garmi|baarish|sardi|holi|diwali|mausam|season)\s*(?:mein)?\s*(?:kya|what|kaun sa)", "seasonal_trend",
@@ -172,6 +176,8 @@ TREND_PATTERNS = [
 
     # 14. Demand & Stock Risk
     (r"(?:future|aane wala|next)\s*(?:demand|jaroorat|requirement|zaroorat)", "demand_stock_risk", lambda m: {}),
+    # Devanagari forms: "फ्यूचर डिमांड दिखाओ", "आने वाली डिमांड"
+    (r"(?:फ्यूचर|फ़्यूचर|आने वाली|आने वाला)\s*(?:डिमांड|मांग|जरूरत)", "demand_stock_risk", lambda m: {}),
     (r"(?:next|aane wale)\s*(\d+)\s*(?:din|day)\s*(?:ka)?\s*(?:demand|jaroorat)", "demand_stock_risk", _days),
     (r"stock\s*(?:shortage|risk|khatam|danger|warn)", "demand_stock_risk", lambda m: {}),
     (r"khatam\s*(?:hone|ho jayega)\s*(?:wala|risk)", "demand_stock_risk", lambda m: {}),

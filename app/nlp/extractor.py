@@ -156,6 +156,8 @@ UNIT_MAP = {
     # Packets
     "packet": "packet", "packets": "packet", "pack": "packet",
     "pkt": "packet", "pouch": "packet", "pouches": "packet",
+    # Common ASR transliteration glitches for "packet"
+    "paiket": "packet",
     "पैकेट": "packet",
     # Dozen
     "dozen": "dozen", "doz": "dozen", "दर्जन": "dozen",
@@ -231,6 +233,9 @@ ITEM_ALIASES = {
     "garlic": "garlic", "lehsun": "garlic", "lasan": "garlic",
     # Savory snacks (namkeen)
     "namkeen": "namkeen", "namkin": "namkeen", "salty": "namkeen",
+    # Instant noodles / Maggi
+    "maggi": "maggi", "maggie": "maggi", "maigee": "maggi", "megii": "maggi",
+    "meggi": "maggi", "मैगी": "maggi",
 }
 
 

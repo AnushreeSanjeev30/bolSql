@@ -149,6 +149,22 @@ def get_all_items() -> list[dict]:
     return [dict(r) for r in rows]
 
 
+def get_all_customers(limit: int = 100) -> list[dict]:
+    """Return a list of customers ordered by last_visit (most recent first).
+
+    Limit the result size to avoid flooding the UI for large shops.
+    """
+    conn = get_conn()
+    try:
+        rows = conn.execute(
+            "SELECT * FROM customers ORDER BY last_visit DESC, customer_id LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
 def upsert_item(name: str, quantity: float, unit: str, price: float = 0.0) -> dict:
     """
     Add item if not exists, else add quantity to existing stock.
