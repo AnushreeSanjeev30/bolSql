@@ -536,3 +536,57 @@ def set_item_expiry(name: str, expiry_date: str) -> dict:
     
     log.info("Expiry date set for %s: %s", norm, expiry_date)
     return dict(updated)
+
+
+def get_today_orders(include_all_status: bool = True) -> list[dict]:
+    """Get today's orders.
+
+    By default returns all statuses for today's date, newest first.
+    """
+    conn = get_conn()
+    try:
+        if include_all_status:
+            rows = conn.execute(
+                """
+                SELECT * FROM orders
+                WHERE DATE(order_date) = DATE('now')
+                ORDER BY order_date DESC
+                """
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                """
+                SELECT * FROM orders
+                WHERE DATE(order_date) = DATE('now') AND status = 'pending'
+                ORDER BY order_date DESC
+                """
+            ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()
+
+
+def get_today_sales_summary() -> list[dict]:
+    """Return aggregated sales for today, grouped by item.
+
+    Each row contains: name, quantity, unit, and total_amount (quantity * price).
+    """
+    conn = get_conn()
+    try:
+        rows = conn.execute(
+            """
+            SELECT
+                COALESCE(t.item_name, i.name) AS name,
+                SUM(t.quantity) AS quantity,
+                COALESCE(i.unit, 'piece') AS unit,
+                SUM(t.quantity * COALESCE(t.price, 0)) AS total_amount
+            FROM transactions t
+            LEFT JOIN inventory i ON i.id = t.item_id
+            WHERE t.type = 'sale' AND DATE(t.timestamp) = DATE('now')
+            GROUP BY COALESCE(t.item_name, i.name), COALESCE(i.unit, 'piece')
+            ORDER BY quantity DESC, name
+            """
+        ).fetchall()
+        return [dict(r) for r in rows]
+    finally:
+        conn.close()

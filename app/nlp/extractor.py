@@ -643,6 +643,7 @@ DEVANAGARI_MAP = {**DEVANAGARI_VOWELS, **DEVANAGARI_MATRAS, **DEVANAGARI_CONSONA
 
 # Item-specific mapping (for common food items only)
 ITEM_NAME_MAP = {
+    # Core staples
     'पोटोज': 'potaj', 'पोटो': 'poto', 'आलू': 'aloo', 'आलो': 'aalo',
     'मंगोज': 'mangoj', 'मंगो': 'mango', 'आम': 'aam',
     'एप्पल': 'apple', 'सेब': 'seb',
@@ -650,6 +651,14 @@ ITEM_NAME_MAP = {
     'चावल': 'chawal', 'दाल': 'dal', 'अता': 'atta', 'आटा': 'atta',
     'तेल': 'tel', 'नमक': 'namak', 'चीनी': 'chini',
     'प्याज': 'pyaj', 'लहसुन': 'lahsun',
+
+    # Common kirana extras (butter, sauce, etc.)
+    'बटर': 'butter', 'बट्टर': 'butter',
+    'सॉस': 'sauce', 'सास': 'sauce',
+
+    # Order / orders (for Hindi "ऑर्डर(्स)") so queries like
+    # "आज के ऑर्डर्स दिखाओ" transliterate cleanly.
+    'ऑर्डर': 'order', 'ऑर्डर्स': 'orders',
 }
 
 

@@ -29,6 +29,8 @@ from app.db.database import (
     upsert_item,
     correct_stock,
     get_orders_by_status,
+    get_today_sales_summary,
+    get_today_orders,
 )
 
 from app.trends import TrendsPipeline
@@ -492,6 +494,123 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
             response=response,
             intent="QUERY",
             db_rows=orders,
+        )
+
+    # Non-pending order queries like "aaj ke orders dikhao" (in Hindi or Hinglish)
+    if ("order" in raw_lower or "orders" in raw_lower) and ("aaj" in raw_lower or "today" in raw_lower):
+        try:
+            today_orders = get_today_orders(include_all_status=True)
+        except Exception as e:
+            log.error("Today orders query failed: %s", e)
+            response_map = {
+                "hinglish": "Aaj ke orders nikaalte waqt problem aayi.",
+                "tamil": "Innikki orders edukkrathula problem irukku.",
+            }
+            return PipelineResult(
+                success=False,
+                response=response_map.get(language, response_map["hinglish"]),
+                error=str(e),
+            )
+
+        if not today_orders:
+            response_map = {
+                "hinglish": "Aaj ke orders mein abhi tak koi entry nahi hai.",
+                "tamil": "Innikki orders la innum entry illa.",
+            }
+            return PipelineResult(
+                success=True,
+                response=response_map.get(language, response_map["hinglish"]),
+                intent="QUERY",
+                db_rows=[],
+            )
+
+        lines = []
+        for o in today_orders:
+            oid = o.get("order_id", "?")
+            item_name = o.get("item_name", "?")
+            qty = o.get("quantity", 0)
+            unit = ""  # orders may not have a separate unit column
+            status = o.get("status", "?")
+            if unit:
+                desc = f"{oid}: {qty:g} {unit} {item_name} ({status})"
+            else:
+                desc = f"{oid}: {qty:g} {item_name} ({status})"
+            lines.append(desc)
+
+        header_map = {
+            "hinglish": "📦 Aaj ke orders:\n  • ",
+            "tamil": "📦 Innikki orders:\n  • ",
+        }
+        header = header_map.get(language, header_map["hinglish"])
+        response = header + "\n  • ".join(lines)
+
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="QUERY",
+            db_rows=today_orders,
+        )
+
+    # Daily sales summary (e.g., "aaj ka kitna sale hua")
+    # Recognize Hinglish/Devanagari-transliterated variants focusing on today's
+    # overall sale, and answer with a list of items sold.
+    if (
+        ("aaj" in raw_lower or raw_lower.startswith("aj ") or "aj ka" in raw_lower or "today" in raw_lower)
+        and ("sale" in raw_lower or "bikri" in raw_lower or "kitna" in raw_lower)
+    ):
+        try:
+            sales_rows = get_today_sales_summary()
+        except Exception as e:
+            log.error("Today sales summary failed: %s", e)
+            response_map = {
+                "hinglish": "Aaj ka sale summary nikaalte waqt problem aayi.",
+                "tamil": "Innikki sale summary edukkrathula problem irukku.",
+            }
+            return PipelineResult(
+                success=False,
+                response=response_map.get(language, response_map["hinglish"]),
+                error=str(e),
+            )
+
+        if not sales_rows:
+            response_map = {
+                "hinglish": "Aaj abhi tak koi sale nahi hua, 0 item becha gaya.",
+                "tamil": "Innikki ippo varikkum sale illa, 0 item vendiyathu.",
+            }
+            return PipelineResult(
+                success=True,
+                response=response_map.get(language, response_map["hinglish"]),
+                intent="QUERY",
+                db_rows=[],
+            )
+
+        # Build a friendly per-item list like "10 packet biscuit, 2 kg atta".
+        lines = []
+        for r in sales_rows:
+            name = r.get("name", "item")
+            qty = r.get("quantity", 0)
+            unit = r.get("unit", "")
+            if unit:
+                lines.append(f"{qty:g} {unit} {name}")
+            else:
+                lines.append(f"{qty:g} {name}")
+
+        if language == "tamil":
+            header = "Innikki sale la vendiya items: "
+        else:
+            header = "Aaj ka sale items: "
+
+        # Short list inline; longer lists on separate lines
+        if len(lines) <= 5:
+            response = header + ", ".join(lines)
+        else:
+            response = header + "\n  • " + "\n  • ".join(lines)
+
+        return PipelineResult(
+            success=True,
+            response=response,
+            intent="QUERY",
+            db_rows=sales_rows,
         )
     if any(word in raw_lower for word in ["kam", "low", "khatam", "shortage"]):
         rows = get_all_items()
