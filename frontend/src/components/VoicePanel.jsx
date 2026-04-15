@@ -246,7 +246,11 @@ const USER_LABELS = {
 }
 
 export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
-  const [messages, setMessages] = useState([])
+  const storageKey = `voice-chat-messages-${language}`
+  const [messages, setMessages] = useState(() => {
+    const saved = localStorage.getItem(storageKey)
+    return saved ? JSON.parse(saved) : []
+  })
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [recording, setRecording] = useState(false)
@@ -254,6 +258,11 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem(storageKey, JSON.stringify(messages))
+  }, [messages, storageKey])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -376,6 +385,22 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
           title={voiceEnabled ? 'Voice output: ON' : 'Voice output: OFF'}
         >
           {voiceEnabled ? '🔊' : '🔇'}
+        </button>
+        <button
+          style={{
+            ...s.speakerBtn(false),
+            background: 'var(--bg-card)',
+            color: 'var(--text-muted)',
+          }}
+          onClick={() => {
+            if (confirm('Clear all chat history?')) {
+              setMessages([])
+              localStorage.removeItem(storageKey)
+            }
+          }}
+          title="Clear chat history"
+        >
+          🗑️
         </button>
       </div>
 
