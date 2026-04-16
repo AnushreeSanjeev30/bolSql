@@ -64,6 +64,7 @@ ADD_KEYWORDS_TAMIL = [
 
 SELL_KEYWORDS = [
     r"\bbecha\b", r"\bbechi\b", r"\bbecho\b",
+    r"\bsell\b", r"\bsold\b",
     r"\bdiya\b", r"\bdiye\b", r"\bde\s+diya\b",
     r"\bgaya\b", r"\bgayi\b", r"\bgaye\b",
     r"\bnikala\b", r"\bnikali\b",
@@ -81,7 +82,7 @@ SELL_KEYWORDS_TAMIL = [
     r"\bthanda\b", r"\bthando\b",  # "தாண்டா" (over, finished)
     r"\bsold\s+pannunga\b", r"\bsale\s*pannunga\b",  # Taglish
     # Mixed Hindi-Tamil: support Hindi SELL keywords
-    r"\bbecha\b", r"\bgaya\b", r"\bsale\b",  # Hindi mixed with Tamil
+    r"\bbecha\b", r"\bgaya\b", r"\bsale\b", r"\bsell\b", r"\bsold\b",  # Hindi/English mixed with Tamil
 ]
 
 QUERY_KEYWORDS = [
@@ -524,6 +525,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bdikhao\b", r"\bshow\b", r"\baaj\b", r"\bkal\b", r"\bpachas\b",
         r"\bpahuncha\b", r"\baaya\b", r"\bnikala\b", r"\bnikali\b",
         r"\bbika\b", r"\bbiki\b", r"\bgayi\b", r"\bgaye\b",
+        r"\bsell\b", r"\bsold\b",
         r"\bcustomer\b", r"\bko\b", r"\bitem\b", r"\bsaman\b",
         r"\bkaunsa\b", r"\bwala\b", r"\bkam\b",
         r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\brupaye\b", r"\brupay\b",
@@ -532,7 +534,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bkre\b", r"\bkaren\b",  # करें/करे = do (Hindi verb)
         r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b", r"\binc\b", r"\bdec\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
-        r"\bkar\b", r"\bkarna\b", r"\bkar do\b",
+        r"\bkar\b", r"\bkarna\b", r"\bkar do\b", r"\bkrdo\b", r"\bkrde\b", r"\bkardo\b",
         r"\bquantity\b", r"\bqty\b", r"\bqts\b",  # Quantity keywords should be removed from item name
         r"\bmatra\b", r"\bparimaan\b", r"\bporshan\b",  # Hindi: quantity words
         # Generic unit words should not be part of item names

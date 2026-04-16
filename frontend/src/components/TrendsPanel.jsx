@@ -2,12 +2,15 @@ import { useState, useEffect } from 'react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { getAllTrends, exportTrendsPDF, exportTrendsJSON, getCurrentWeather } from '../api'
 
-export default function TrendsPanel({ language = 'hinglish' }) {
+export default function TrendsPanel({ language = 'hinglish', refreshKey = 0 }) {
   const [trends, setTrends] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [selectedTrend, setSelectedTrend] = useState(null)
   const [liveWeather, setLiveWeather] = useState(null)
+  const [showAIReasoning, setShowAIReasoning] = useState(false)
+  const [aiQuestion, setAIQuestion] = useState('')
+  const [aiReply, setAIReply] = useState('')
 
   const iconMap = {
     sales: '📊',
@@ -72,9 +75,290 @@ export default function TrendsPanel({ language = 'hinglish' }) {
 
   const sumNumeric = (items, key) => items.reduce((acc, item) => acc + (Number(item?.[key]) || 0), 0)
 
+  const getTrendDataRows = (trend) => {
+    if (Array.isArray(trend?.raw?.data)) return trend.raw.data
+    if (Array.isArray(trend?.raw)) return trend.raw
+    return []
+  }
+
+  const getSeasonalSeries = (trend) => {
+    const raw = Array.isArray(trend?.raw?.data) ? trend.raw.data : []
+    const mapped = raw
+      .map((row) => ({
+        month: row.month || row.period || '--',
+        qty: Number(row.qty ?? row.units ?? row.total_qty ?? 0),
+      }))
+      .filter((row) => row.month && !Number.isNaN(row.qty))
+    return mapped
+  }
+
+  const getSeasonalAI = (trend) => {
+    const series = getSeasonalSeries(trend)
+    if (!series.length) return null
+    const isTanglishLike = language === 'tanglish' || language === 'tamil'
+
+    const peak = series.reduce((best, row) => (row.qty > best.qty ? row : best), series[0])
+    const first = series[0].qty
+    const last = series[series.length - 1].qty
+    const growthPct = first > 0 ? ((last - first) / first) * 100 : 0
+    const recent3 = series.slice(-3)
+    const movingAvg = recent3.length ? recent3.reduce((a, b) => a + b.qty, 0) / recent3.length : last
+    const nextQty = Math.round((movingAvg * 0.7) + (last * 0.3))
+    const confidence = Math.max(58, Math.min(94, Math.round(62 + Math.min(series.length, 8) * 3 + (Math.abs(growthPct) <= 20 ? 10 : 2))))
+
+    const monthToken = String(peak.month).slice(5, 7)
+    const whyMap = {
+      '03': isTanglishLike ? 'Summer prep start aagudhu, beverages demand rise aagum.' : 'Summer prep starts, beverages begin to rise.',
+      '04': isTanglishLike ? 'Peak summer effect nala cool items demand increase aagudhu.' : 'Peak summer effect pushes cool-item demand up.',
+      '05': isTanglishLike ? 'Summer continuation nala cold products fast move aagudhu.' : 'Summer continuation keeps cold products moving fast.',
+      '10': isTanglishLike ? 'Festival season start nala snack and gifting pull varudhu.' : 'Festival season start boosts snack and gifting pull.',
+      '11': isTanglishLike ? 'Festival buying window nala footfall and basket size both improve aagudhu.' : 'Festival buying window lifts footfall and basket size.',
+      '12': isTanglishLike ? 'Year-end purchase cycle nala pantry refill activity increase aagudhu.' : 'Year-end purchase cycle increases pantry refills.',
+    }
+
+    const monthReason = whyMap[monthToken] || (isTanglishLike
+      ? 'Seasonal buying behavior and local demand cycle pattern match aagudhu.'
+      : 'Seasonal buying behavior and local demand cycle align here.')
+
+    return {
+      series,
+      peak,
+      growthPct,
+      nextQty,
+      confidence,
+      monthReason,
+    }
+  }
+
+  const seasonalActions = (trend) => {
+    const ai = getSeasonalAI(trend)
+    if (!ai) return []
+    const plus = Math.max(1, Math.round(ai.nextQty * 0.25))
+    const reduce = Math.max(1, Math.round(ai.nextQty * 0.1))
+    if (language === 'tanglish') {
+      return [
+        `Next cycle-ku fast movers stock ~25% increase pannunga (+${plus} units).`,
+        `Slow movers stock 10% reduce pannunga (~${reduce} units).`,
+        'Peak-ku 5 naal munnadi bulk purchase lock pannunga.',
+        'High-demand items counter pakkam display pannunga.',
+      ]
+    }
+    if (language === 'tamil') {
+      return [
+        `Adutha cycle-ku fast movers stock ~25% increase pannunga (+${plus} units).`,
+        `Slow movers stock 10% reduce pannunga (~${reduce} units).`,
+        'Peak-ku 5 naal munnadi bulk purchase lock pannunga.',
+        'High-demand items counter pakkathula display pannunga.',
+      ]
+    }
+    return [
+      `Increase fast-mover stock by ~25% before next cycle (+${plus} units).`,
+      `Reduce slow movers by ~10% (~${reduce} units) to free cash.`,
+      'Place bulk purchase order 5 days before expected peak.',
+      'Keep high-demand items near checkout for quicker conversion.',
+    ]
+  }
+
+  const roundToStep = (value, step = 5) => Math.max(0, Math.ceil(value / step) * step)
+
+  const getStockAI = (trend) => {
+    const raw = getTrendDataRows(trend)
+    const formatted = typeof trend?.formatted === 'string' ? trend.formatted : ''
+
+    const parsedFromFormatted = !raw.length && formatted
+      ? formatted
+          .split('\n')
+          .map((line) => {
+            const m = line.match(/(LOW|OK|HIGH)\s+(.+?):\s*([\d.]+)\s*units.*?([\d.]+)\s*days/i)
+            if (!m) return null
+            return {
+              item_name: m[2]?.trim(),
+              current_stock: Number(m[3]),
+              days_until_stockout: Number(m[4]),
+              risk_label: m[1]?.toUpperCase(),
+            }
+          })
+          .filter(Boolean)
+      : []
+
+    const sourceRows = raw.length ? raw : parsedFromFormatted
+    const today = new Date()
+    const items = sourceRows.map((row) => {
+      const item = row.item_name || row.item || row.name || 'Item'
+      const currentStock = Number(row.current_stock ?? row.stock_qty ?? row.stock ?? 0)
+      const avgDaily = Number(row.avg_daily_sales ?? row.daily_sales ?? row.avg_qty ?? 0)
+      const daysLeftGiven = Number(row.days_until_stockout)
+      const inferredDays = avgDaily > 0 ? currentStock / avgDaily : 9999
+      const daysLeft = Number.isFinite(daysLeftGiven) && daysLeftGiven > 0 ? daysLeftGiven : inferredDays
+      const leadTime = Number(row.lead_time_days ?? 5)
+      const safetyStock = Math.max(10, Math.round(avgDaily * 2.5))
+      const reorderQtyRaw = (avgDaily * leadTime) + safetyStock - currentStock
+      const reorderQty = roundToStep(Math.max(0, reorderQtyRaw), 5)
+      const threshold = Math.max(safetyStock, Math.round(avgDaily * 7))
+      const riskByDays = daysLeft <= 7 ? 'HIGH' : daysLeft <= 14 ? 'MEDIUM' : 'LOW'
+      const risk = row.risk_label || riskByDays
+      const stockoutDate = new Date(today)
+      stockoutDate.setDate(stockoutDate.getDate() + Math.max(0, Math.floor(daysLeft)))
+      const price = Number(row.unit_price ?? row.price ?? (row.revenue && row.qty ? row.revenue / row.qty : 40))
+      const lostUnits7d = Math.max(0, Math.round((avgDaily * 7) - currentStock))
+      const lostValue7d = Math.round(lostUnits7d * (Number.isFinite(price) && price > 0 ? price : 40))
+      return {
+        item,
+        currentStock,
+        avgDaily,
+        daysLeft,
+        leadTime,
+        safetyStock,
+        reorderQty,
+        threshold,
+        risk,
+        stockoutDate,
+        lostUnits7d,
+        lostValue7d,
+      }
+    }).filter((x) => x.item)
+
+    const sortedByRisk = [...items].sort((a, b) => a.daysLeft - b.daysLeft)
+    const nextStockout = sortedByRisk[0] || null
+    const criticalCount = items.filter((x) => x.daysLeft <= 3).length
+    const highRiskCount = items.filter((x) => x.risk === 'HIGH').length
+    const totalLostValue7d = items.reduce((acc, x) => acc + x.lostValue7d, 0)
+    return { items, nextStockout, criticalCount, highRiskCount, totalLostValue7d }
+  }
+
+  const stockActions = (trend) => {
+    const ai = getStockAI(trend)
+    if (!ai?.items?.length) return []
+    const top = ai.nextStockout
+    if (!top) return []
+    if (language === 'tamil' || language === 'tanglish') {
+      return [
+        `${top.item} reorder ${top.reorderQty} units within 48 hours.`,
+        `${top.item} minimum threshold ${top.threshold} units set pannunga.`,
+        'Fast-moving items-ku 20% buffer maintain pannunga.',
+      ]
+    }
+    return [
+      `Reorder ${top.item}: ${top.reorderQty} units within 48 hours.`,
+      `Set minimum threshold for ${top.item}: ${top.threshold} units.`,
+      'Increase safety buffer for fast-moving items by 20%.',
+    ]
+  }
+
+  const askStockAI = (trend, question) => {
+    const ai = getStockAI(trend)
+    if (!ai?.items?.length || !question?.trim()) return ''
+    const q = question.toLowerCase()
+    const top = ai.nextStockout
+    const isTanglishLike = language === 'tanglish' || language === 'tamil'
+    if (!top) return isTanglishLike ? 'Stock data insufficient.' : 'Insufficient stock data.'
+
+    if (q.includes('run out') || q.includes('first') || q.includes('stockout') || q.includes('mudu') || q.includes('theer')) {
+      return isTanglishLike
+        ? `${top.item} first stockout risk. Approx ${top.daysLeft.toFixed(1)} days left, expected date ${top.stockoutDate.toLocaleDateString('en-GB')}.`
+        : `${top.item} will run out first. About ${top.daysLeft.toFixed(1)} days left, expected stockout date ${top.stockoutDate.toLocaleDateString('en-GB')}.`
+    }
+    if (q.includes('reorder') || q.includes('order') || q.includes('how much') || q.includes('qty')) {
+      return isTanglishLike
+        ? `${top.item} ku reorder ${top.reorderQty} units suggest pannrom. Formula: (avg daily ${top.avgDaily.toFixed(1)} x lead ${top.leadTime}) + safety ${top.safetyStock} - current ${top.currentStock}.`
+        : `Recommended reorder for ${top.item}: ${top.reorderQty} units. Formula: (avg daily ${top.avgDaily.toFixed(1)} x lead ${top.leadTime}) + safety ${top.safetyStock} - current ${top.currentStock}.`
+    }
+    if (q.includes('7 day') || q.includes('simulate') || q.includes('loss')) {
+      return isTanglishLike
+        ? `Next 7 days no action-na approx lost sales ₹${ai.totalLostValue7d.toLocaleString()}.`
+        : `If no action is taken in next 7 days, estimated lost sales are ₹${ai.totalLostValue7d.toLocaleString()}.`
+    }
+    return isTanglishLike
+      ? `High risk items ${ai.highRiskCount}, critical ${ai.criticalCount}. Next stockout: ${top.item} (${top.daysLeft.toFixed(1)} days).`
+      : `High-risk items: ${ai.highRiskCount}, critical: ${ai.criticalCount}. Next stockout: ${top.item} (${top.daysLeft.toFixed(1)} days).`
+  }
+
+  const askSeasonalAI = (trend, question) => {
+    const ai = getSeasonalAI(trend)
+    if (!ai || !question?.trim()) return ''
+    const q = question.toLowerCase()
+    const isTanglishLike = language === 'tanglish' || language === 'tamil'
+    const whyIntent = ['why', 'ky', 'kyu', 'kyo', 'kyun', 'kisliye', 'kaaran', 'enna', 'epdi', 'edhuku', 'ethu nala'].some((k) => q.includes(k))
+    const stockIntent = ['stock', 'order', 'reorder', 'buy', 'vang', 'purchase', 'add'].some((k) => q.includes(k))
+    const forecastIntent = ['next', 'predict', 'forecast', 'adutha', 'next month', 'coming month'].some((k) => q.includes(k))
+
+    const monthAliases = {
+      '01': ['jan', 'january'],
+      '02': ['feb', 'february'],
+      '03': ['mar', 'march'],
+      '04': ['apr', 'april'],
+      '05': ['may'],
+      '06': ['jun', 'june'],
+      '07': ['jul', 'july'],
+      '08': ['aug', 'august'],
+      '09': ['sep', 'sept', 'september'],
+      '10': ['oct', 'october'],
+      '11': ['nov', 'november'],
+      '12': ['dec', 'december'],
+    }
+
+    const monthReasonByToken = {
+      '03': isTanglishLike ? 'Summer prep start aagudhu, beverages demand rise aagum.' : 'Summer prep starts, beverages begin to rise.',
+      '04': isTanglishLike ? 'Peak summer effect nala cool items demand increase aagudhu.' : 'Peak summer effect pushes cool-item demand up.',
+      '05': isTanglishLike ? 'Summer continuation nala cold products fast move aagudhu.' : 'Summer continuation keeps cold products moving fast.',
+      '10': isTanglishLike ? 'Festival season start nala snack and gifting pull varudhu.' : 'Festival season start boosts snack and gifting pull.',
+      '11': isTanglishLike ? 'Festival buying window nala footfall and basket size both improve aagudhu.' : 'Festival buying window lifts footfall and basket size.',
+      '12': isTanglishLike ? 'Year-end purchase cycle nala pantry refill activity increase aagudhu.' : 'Year-end purchase cycle increases pantry refills.',
+    }
+
+    let requestedMonthToken = null
+    const explicitIso = q.match(/(20\d{2}-\d{2})/)
+    if (explicitIso) {
+      requestedMonthToken = explicitIso[1].slice(5, 7)
+    } else {
+      Object.entries(monthAliases).forEach(([token, aliases]) => {
+        if (!requestedMonthToken && aliases.some((m) => q.includes(m))) requestedMonthToken = token
+      })
+    }
+
+    const requestedMonthPoint = requestedMonthToken
+      ? [...ai.series].reverse().find((x) => String(x.month).slice(5, 7) === requestedMonthToken)
+      : null
+    const latestPoint = ai.series[ai.series.length - 1]
+    const monthDemandIntent = Boolean(requestedMonthToken) && q.includes('demand')
+
+    if (whyIntent || monthDemandIntent) {
+      if (requestedMonthPoint) {
+        const reason = monthReasonByToken[requestedMonthToken] || (isTanglishLike
+          ? 'Seasonal buying behavior and local demand cycle pattern match aagudhu.'
+          : 'Seasonal buying behavior and local demand cycle align here.')
+        return isTanglishLike
+          ? `${requestedMonthPoint.month} la demand ${requestedMonthPoint.qty.toLocaleString()} units. Reason: ${reason}`
+          : `${requestedMonthPoint.month} had demand of ${requestedMonthPoint.qty.toLocaleString()} units. Reason: ${reason}`
+      }
+      if (requestedMonthToken && !requestedMonthPoint) {
+        return isTanglishLike
+          ? `Andha month-ku direct data illa. Latest month ${latestPoint.month} la ${latestPoint.qty.toLocaleString()} units irukku. Next cycle forecast ~${ai.nextQty} units (${ai.confidence}% confidence).`
+          : `No direct data is available for that month. Latest month ${latestPoint.month} has ${latestPoint.qty.toLocaleString()} units. Next-cycle forecast is ~${ai.nextQty} units (${ai.confidence}% confidence).`
+      }
+      return isTanglishLike
+        ? `Peak month ${ai.peak.month} high irundhadhukku reason: ${ai.monthReason}`
+        : `Peak month ${ai.peak.month} was high because: ${ai.monthReason}`
+    }
+    if (stockIntent) {
+      const add = Math.max(1, Math.round(ai.nextQty * 0.25))
+      return isTanglishLike
+        ? `Recommendation: fast movers-ku +${add} units add pannunga. Peak-ku 5 naal munnadi order podunga.`
+        : `Recommendation: add +${add} units for fast movers and place order 5 days before peak.`
+    }
+    if (forecastIntent) {
+      return isTanglishLike
+        ? `Next cycle forecast ~${ai.nextQty} units, confidence ${ai.confidence}%.`
+        : `Next cycle forecast is ~${ai.nextQty} units with ${ai.confidence}% confidence.`
+    }
+    return isTanglishLike
+      ? `Pattern: growth ${ai.growthPct.toFixed(1)}%, peak ${ai.peak.month}, forecast ${ai.nextQty} units.`
+      : `Pattern summary: growth ${ai.growthPct.toFixed(1)}%, peak ${ai.peak.month}, forecast ${ai.nextQty} units.`
+  }
+
   const getTrendMetrics = (trend) => {
     if (!trend) return []
-    const data = Array.isArray(trend?.raw?.data) ? trend.raw.data : []
+    const data = getTrendDataRows(trend)
     const count = data.length
     const first = data[0] || {}
     const last = data[data.length - 1] || {}
@@ -121,12 +405,13 @@ export default function TrendsPanel({ language = 'hinglish' }) {
     }
 
     if (trend.type === 'stock_depletion') {
-      const critical = data.filter((item) => (item.days_until_stockout ?? 9999) <= 3).length
+      const stockAI = getStockAI(trend)
+      const next = stockAI?.nextStockout
       return [
-        { label: 'Items flagged', value: count || '--' },
-        { label: 'Critical', value: critical },
-        { label: 'Next stockout', value: topItem?.item || '--' },
-        { label: 'Days left', value: topItem?.days_until_stockout ?? '--' },
+        { label: 'Items flagged', value: stockAI?.items?.length ?? count ?? '--' },
+        { label: 'Critical', value: stockAI?.criticalCount ?? '--' },
+        { label: 'Next stockout', value: next ? `${next.item}` : '--' },
+        { label: 'Days left (min)', value: next ? `${next.daysLeft.toFixed(1)}` : '--' },
       ]
     }
 
@@ -160,7 +445,7 @@ export default function TrendsPanel({ language = 'hinglish' }) {
     if (trend.type === 'festival_trend') {
       return [
         { label: 'Years tracked', value: count || '--' },
-        { label: 'Festival', value: trend.raw?.festival || '--' },
+        { label: 'Festival', value: trend.raw?.top_festival || trend.raw?.festival || '--' },
         { label: 'Best year', value: trend.raw?.best_year || '--' },
         { label: 'Top revenue', value: topItem?.revenue !== undefined ? `₹${Number(topItem.revenue).toLocaleString()}` : '--' },
       ]
@@ -228,6 +513,34 @@ export default function TrendsPanel({ language = 'hinglish' }) {
         rawData: '📋 Raw Data',
         insight: '💡 Insight',
         actions: '⚡ What To Do Now',
+        nextPrediction: '🔮 Next Month Prediction',
+        confidence: 'Confidence Score',
+        why: '📊 Why This Happened',
+        aiReasoning: '🤖 AI Reasoning',
+        askAi: '💬 Ask AI About This Trend',
+      }
+    : language === 'tanglish'
+    ? {
+        title: '📈 Kirana Trends & Reports',
+        refresh: '🔄 Refresh',
+        pdf: '📄 PDF',
+        json: '📊 JSON',
+        loading: '⏳ Loading trends...',
+        empty: 'Sidebar la oru trend select pannunga',
+        weatherHero: 'Live Weather Intelligence',
+        humidity: 'Humidity',
+        wind: 'Wind',
+        condition: 'Condition',
+        playbook: 'Playbook',
+        tip: 'Tip',
+        rawData: '📋 Raw Data',
+        insight: '💡 Insight',
+        actions: '⚡ What To Do Now',
+        nextPrediction: '🔮 Next Month Forecast',
+        confidence: 'Confidence Score',
+        why: '📊 Why This Happened',
+        aiReasoning: '🤖 AI Reasoning',
+        askAi: '💬 Ask AI About This Trend',
       }
     : {
         title: '📈 Kirana Trends & Reports',
@@ -245,12 +558,18 @@ export default function TrendsPanel({ language = 'hinglish' }) {
         rawData: '📋 Raw Data',
         insight: '💡 Insight',
         actions: '⚡ What To Do Now',
+        nextPrediction: '🔮 Next Month Prediction',
+        confidence: 'Confidence Score',
+        why: '📊 Why This Happened',
+        aiReasoning: '🤖 AI Reasoning',
+        askAi: '💬 Ask AI About This Trend',
       }
 
   const actionPlaybook = {
     hinglish: {
       sales_trend: ['Top-selling SKU pe stock buffer 20% badhao', 'Slow SKU pe combo offer test karo'],
       hourly_rush: ['Peak hour ke pehle counter prep karo', 'Fast-moving items front rack pe rakho'],
+      seasonal_trend: ['Next cycle demand ke liye inventory proactively plan karo', 'Peak month se pehle supplier order lock karo'],
       stock_depletion: ['Critical items ka reorder aaj hi place karo', 'Safety stock threshold set karo'],
       smart_reorder: ['Suggested reorder list ko supplier ke saath lock karo', 'High margin items ko priority do'],
       dead_stock: ['Dead stock pe discount bundle launch karo', 'Shelf space ko fast movers ko do'],
@@ -266,14 +585,31 @@ export default function TrendsPanel({ language = 'hinglish' }) {
       market_basket: ['Top pairs-ku combo price kudunga', 'Saathaa vangara items side-by-side display pannunga'],
       weather_trend: ['Weather-led top items front display la podunga', '2-naal spike-ku quick reorder pannunga'],
     },
+    tanglish: {
+      sales_trend: ['Top SKU-ku buffer stock increase pannunga', 'Slow SKU-ku combo offer test pannunga'],
+      hourly_rush: ['Peak hour-ku munnadi counter prep pannunga', 'Fast-moving items front rack-la vainga'],
+      seasonal_trend: ['Next cycle demand-ku stock early-a plan pannunga', 'Peak month munnadi supplier order lock pannunga'],
+      stock_depletion: ['Critical items reorder same day podunga', 'Safety stock threshold set pannunga'],
+      smart_reorder: ['Suggested reorder list supplier-oda confirm pannunga', 'High margin items-ku priority kudunga'],
+      dead_stock: ['Dead stock-ku discount bundle launch pannunga', 'Shelf space fast movers-ku maathunga'],
+      market_basket: ['Top pairs-ku combo pricing podunga', 'Co-buy items side by side display pannunga'],
+      weather_trend: ['Weather-demand items front display la vainga', '2-day spike-ku quick reorder pannunga'],
+    },
   }
 
   const getSeries = (trend) => {
-    const d = trend?.raw?.data
+    const d = getTrendDataRows(trend)
     if (!Array.isArray(d) || d.length === 0) return []
     return d.slice(0, 8).map((x) => (
       x.revenue ?? x.orders ?? x.total_qty ?? x.current_stock ?? x.count ?? x.qty ?? 0
     )).filter(v => typeof v === 'number' && !Number.isNaN(v))
+  }
+
+  const formatAvgDaily = (value) => {
+    const n = Number(value)
+    if (!Number.isFinite(n) || n <= 0) return '0'
+    if (n < 0.1) return '<0.1'
+    return n.toFixed(1)
   }
 
   const trendMeta = (trend) => {
@@ -287,7 +623,7 @@ export default function TrendsPanel({ language = 'hinglish' }) {
   useEffect(() => {
     loadAllTrends()
     loadWeather()
-  }, [])
+  }, [refreshKey, language])
 
   const loadWeather = async () => {
     try {
@@ -750,10 +1086,10 @@ export default function TrendsPanel({ language = 'hinglish' }) {
 
   // Render appropriate chart based on trend type and data structure
   const renderChart = (trend) => {
-    if (!trend.raw || !trend.raw.data) return null
+    if (!trend?.raw) return null
 
     const { type, raw } = trend
-    const data = raw.data || []
+    const data = getTrendDataRows(trend)
 
     // Sales Trend - Line Chart
     if (type === 'sales_trend' && data.length > 0) {
@@ -805,20 +1141,63 @@ export default function TrendsPanel({ language = 'hinglish' }) {
 
     // Product Demand - Bar Chart (Top products)
     if (type === 'product_demand' && data.length > 0) {
+      const chartData = data.map((d) => ({
+        item: d.item || d.item_name || d.name || 'item',
+        qty: Number(d.qty_sold ?? d.total_qty ?? d.qty ?? 0),
+      }))
       return (
         <div style={styles.chartContainer}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical">
+            <BarChart data={chartData} layout="vertical">
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis type="number" stroke="var(--text-muted)" />
-              <YAxis dataKey="item_name" type="category" stroke="var(--text-muted)" width={100} />
+              <YAxis dataKey="item" type="category" stroke="var(--text-muted)" width={100} />
               <Tooltip 
                 contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
                 labelStyle={{ color: 'var(--text)' }}
               />
               <Legend />
-              <Bar dataKey="total_qty" fill="#8884D8" name="Quantity" />
+              <Bar dataKey="qty" fill="#8884D8" name="Quantity" />
             </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )
+    }
+
+    // Seasonal Trend - Line Chart with highlighted peak
+    if (type === 'seasonal_trend' && data.length > 0) {
+      const chartData = data.map((d) => ({
+        month: d.month,
+        qty: Number(d.qty ?? d.units ?? d.total_qty ?? 0),
+      }))
+      const ai = getSeasonalAI(trend)
+      const peakMonth = ai?.peak?.month
+      return (
+        <div style={styles.chartContainer}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="month" stroke="var(--text-muted)" />
+              <YAxis stroke="var(--text-muted)" />
+              <Tooltip
+                contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
+                labelStyle={{ color: 'var(--text)' }}
+                formatter={(value) => [`${Number(value).toLocaleString()} units`, 'Demand']}
+              />
+              <Legend />
+              <Line
+                type="monotone"
+                dataKey="qty"
+                stroke="#00C49F"
+                strokeWidth={2}
+                name="Units"
+                dot={(props) => {
+                  const { cx, cy, payload } = props
+                  if (payload.month === peakMonth) return <circle cx={cx} cy={cy} r={6} fill="#ffbb28" stroke="#fff" strokeWidth={1.5} />
+                  return <circle cx={cx} cy={cy} r={3.5} fill="#00C49F" />
+                }}
+              />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       )
@@ -826,12 +1205,18 @@ export default function TrendsPanel({ language = 'hinglish' }) {
 
     // Stock Depletion - Bar Chart
     if (type === 'stock_depletion' && data.length > 0) {
+      const ai = getStockAI(trend)
+      const chartData = (ai?.items || []).slice(0, 8).map((x) => ({
+        item: x.item,
+        current_stock: x.currentStock,
+        threshold: x.threshold,
+      }))
       return (
         <div style={styles.chartContainer}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
+            <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-              <XAxis dataKey="item_name" stroke="var(--text-muted)" angle={-45} textAnchor="end" height={80} />
+              <XAxis dataKey="item" stroke="var(--text-muted)" angle={-45} textAnchor="end" height={80} />
               <YAxis stroke="var(--text-muted)" />
               <Tooltip 
                 contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border)' }}
@@ -839,6 +1224,7 @@ export default function TrendsPanel({ language = 'hinglish' }) {
               />
               <Legend />
               <Bar dataKey="current_stock" fill="#FF8042" name="Current Stock" />
+              <Bar dataKey="threshold" fill="#ffbb28" name="Min Threshold" />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -977,7 +1363,7 @@ export default function TrendsPanel({ language = 'hinglish' }) {
                   </div>
                   <div style={styles.trendHeroMeta}>
                     <span style={styles.trendHeroPill}>{trendTone(selectedTrend.type).toUpperCase()}</span>
-                    <span style={styles.trendHeroPill}>{selectedTrend.raw?.data?.length || 0} signal points</span>
+                    <span style={styles.trendHeroPill}>{getTrendDataRows(selectedTrend).length || 0} signal points</span>
                     <span style={styles.trendHeroPill}>{selectedTrend.raw?.trend || selectedTrend.type}</span>
                   </div>
                 </div>
@@ -1034,7 +1420,155 @@ export default function TrendsPanel({ language = 'hinglish' }) {
                   </div>
                 </div>
               )}
-              
+
+              {selectedTrend.type === 'seasonal_trend' && (() => {
+                const ai = getSeasonalAI(selectedTrend)
+                if (!ai) return null
+                return (
+                  <>
+                    <div style={{ ...styles.actionCard, borderColor: 'rgba(0,196,159,0.35)', background: 'linear-gradient(135deg, rgba(0,136,254,0.10), rgba(0,196,159,0.08))' }}>
+                      <div style={styles.actionTitle}>{ui.nextPrediction}</div>
+                      <div style={styles.actionItem}>{language === 'tanglish' ? `Next cycle expected demand: ~${ai.nextQty} units` : `Predicted demand (next cycle): ~${ai.nextQty} units`}</div>
+                      <div style={styles.actionItem}>{language === 'tanglish' ? `Growth trend: ${ai.growthPct.toFixed(1)}%` : `Growth trend: ${ai.growthPct.toFixed(1)}%`}</div>
+                      <div style={styles.actionItem}><strong>{ui.confidence}:</strong> {ai.confidence}%</div>
+                    </div>
+
+                    <div style={{ ...styles.insight, marginTop: 12 }}>
+                      <strong>{ui.why}:</strong>
+                      <div style={{ marginTop: 8 }}>• {ai.monthReason}</div>
+                      <div style={{ marginTop: 4 }}>• {language === 'tanglish' ? `Peak month ${ai.peak.month} la demand ${ai.peak.qty.toLocaleString()} units reach aayiduchu.` : `Peak month ${ai.peak.month} reached ${ai.peak.qty.toLocaleString()} units.`}</div>
+                    </div>
+
+                    <div style={styles.chart}>
+                      <details open={showAIReasoning}>
+                        <summary
+                          style={{ cursor: 'pointer', fontWeight: 600, marginTop: 14 }}
+                          onClick={(e) => {
+                            e.preventDefault()
+                            setShowAIReasoning((prev) => !prev)
+                          }}
+                        >
+                          {ui.aiReasoning}
+                        </summary>
+                        {showAIReasoning && (
+                          <div style={styles.trendData}>
+                            <div>Input: last {ai.series.length} month sales series + seasonal behavior</div>
+                            <div>Processing: moving average + peak detection + heuristic scoring</div>
+                            <div>Output: peak month, next-cycle forecast, confidence score, action plan</div>
+                          </div>
+                        )}
+                      </details>
+                    </div>
+
+                    <div style={{ ...styles.actionCard, marginTop: 12 }}>
+                      <div style={styles.actionTitle}>{ui.askAi}</div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          value={aiQuestion}
+                          onChange={(e) => setAIQuestion(e.target.value)}
+                          placeholder={language === 'tanglish' ? 'Example: why April high?' : 'Example: why April demand high?'}
+                          style={{
+                            flex: 1,
+                            padding: '8px 10px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 8,
+                            color: 'var(--text)',
+                          }}
+                        />
+                        <button
+                          style={styles.button}
+                          onClick={() => setAIReply(askSeasonalAI(selectedTrend, aiQuestion))}
+                        >
+                          Ask
+                        </button>
+                      </div>
+                      {aiReply && <div style={styles.trendData}>{aiReply}</div>}
+                    </div>
+                  </>
+                )
+              })()}
+
+              {selectedTrend.type === 'stock_depletion' && (() => {
+                const ai = getStockAI(selectedTrend)
+                if (!ai?.items?.length) return null
+                const topItems = ai.items.slice(0, 3)
+                return (
+                  <>
+                    <div style={{ ...styles.actionCard, borderColor: 'rgba(239,68,68,0.35)', background: 'linear-gradient(135deg, rgba(239,68,68,0.12), rgba(245,158,11,0.10))' }}>
+                      <div style={styles.actionTitle}>Reorder Decision Engine</div>
+                      {topItems.map((x) => (
+                        <div key={x.item} style={{ ...styles.trendData, marginBottom: 10 }}>
+                          <div><strong>{x.item}</strong></div>
+                          <div>Current stock: {x.currentStock} units</div>
+                          <div>Days left: {x.daysLeft.toFixed(1)} days</div>
+                          <div>Avg daily sales: {formatAvgDaily(x.avgDaily)} units</div>
+                          <div>Recommended: Reorder <strong>{x.reorderQty} units</strong> within 48 hours</div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={{ ...styles.insight, marginTop: 12 }}>
+                      <strong>Risk Prediction</strong>
+                      {ai.items.slice(0, 5).map((x) => (
+                        <div key={`${x.item}-risk`} style={{ marginTop: 6 }}>
+                          • {x.item} → <strong>{x.risk}</strong> risk, expected stockout: {x.stockoutDate.toLocaleDateString('en-GB')}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div style={styles.chart}>
+                      <details>
+                        <summary style={{ cursor: 'pointer', fontWeight: 600, marginTop: 14 }}>🤖 AI Logic</summary>
+                        <div style={styles.trendData}>
+                          reorder_qty = (avg_daily_sales × lead_time) + safety_stock − current_stock
+                          {ai.nextStockout && (
+                            <>
+                              {'\n'}
+                              Example ({ai.nextStockout.item}): ({ai.nextStockout.avgDaily.toFixed(1)} × {ai.nextStockout.leadTime}) + {ai.nextStockout.safetyStock} − {ai.nextStockout.currentStock} = {ai.nextStockout.reorderQty}
+                            </>
+                          )}
+                        </div>
+                      </details>
+                    </div>
+
+                    <div style={{ ...styles.actionCard, marginTop: 12 }}>
+                      <div style={styles.actionTitle}>💬 Ask AI - Stock Depletion</div>
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <input
+                          value={aiQuestion}
+                          onChange={(e) => setAIQuestion(e.target.value)}
+                          placeholder="Example: which item will run out first?"
+                          style={{
+                            flex: 1,
+                            padding: '8px 10px',
+                            background: 'var(--bg-card)',
+                            border: '1px solid var(--border)',
+                            borderRadius: 8,
+                            color: 'var(--text)',
+                          }}
+                        />
+                        <button style={styles.button} onClick={() => setAIReply(askStockAI(selectedTrend, aiQuestion))}>Ask</button>
+                        <button
+                          style={styles.button}
+                          onClick={() => setAIReply(`If no action in next 7 days: expected lost sales ₹${ai.totalLostValue7d.toLocaleString()}. Next stockout: ${ai.nextStockout?.item || '--'} (${ai.nextStockout ? ai.nextStockout.daysLeft.toFixed(1) : '--'} days).`)}
+                        >
+                          Simulate 7 Days
+                        </button>
+                      </div>
+                      {aiReply && <div style={styles.trendData}>{aiReply}</div>}
+                    </div>
+
+                    <div style={{ ...styles.insight, marginTop: 12 }}>
+                      <strong>AI Insight:</strong>
+                      <div style={{ marginTop: 6 }}>
+                        Fast-moving category depletion is increasing. Cross-signal suggests rush-hour demand may be accelerating stock burn rate for snack items.
+                      </div>
+                    </div>
+                  </>
+                )
+              })()}
+
               {/* Render chart based on trend type */}
               {renderChart(selectedTrend)}
 
@@ -1068,9 +1602,16 @@ export default function TrendsPanel({ language = 'hinglish' }) {
 
               <div style={styles.actionCard}>
                 <div style={styles.actionTitle}>{ui.actions}</div>
-                {(actionPlaybook[language]?.[selectedTrend.type] || actionPlaybook.hinglish[selectedTrend.type] || [
-                  language === 'tamil' ? 'Data-a base panni next action decide pannunga' : 'Use this trend to decide next operational action',
-                ]).map((a, i) => (
+                {(selectedTrend.type === 'seasonal_trend'
+                  ? seasonalActions(selectedTrend)
+                  : selectedTrend.type === 'stock_depletion'
+                  ? stockActions(selectedTrend)
+                  : (actionPlaybook[language]?.[selectedTrend.type] || actionPlaybook.hinglish[selectedTrend.type] || [
+                      language === 'tamil' || language === 'tanglish'
+                        ? 'Data-a base panni next action decide pannunga'
+                        : 'Use this trend to decide next operational action',
+                    ])
+                ).map((a, i) => (
                   <div key={i} style={styles.actionItem}>• {a}</div>
                 ))}
               </div>

@@ -72,7 +72,16 @@ def _fmt_demand(d: dict, language: str = "hinglish") -> str:
     else:
         lines = ["📦 Top Selling Products:\n"]
     for i, row in enumerate(d["data"][:5], 1):
-        lines.append(f"  {i}. {row['item']}: {row['qty_sold']} units (₹{row['revenue']:.0f})")
+        has_price_data = row.get("has_price_data")
+        if has_price_data is None:
+            has_price_data = (row.get("revenue") or 0) > 0
+
+        if has_price_data:
+            value_text = f"₹{(row.get('revenue') or 0):.0f}"
+        else:
+            value_text = "price missing"
+
+        lines.append(f"  {i}. {row['item']}: {row['qty_sold']} units ({value_text})")
     lines.append(f"\n✅ {d['insight']}")
     return "\n".join(lines)
 
@@ -178,9 +187,21 @@ def _fmt_profit(d: dict, language: str = "hinglish") -> str:
 def _fmt_festival(d: dict, language: str = "hinglish") -> str:
     if not d.get("data"):
         return f"🎉 {d.get('festival', 'Festival')} data not found."
-    lines = [f"🎉 {d['festival'].title()} Sales History:\n"]
+    festival_label = d.get("festival", "Festival")
+    if festival_label == "general":
+        festivals = ", ".join(d.get("festivals", [])[:8]) or "supported festivals"
+        lines = [f"🎉 Festival Sales History ({festivals}):\n"]
+    else:
+        lines = [f"🎉 {festival_label.title()} Sales History:\n"]
     for row in d["data"]:
-        lines.append(f"  {row['year']}: ₹{row['revenue']:.0f} ({row['orders']} orders, {row['units']} units)")
+        festival_name = row.get("festival")
+        if festival_label == "general" and festival_name:
+            festival_name = festival_name.replace("_", " ").title()
+            lines.append(f"  {festival_name} {row['year']}: ₹{row['revenue']:.0f} ({row['orders']} orders, {row['units']} units)")
+        else:
+            lines.append(f"  {row['year']}: ₹{row['revenue']:.0f} ({row['orders']} orders, {row['units']} units)")
+    if d.get("top_festival"):
+        lines.append(f"\n✅ Top festival: {d['top_festival'].replace('_', ' ').title()} in {d['best_year']} with ₹{d.get('top_revenue', 0):.0f}")
     lines.append(f"\n✅ {d['insight']}")
     return "\n".join(lines)
 

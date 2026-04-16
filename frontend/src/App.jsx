@@ -162,9 +162,9 @@ export default function App() {
 
   const panels = {
     voice:     <VoicePanel onRefresh={triggerRefresh} language={language} />,
-    inventory: <InventoryPanel key={refreshKey} language={language} />,
+    inventory: <InventoryPanel key={refreshKey} language={language} onDataUpdated={triggerRefresh} />,
     history:   <HistoryPanel language={language} />,
-    trends:    <TrendsPanel language={language} />,
+    trends:    <TrendsPanel language={language} refreshKey={refreshKey} />,
     customer:  <CustomerTrendsPanel refreshKey={refreshKey} />,
     bill:      <BillUploadPanel onBillProcessed={triggerRefresh} />,
   }

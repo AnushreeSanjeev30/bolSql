@@ -20,13 +20,13 @@ export async function getHealth() {
   return data
 }
 
-export async function getAllTrends() {
-  const { data } = await api.get('/trends/all')
+export async function getAllTrends(festival = 'general') {
+  const { data } = await api.get('/trends/all', { params: { festival } })
   return data
 }
 
-export async function exportTrendsJSON() {
-  const { data } = await api.get('/trends/export-json')
+export async function exportTrendsJSON(festival = 'general') {
+  const { data } = await api.get('/trends/export-json', { params: { festival } })
   return data
 }
 
@@ -45,8 +45,23 @@ export async function getCurrentWeather(language = 'hinglish') {
   return data
 }
 
+export async function getTrendsMetadata(language = 'hinglish') {
+  const { data } = await api.get('/trends/metadata', { params: { language } })
+  return data
+}
+
 export async function uploadBill(bill) {
   const { data } = await api.post('/api/upload-bill', bill)
+  return data
+}
+
+export async function importSalesCsv(csvText, mode = 'transaction') {
+  const { data } = await api.post('/api/import-sales-csv', { csv_text: csvText, mode })
+  return data
+}
+
+export async function clearInventory() {
+  const { data } = await api.post('/api/inventory/clear')
   return data
 }
 

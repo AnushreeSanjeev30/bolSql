@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { sendQuery } from '../api'
+import { sendQuery, getAllTrends } from '../api'
 import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar } from 'recharts'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -245,6 +245,22 @@ const USER_LABELS = {
   tamil: 'nee',
 }
 
+const REPORT_TRENDS = [
+  { type: 'sales_trend', title: 'Sales Trend', description: 'Monthly/weekly revenue over time' },
+  { type: 'hourly_rush', title: 'Hourly Rush', description: 'Busiest hours of the day for sales' },
+  { type: 'product_demand', title: 'Product Demand', description: 'Top-selling products by volume or revenue' },
+  { type: 'dead_stock', title: 'Dead Stock', description: 'Products with very low or no sales' },
+  { type: 'seasonal_trend', title: 'Seasonal Trend', description: 'Which products sell more in which months' },
+  { type: 'festival_trend', title: 'Festival Trend', description: 'Sales spikes around known festival dates' },
+]
+
+function hasTrendData(trend) {
+  if (!trend) return false
+  if (Array.isArray(trend.raw?.data)) return trend.raw.data.length > 0
+  if (Array.isArray(trend.raw)) return trend.raw.length > 0
+  return Boolean(trend.raw)
+}
+
 export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const storageKey = `voice-chat-messages-${language}`
   const [messages, setMessages] = useState(() => {
@@ -256,6 +272,7 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const [recording, setRecording] = useState(false)
   const [focusInput, setFocusInput] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [reportTrends, setReportTrends] = useState([])
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -298,6 +315,18 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
         intent: res.intent,
         db_rows: res.db_rows,
       }])
+
+      if (res.intent === 'REPORT') {
+        try {
+          const trendsRes = await getAllTrends()
+          setReportTrends(trendsRes.trends || [])
+        } catch {
+          setReportTrends([])
+        }
+      } else {
+        setReportTrends([])
+      }
+
       // Speak the response if voice is enabled
       speak(res.response)
       // Refresh inventory after successful ADD or SELL operations
@@ -454,7 +483,45 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
             {/* Inside the component that renders messages*/}
             {msg.intent === "REPORT" && msg.db_rows && msg.db_rows[0] && (
               <div id="report-view" className="bg-white p-6 rounded-lg text-black mt-4">
-                <h3 className="text-xl font-bold mb-4">Monthly Analytics Dashboard</h3>
+                <h3 className="text-xl font-bold mb-4">Imported CSV Analytics Report</h3>
+
+                {reportTrends.length > 0 && (
+                  <div style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontWeight: 700, marginBottom: 8 }}>📈 Trend coverage from imported CSV</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+                      {REPORT_TRENDS.map((item) => {
+                        const trend = reportTrends.find(t => t.type === item.type)
+                        const available = hasTrendData(trend)
+                        return (
+                          <div
+                            key={item.type}
+                            style={{
+                              border: '1px solid rgba(0,0,0,0.12)',
+                              borderRadius: 10,
+                              padding: '12px 14px',
+                              background: available ? 'rgba(16, 185, 129, 0.08)' : 'rgba(239, 68, 68, 0.06)',
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+                              <div style={{ fontWeight: 700 }}>{item.title}</div>
+                              <div style={{ fontFamily: 'monospace', fontSize: 12, color: available ? '#059669' : '#dc2626' }}>
+                                {available ? 'Yes' : 'No'}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: 12, color: '#4b5563', lineHeight: 1.4 }}>
+                              {item.description}
+                            </div>
+                            {trend?.insight && (
+                              <div style={{ marginTop: 6, fontSize: 12, color: '#111827' }}>
+                                {trend.insight}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
 
                 {/* Sales Trend Chart */}
                 <div className="h-64 w-full">

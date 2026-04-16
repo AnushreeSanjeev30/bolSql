@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { getInventory, sendQuery } from '../api'
+import { getInventory, importSalesCsv, clearInventory } from '../api'
 
 const s = {
   root: {
@@ -59,6 +59,17 @@ const s = {
     fontFamily: 'var(--font-mono)',
     transition: 'all 0.15s',
     background: 'var(--bg-card)',
+    cursor: 'pointer',
+  },
+  clearBtn: {
+    padding: '8px 16px',
+    borderRadius: 'var(--radius)',
+    border: '1px solid #ef444460',
+    color: '#ef4444',
+    fontSize: 12,
+    fontFamily: 'var(--font-mono)',
+    transition: 'all 0.15s',
+    background: 'rgba(239,68,68,0.10)',
     cursor: 'pointer',
   },
   statsRow: {
@@ -408,11 +419,96 @@ function parseCSV(text) {
   return { headers, rows }
 }
 
+function normalizeHeader(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[()]/g, '')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
+
+function autoDetectColumns(headers) {
+  const mapping = { name: '', quantity: '', unit: '', price: '', date: '', time: '' }
+
+  headers.forEach(header => {
+    const key = normalizeHeader(header)
+    if (['name', 'item', 'product', 'item_name', 'product_name', 'productname', 'naam'].includes(key)) mapping.name = header
+    if (['quantity', 'qty', 'stock', 'amount', 'matra'].includes(key)) mapping.quantity = header
+    if (['unit', 'units', 'uom', 'ikai'].includes(key)) mapping.unit = header
+    if (['price', 'cost', 'rate', 'mrp', 'daam', 'price_usd', 'selling_price'].includes(key)) mapping.price = header
+    if (['date', 'order_date', 'timestamp', 'datetime', 'sold_at'].includes(key)) mapping.date = header
+    if (['time', 'clock', 'time_of_day'].includes(key)) mapping.time = header
+  })
+
+  return mapping
+}
+
+function buildCsvCapabilities(headers, rows) {
+  const normalizedHeaders = headers.map(normalizeHeader)
+  const hasName = normalizedHeaders.some(key => ['name', 'item', 'product', 'item_name', 'product_name', 'productname'].includes(key))
+  const hasQuantity = normalizedHeaders.some(key => ['quantity', 'qty', 'stock', 'amount'].includes(key))
+  const hasDate = normalizedHeaders.some(key => ['date', 'order_date', 'timestamp', 'datetime', 'sold_at'].includes(key))
+  const hasTime = normalizedHeaders.some(key => ['time', 'clock', 'time_of_day'].includes(key))
+  const distinctMonths = new Set()
+
+  rows.forEach((row) => {
+    const rawDate = String(row.date || row.order_date || row.timestamp || row.datetime || row.sold_at || '').trim()
+    if (!rawDate) return
+    const monthMatch = rawDate.match(/\b(\d{4}-\d{2}|\d{2}[-/]\d{4}|\d{4}\/\d{2})\b/)
+    if (monthMatch) distinctMonths.add(monthMatch[1])
+  })
+
+  return [
+    {
+      title: 'Sales Trend',
+      description: 'Monthly/weekly revenue over time',
+      available: hasDate && hasQuantity,
+    },
+    {
+      title: 'Hourly Rush',
+      description: 'Busiest hours of the day for sales',
+      available: hasDate && hasTime,
+    },
+    {
+      title: 'Product Demand',
+      description: 'Top-selling products by volume or revenue',
+      available: hasName && hasQuantity,
+    },
+    {
+      title: 'Dead Stock',
+      description: 'Products with very low or no sales',
+      available: hasName && hasQuantity,
+    },
+    {
+      title: 'Seasonal Trend',
+      description: 'Which products sell more in which months',
+      available: hasDate && (distinctMonths.size >= 1),
+    },
+    {
+      title: 'Festival Trend',
+      description: 'Sales spikes around known festival dates',
+      available: hasDate,
+    },
+  ]
+}
+
+function countUniqueProducts(rows) {
+  const unique = new Set()
+
+  rows.forEach((row) => {
+    const name = String(row.product_name || row.item_name || row.name || row.product || row.item || row.sku || '').trim().toLowerCase()
+    if (name) unique.add(name)
+  })
+
+  return unique.size
+}
+
 function CSVModal({ onClose, onImported }) {
   const [dragging, setDragging] = useState(false)
   const [parsed, setParsed] = useState(null)
   const [headers, setHeaders] = useState([])
-  const [mapping, setMapping] = useState({ name: '', quantity: '', unit: '', price: '' })
+  const [rawCsv, setRawCsv] = useState('')
   const [importing, setImporting] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -427,19 +523,12 @@ function CSVModal({ onClose, onImported }) {
     const reader = new FileReader()
     reader.onload = (e) => {
       try {
-        const { headers, rows } = parseCSV(e.target.result)
+        const csvText = String(e.target.result || '')
+        const { headers, rows } = parseCSV(csvText)
         setHeaders(headers)
         setParsed(rows)
+        setRawCsv(csvText)
         setError(null)
-        // Auto-map obvious column names
-        const autoMap = { name: '', quantity: '', unit: '', price: '' }
-        headers.forEach(h => {
-          if (['name', 'item', 'product', 'item_name', 'product_name', 'naam'].includes(h)) autoMap.name = h
-          if (['quantity', 'qty', 'stock', 'amount', 'matra'].includes(h)) autoMap.quantity = h
-          if (['unit', 'units', 'uom', 'ikai'].includes(h)) autoMap.unit = h
-          if (['price', 'cost', 'rate', 'mrp', 'daam'].includes(h)) autoMap.price = h
-        })
-        setMapping(autoMap)
       } catch (err) {
         setError(err.message)
       }
@@ -454,53 +543,57 @@ function CSVModal({ onClose, onImported }) {
   }
 
   function downloadSample() {
-    const blob = new Blob([SAMPLE_CSV], { type: 'text/csv' })
+    const blob = new Blob([
+      'name,quantity,unit,price,category,expiry_date\nAloo,50,kg,32,vegetable,2026-04-30\nAtta,20,kg,45,grains,2026-12-31\nChini,15,kg,55,groceries,2027-01-15'
+    ], { type: 'text/csv' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'sample_inventory.csv'
+    a.download = 'inventory_sample.csv'
     a.click()
     URL.revokeObjectURL(url)
   }
 
+  const csvCapabilities = parsed ? buildCsvCapabilities(headers, parsed) : []
+
   async function doImport() {
-    if (!parsed || !mapping.name || !mapping.quantity) {
-      setError('Name aur Quantity columns select karo')
+    if (!parsed || !rawCsv) {
+      setError('Pehle CSV file upload karo')
       return
     }
     setImporting(true)
     setError(null)
 
-    let successCount = 0
-    let failCount = 0
+    try {
+      const response = await importSalesCsv(rawCsv, 'snapshot')
+      setResult({
+        success: response.success,
+        message: response.message,
+        rowsProcessed: response.rows_processed,
+        rowsSucceeded: response.rows_succeeded,
+        rowsFailed: response.rows_failed,
+        inventoryUpdated: response.inventory_updated,
+        trendsRefreshed: response.trends_refreshed,
+        warnings: response.warnings || [],
+        error: response.error,
+      })
 
-    for (const row of parsed) {
-      const name = row[mapping.name]?.trim()
-      const quantity = parseFloat(row[mapping.quantity])
-      const unit = mapping.unit ? (row[mapping.unit]?.trim() || 'piece') : 'piece'
-      const price = mapping.price ? (parseFloat(row[mapping.price]) || 0) : 0
-
-      if (!name || isNaN(quantity)) { failCount++; continue }
-
-      try {
-        const data = await sendQuery(`${quantity} ${unit} ${name} add karo`, language)
-        if (data.success) successCount++
-        else failCount++
-      } catch {
-        failCount++
+      if (response.success) {
+        onImported()
       }
+    } catch (err) {
+      setResult(null)
+      setError(err.message || 'CSV import failed')
+    } finally {
+      setImporting(false)
     }
-
-    setImporting(false)
-    setResult({ successCount, failCount })
-    if (successCount > 0) onImported()
   }
 
   return (
     <div style={s.overlay} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div style={s.modal}>
         <div style={s.modalHeader}>
-          <div style={s.modalTitle}>📥 CSV Import</div>
+          <div style={s.modalTitle}>📥 Inventory CSV Import</div>
           <button style={s.closeBtn} onClick={onClose}>×</button>
         </div>
 
@@ -516,7 +609,7 @@ function CSVModal({ onClose, onImported }) {
                 onClick={() => fileRef.current.click()}
               >
                 <div style={s.dropIcon}>📂</div>
-                <div style={s.dropText}>CSV file yahan drop karo ya click karke select karo</div>
+                <div style={s.dropText}>Inventory CSV yahan drop karo ya click karke select karo</div>
                 <div style={s.dropHint}>Supported: .csv files only</div>
                 <input
                   ref={fileRef}
@@ -529,15 +622,15 @@ function CSVModal({ onClose, onImported }) {
 
               {/* Sample format */}
               <div style={s.sampleBox}>
-                <div style={s.sampleLabel}>Expected CSV format</div>
-                <div style={s.sampleCode}>{SAMPLE_CSV}</div>
+                <div style={s.sampleLabel}>Expected inventory CSV format</div>
+                <div style={s.sampleCode}>{'name,quantity,unit,price,category,expiry_date\nAloo,50,kg,32,vegetable,2026-04-30'}</div>
               </div>
 
               <button
                 style={{ ...s.importConfirmBtn, background: 'transparent', border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
                 onClick={downloadSample}
               >
-                ↓ Sample CSV Download Karo
+                ↓ Inventory CSV Sample Download Karo
               </button>
 
               {error && <div style={s.errorBanner}>❌ {error}</div>}
@@ -545,7 +638,22 @@ function CSVModal({ onClose, onImported }) {
           ) : result ? (
             <>
               <div style={s.successBanner}>
-                ✅ Import complete! {result.successCount} items add hue, {result.failCount} skip hue.
+                {result.success ? '✅ ' : '❌ '}{result.message}
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12 }}>
+                <div>Rows processed: {result.rowsProcessed ?? 0}</div>
+                <div>Rows imported: {result.rowsSucceeded ?? 0}</div>
+                <div>Rows failed: {result.rowsFailed ?? 0}</div>
+                <div>Inventory updated: {result.inventoryUpdated ? 'yes' : 'no'}</div>
+                <div>Trends refreshed: {result.trendsRefreshed ? 'yes' : 'no'}</div>
+                {Array.isArray(result.warnings) && result.warnings.length > 0 && (
+                  <div style={{ marginTop: 8 }}>
+                    {result.warnings.slice(0, 5).map((warning, index) => (
+                      <div key={index}>⚠️ {warning}</div>
+                    ))}
+                  </div>
+                )}
+                {result.error && <div style={{ color: 'var(--warning)', marginTop: 8 }}>Error: {result.error}</div>}
               </div>
               <button style={s.importConfirmBtn} onClick={onClose}>
                 Done → Inventory Dekho
@@ -553,30 +661,59 @@ function CSVModal({ onClose, onImported }) {
             </>
           ) : (
             <>
-              {/* Column mapping */}
+              {/* Auto-detected columns */}
               <div>
                 <div style={{ ...s.sampleLabel, marginBottom: 12 }}>
-                  Column Mapping — CSV ke columns select karo
+                  Auto-detected columns
                 </div>
-                {[
-                  { field: 'name',     label: 'Item Name *', required: true },
-                  { field: 'quantity', label: 'Quantity *',  required: true },
-                  { field: 'unit',     label: 'Unit',        required: false },
-                  { field: 'price',    label: 'Price',       required: false },
-                ].map(({ field, label, required }) => (
-                  <div key={field} style={s.mapRow}>
-                    <div style={s.mapLabel}>{label}</div>
-                    <div style={s.mapArrow}>→</div>
-                    <select
-                      style={s.select}
-                      value={mapping[field]}
-                      onChange={e => setMapping(m => ({ ...m, [field]: e.target.value }))}
+                {(() => {
+                  const autoMap = autoDetectColumns(headers)
+                  const rows = [
+                    ['Product Name', autoMap.name || 'not found'],
+                    ['Quantity', autoMap.quantity || 'not found'],
+                    ['Unit', autoMap.unit || 'optional / not found'],
+                    ['Price', autoMap.price || 'optional / not found'],
+                    ['Date', autoMap.date || 'optional / not found'],
+                    ['Time', autoMap.time || 'optional / not found'],
+                  ]
+                  return rows.map(([label, value]) => (
+                    <div key={label} style={s.mapRow}>
+                      <div style={s.mapLabel}>{label}</div>
+                      <div style={s.mapArrow}>→</div>
+                      <div style={{ ...s.select, display: 'flex', alignItems: 'center' }}>{value}</div>
+                    </div>
+                  ))
+                })()}
+              </div>
+
+              {/* CSV-powered analytics coverage */}
+              <div>
+                <div style={{ ...s.sampleLabel, marginBottom: 12 }}>
+                  Analytics available from this CSV
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 10 }}>
+                  {csvCapabilities.map((item) => (
+                    <div
+                      key={item.title}
+                      style={{
+                        border: '1px solid var(--border)',
+                        borderRadius: 'var(--radius)',
+                        padding: '12px 14px',
+                        background: item.available ? 'rgba(0,196,159,0.08)' : 'rgba(255,255,255,0.03)',
+                      }}
                     >
-                      <option value="">-- select column --</option>
-                      {headers.map(h => <option key={h} value={h}>{h}</option>)}
-                    </select>
-                  </div>
-                ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+                        <div style={{ fontWeight: 700, fontSize: 13 }}>{item.title}</div>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: item.available ? 'var(--teal)' : 'var(--text-muted)' }}>
+                          {item.available ? 'Yes' : 'No'}
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.4 }}>
+                        {item.description}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Preview */}
@@ -601,7 +738,7 @@ function CSVModal({ onClose, onImported }) {
                   </table>
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', marginTop: 6 }}>
-                  Total {parsed.length} rows milein
+                  Total {parsed.length} rows milein · {countUniqueProducts(parsed)} unique products
                 </div>
               </div>
 
@@ -614,7 +751,7 @@ function CSVModal({ onClose, onImported }) {
                 onMouseEnter={e => { e.currentTarget.style.background = 'var(--teal-mid)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'var(--teal)' }}
               >
-                {importing ? `⏳ Importing... (${parsed.length} items)` : `✓ ${parsed.length} Items Import Karo`}
+                {importing ? `⏳ Importing... (${parsed.length} rows)` : `✓ ${parsed.length} Rows Import Karo`}
               </button>
             </>
           )}
@@ -624,7 +761,7 @@ function CSVModal({ onClose, onImported }) {
   )
 }
 
-export default function InventoryPanel({ language = 'hinglish' }) {
+export default function InventoryPanel({ language = 'hinglish', onDataUpdated }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -682,6 +819,21 @@ export default function InventoryPanel({ language = 'hinglish' }) {
     URL.revokeObjectURL(url)
   }
 
+  async function handleClearInventory() {
+    const ok = window.confirm('Clear inventory completely? This will delete all items from inventory table.')
+    if (!ok) return
+
+    try {
+      const result = await clearInventory()
+      if (!result?.success) throw new Error(result?.error || result?.message || 'Failed to clear inventory')
+      await load()
+      if (typeof onDataUpdated === 'function') onDataUpdated()
+      window.alert(`Inventory cleared. Deleted ${result.items_deleted || 0} items.`)
+    } catch (err) {
+      window.alert(err?.message || 'Inventory clear failed')
+    }
+  }
+
   const lowStock = items.filter(i => i.quantity < 5)
   const totalItems = items.length
   const chartData = items
@@ -694,7 +846,11 @@ export default function InventoryPanel({ language = 'hinglish' }) {
       {showCSV && (
         <CSVModal
           onClose={() => setShowCSV(false)}
-          onImported={() => { setShowCSV(false); load() }}
+          onImported={() => {
+            setShowCSV(false)
+            load()
+            if (typeof onDataUpdated === 'function') onDataUpdated()
+          }}
         />
       )}
 
@@ -726,6 +882,14 @@ export default function InventoryPanel({ language = 'hinglish' }) {
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
           >
             ↺ Refresh
+          </button>
+          <button
+            style={s.clearBtn}
+            onClick={handleClearInventory}
+            onMouseEnter={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.10)'; e.currentTarget.style.color = '#ef4444' }}
+          >
+            🗑 Clear Inventory
           </button>
         </div>
       </div>
@@ -802,9 +966,9 @@ export default function InventoryPanel({ language = 'hinglish' }) {
             <div style={s.empty}>{error}</div>
           ) : items.length === 0 ? (
             <div style={s.empty}>
-              Inventory khaali hai —{' '}
+                  Inventory khaali hai —{' '}
               <span style={{ color: 'var(--teal)', cursor: 'pointer' }} onClick={() => setShowCSV(true)}>
-                CSV import karo
+                    inventory CSV import karo
               </span>
               {' '}ya voice se add karo
             </div>

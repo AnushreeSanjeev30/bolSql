@@ -122,8 +122,8 @@ TREND_PATTERNS = [
     (r"profit\s*(?:analysis|trend|report|by\s*item)", "profit_trend", lambda m: {}),
 
     # 9. Festival Trend
-    (r"(?:last|pichla|ane wala|aane wala|coming)\s*(diwali|holi|eid|christmas|navratri|durga|raksha?|ramzan)", "festival_trend", _festival),
-    (r"(diwali|holi|eid|christmas|navratri|durga|raksha|ramzan)\s*(?:mein)?\s*(?:kya|sales?|bikri|demand)", "festival_trend", _festival),
+    (r"(?:last|pichla|ane wala|aane wala|coming)\s*(diwali|holi|eid|christmas|new\s*year|newyear|valentine|valentines?|navratri|dussehra|dusshera|durga|raksha?|ramzan)", "festival_trend", _festival),
+    (r"(diwali|holi|eid|christmas|new\s*year|newyear|valentine|valentines?|navratri|dussehra|dusshera|durga|raksha|ramzan)\s*(?:mein)?\s*(?:kya|sales?|bikri|demand)", "festival_trend", _festival),
     (r"festival\s*(?:sales?|trends?|demand|inventory)", "festival_trend", lambda m: {"festival": "general"}),
 
     # 10. Market Basket (Hinglish + Hindi + English + Tamil/Tanglish)

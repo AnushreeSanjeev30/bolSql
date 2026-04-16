@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { uploadBill } from '../api'
+import { uploadBill, importSalesCsv } from '../api'
 import '../styles/BillUploadPanel.css'
 
 export default function BillUploadPanel({ onBillProcessed }) {
@@ -139,7 +139,21 @@ export default function BillUploadPanel({ onBillProcessed }) {
       if (file.name.endsWith('.json')) {
         importedBill = JSON.parse(fileContent)
       } else if (file.name.endsWith('.csv')) {
-        importedBill = parseCSVBill(fileContent)
+        const response = await importSalesCsv(fileContent, 'transaction')
+        setResult(response)
+
+        if (!response.success) {
+          throw new Error(response.error || response.message || 'CSV import failed')
+        }
+
+        if (onBillProcessed) {
+          onBillProcessed(response)
+        }
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
+        return
       } else {
         throw new Error('Unsupported file format. Use JSON or CSV.')
       }
@@ -182,48 +196,6 @@ export default function BillUploadPanel({ onBillProcessed }) {
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
-  }
-
-  const parseCSVBill = (csvContent) => {
-    const lines = csvContent.trim().split('\n')
-    const bill = {
-      bill_id: '',
-      customer_id: '',
-      customer_name: '',
-      timestamp: '',
-      items: [],
-    }
-
-    let inItemsSection = false
-
-    for (const line of lines) {
-      if (line.includes('Items') || line.includes('Product ID')) {
-        inItemsSection = true
-        continue
-      }
-
-      if (inItemsSection) {
-        if (line.trim() === '' || line.includes('Product ID')) continue
-
-        const parts = line.split(',').map(p => p.trim())
-        if (parts.length >= 4 && parts[0] !== 'Product ID') {
-          bill.items.push({
-            product_id: parts[0],
-            name: parts[1],
-            quantity: parseFloat(parts[2]) || 0,
-            price: parseFloat(parts[3]) || 0,
-          })
-        }
-      } else {
-        const [key, value] = line.split(',').map(p => p.trim())
-        if (key === 'Bill ID') bill.bill_id = value
-        else if (key === 'Customer ID') bill.customer_id = value
-        else if (key === 'Customer Name') bill.customer_name = value
-        else if (key === 'Timestamp') bill.timestamp = value
-      }
-    }
-
-    return bill
   }
 
   return (
@@ -353,10 +325,34 @@ export default function BillUploadPanel({ onBillProcessed }) {
               {result.message}
               {result.success && (
                 <div className="result-details">
-                  <p>✅ Items Processed: {result.items_processed}</p>
-                  <p>✅ Sales Recorded: {result.sales_records_created}</p>
-                  <p>{result.inventory_updated ? '✅' : '❌'} Inventory Updated</p>
-                  <p>{result.trends_refreshed ? '✅' : '❌'} Trends Refreshed</p>
+                  {typeof result.items_processed === 'number' && (
+                    <p>✅ Items Processed: {result.items_processed}</p>
+                  )}
+                  {typeof result.sales_records_created === 'number' && (
+                    <p>✅ Sales Recorded: {result.sales_records_created}</p>
+                  )}
+                  {typeof result.rows_processed === 'number' && (
+                    <p>✅ Rows Processed: {result.rows_processed}</p>
+                  )}
+                  {typeof result.rows_succeeded === 'number' && (
+                    <p>✅ Rows Imported: {result.rows_succeeded}</p>
+                  )}
+                  {typeof result.rows_failed === 'number' && (
+                    <p>⚠️ Rows Failed: {result.rows_failed}</p>
+                  )}
+                  {typeof result.inventory_updated !== 'undefined' && (
+                    <p>{result.inventory_updated ? '✅' : '❌'} Inventory Updated</p>
+                  )}
+                  {typeof result.trends_refreshed !== 'undefined' && (
+                    <p>{result.trends_refreshed ? '✅' : '❌'} Trends Refreshed</p>
+                  )}
+                  {Array.isArray(result.warnings) && result.warnings.length > 0 && (
+                    <div className="result-warnings">
+                      {result.warnings.slice(0, 5).map((warning, index) => (
+                        <p key={index}>⚠️ {warning}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
               {result.error && (
@@ -383,7 +379,7 @@ export default function BillUploadPanel({ onBillProcessed }) {
               📝 Load Sample
             </button>
             <label className="btn-import" htmlFor="bill-file-input">
-              📥 Import Bill
+              📥 Import CSV / JSON
             </label>
             <input
               ref={fileInputRef}

@@ -5,6 +5,7 @@ Or: uvicorn api:app --reload
 """
 
 import sys
+import sqlite3
 from pathlib import Path
 from typing import Optional
 import tempfile
@@ -62,7 +63,7 @@ TREND_CATALOG = [
     ("smart_reorder", {}),
     ("dead_stock", {}),
     ("profit_trend", {}),
-    ("festival_trend", {}),
+    ("festival_trend", {"festival": "general"}),
     ("market_basket", {}),
     ("customer_pattern", {}),
     ("auto_subscription", {}),
@@ -70,14 +71,17 @@ TREND_CATALOG = [
 ]
 
 
-def _execute_all_trends(engine) -> list[dict]:
+def _execute_all_trends(engine, festival: str = "general") -> list[dict]:
     """Run all trends from centralized catalog and return UI-ready payload."""
     from app.trends.formatter import format_trend_response
 
     trends = []
     for trend_type, params in TREND_CATALOG:
         try:
-            raw_data = engine.dispatch(trend_type, params)
+            effective_params = dict(params)
+            if trend_type == "festival_trend":
+                effective_params["festival"] = festival or "general"
+            raw_data = engine.dispatch(trend_type, effective_params)
             formatted = format_trend_response(trend_type, raw_data)
             insight = raw_data.get("insight", "") if isinstance(raw_data, dict) else ""
             trends.append({
@@ -229,6 +233,55 @@ async def get_inventory():
     return {"items": get_all_items()}
 
 
+@app.api_route("/api/inventory/clear", methods=["POST", "DELETE"])
+async def clear_inventory():
+    """Clear inventory completely by deleting all inventory items."""
+    conn = None
+    try:
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA journal_mode=WAL")
+
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) AS c FROM inventory")
+        row = cur.fetchone()
+        items_deleted = int(row[0] if row else 0)
+
+        # Keep history tables but detach item_id pointers before deleting inventory rows.
+        tables = cur.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+        for table_row in tables:
+            table_name = table_row[0]
+            if table_name == "inventory":
+                continue
+            cols = cur.execute(f"PRAGMA table_info({table_name})").fetchall()
+            if any(col[1] == "item_id" for col in cols):
+                cur.execute(f"UPDATE {table_name} SET item_id=NULL WHERE item_id IS NOT NULL")
+
+        cur.execute("DELETE FROM inventory")
+        conn.commit()
+
+        return {
+            "success": True,
+            "message": "✅ Inventory cleared successfully",
+            "items_deleted": items_deleted,
+        }
+    except Exception as e:
+        if conn:
+            conn.rollback()
+        return {
+            "success": False,
+            "message": "Failed to clear inventory",
+            "items_deleted": 0,
+            "error": str(e),
+        }
+    finally:
+        if conn:
+            conn.close()
+
+
 @app.get("/weather/current")
 async def get_current_weather(language: str = "hinglish"):
     """Return current live weather + weather-aware product playbook."""
@@ -249,8 +302,175 @@ async def get_current_weather(language: str = "hinglish"):
     }
 
 
+@app.get("/trends/metadata")
+async def get_trends_metadata(language: str = "hinglish"):
+    """Return UI metadata for all trend types (icons, narratives, playbooks, etc.)."""
+    metadata = {
+        "sales_trend": {
+            "icon": "📊",
+            "narrative_hinglish": "Revenue pulse",
+            "narrative_tamil": "Viola mudhal analysis",
+            "description_hinglish": "Daily revenue and order tracking over 7 days",
+            "description_tamil": "7 naal viola mudhal analysis",
+            "playbook_hinglish": ["Top-selling SKU pe stock buffer 20% badhao", "Slow SKU pe combo offer test karo"],
+            "playbook_tamil": ["Top selling items-ku 20% stock buffer vainga", "Slow moving items-ku combo offer podunga"],
+            "tone": "ok",
+            "priority": 1,
+        },
+        "hourly_rush": {
+            "icon": "🕐",
+            "narrative_hinglish": "Rush window",
+            "narrative_tamil": "Peak neram",
+            "description_hinglish": "Identify peak shopping hours for staffing",
+            "description_tamil": "Peak neram identify pannunga",
+            "playbook_hinglish": ["Peak hour ke pehle counter prep karo", "Fast-moving items front rack pe rakho"],
+            "playbook_tamil": ["Peak hour-ku munna counter prep pannunga", "Fast movers front rack la vainga"],
+            "tone": "accent",
+            "priority": 3,
+        },
+        "product_demand": {
+            "icon": "📦",
+            "narrative_hinglish": "Top mover spotlight",
+            "narrative_tamil": "Top bikne wala items",
+            "description_hinglish": "Top 10 most in-demand products this month",
+            "description_tamil": "Month ku top 10 items",
+            "playbook_hinglish": ["Top items ka stock lavel maintain karo", "Slow movers pe bundle offers do"],
+            "playbook_tamil": ["Top items stock la vainga", "Slow items-ku bundle offers podunga"],
+            "tone": "ok",
+            "priority": 2,
+        },
+        "seasonal_trend": {
+            "icon": "🌦️",
+            "narrative_hinglish": "Seasonal pattern",
+            "narrative_tamil": "Kalam pattern",
+            "description_hinglish": "Monthly sales patterns and seasonal spikes",
+            "description_tamil": "Monthly pattern analysis",
+            "playbook_hinglish": ["Festival prep ke 2 hafta pehle stock badho", "Off-season pe discounts chalaao"],
+            "playbook_tamil": ["Festival munna stock badhandi", "Off-season la discount podunga"],
+            "tone": "accent",
+            "priority": 4,
+        },
+        "stock_depletion": {
+            "icon": "⚠️",
+            "narrative_hinglish": "Stock risk monitor",
+            "narrative_tamil": "Stock risk warning",
+            "description_hinglish": "Items at risk of stockout within 7 days",
+            "description_tamil": "7 naal la khatam hone wala items",
+            "playbook_hinglish": ["Critical items ka reorder aaj hi place karo", "Safety stock threshold set karo"],
+            "playbook_tamil": ["Critical items reorder innaikke podunga", "Safety stock limit set pannunga"],
+            "tone": "warn",
+            "priority": 0,
+        },
+        "smart_reorder": {
+            "icon": "🛒",
+            "narrative_hinglish": "Reorder command",
+            "narrative_tamil": "Smart reorder quantity",
+            "description_hinglish": "Auto-calculated quantities based on demand and lead time",
+            "description_tamil": "Auto-calculated reorder quantities",
+            "playbook_hinglish": ["Suggested reorder list ko supplier ke saath lock karo", "High margin items ko priority do"],
+            "playbook_tamil": ["Suggested reorder list supplier-oda confirm pannunga", "High margin items-ku priority kudunga"],
+            "tone": "ok",
+            "priority": 1,
+        },
+        "dead_stock": {
+            "icon": "💀",
+            "narrative_hinglish": "Dead stock cleanup",
+            "narrative_tamil": "Dead stock removal",
+            "description_hinglish": "Items not sold in 30+ days — recommend discount or return",
+            "description_tamil": "30+ days la bikka items",
+            "playbook_hinglish": ["Dead stock pe discount bundle launch karo", "Shelf space ko fast movers ko do"],
+            "playbook_tamil": ["Dead stock-ku discount bundle podunga", "Shelf space fast movers-ku maathunga"],
+            "tone": "warn",
+            "priority": 2,
+        },
+        "profit_trend": {
+            "icon": "💰",
+            "narrative_hinglish": "Margin heatmap",
+            "narrative_tamil": "Profit analysis",
+            "description_hinglish": "Top 10 most profitable products and margin %",
+            "description_tamil": "Top 10 profit wala products",
+            "playbook_hinglish": ["High margin items pa stock buffer rakho", "Low margin items par combo offers do"],
+            "playbook_tamil": ["High margin items stock buffer vainga", "Low margin items-ku combo offers podunga"],
+            "tone": "ok",
+            "priority": 2,
+        },
+        "festival_trend": {
+            "icon": "🎉",
+            "narrative_hinglish": "Festival spike radar",
+            "narrative_tamil": "Festival spike detection",
+            "description_hinglish": "Compare sales across festivals across multiple years",
+            "description_tamil": "Festival-to-festival comparison",
+            "playbook_hinglish": ["Festival 2 hafta pehle prep start karo", "Festival-specific stock level plan karo"],
+            "playbook_tamil": ["Festival munna planning start pannunga", "Festival stock plan pannunga"],
+            "tone": "accent",
+            "priority": 3,
+        },
+        "market_basket": {
+            "icon": "🧺",
+            "narrative_hinglish": "Bundle discovery",
+            "narrative_tamil": "Co-purchase patterns",
+            "description_hinglish": "Frequently co-purchased item pairs",
+            "description_tamil": "Saathaa bikne items",
+            "playbook_hinglish": ["Top pairs pe combo pricing do", "Co-purchase items ko paas-pass display karo"],
+            "playbook_tamil": ["Top pairs-ku combo price kudunga", "Saathaa vangara items side-by-side display pannunga"],
+            "tone": "neutral",
+            "priority": 4,
+        },
+        "customer_pattern": {
+            "icon": "👥",
+            "narrative_hinglish": "Customer behavior",
+            "narrative_tamil": "Customer patterns",
+            "description_hinglish": "Top customers and purchasing habits",
+            "description_tamil": "Top customer analysis",
+            "playbook_hinglish": ["Top customers ke liye loyalty perks do", "VIP customers ke liye exclusive offers"],
+            "playbook_tamil": ["Top customers-ku loyalty offers podunga", "VIP treatment pannunga"],
+            "tone": "neutral",
+            "priority": 3,
+        },
+        "auto_subscription": {
+            "icon": "🔄",
+            "narrative_hinglish": "Repeat-buy signal",
+            "narrative_tamil": "Subscription pattern",
+            "description_hinglish": "Items purchased regularly — ideal for subscription model",
+            "description_tamil": "Regular bikne items",
+            "playbook_hinglish": ["Regular items ke liye subscription offer banao", "Monthly bundles suggest karo"],
+            "playbook_tamil": ["Regular items-ku subscription offer podunga", "Monthly bundle suggest pannunga"],
+            "tone": "neutral",
+            "priority": 4,
+        },
+        "weather_trend": {
+            "icon": "🌤️",
+            "narrative_hinglish": "Weather demand signal",
+            "narrative_tamil": "Weather impact",
+            "description_hinglish": "Weather-based demand prediction and product recommendations",
+            "description_tamil": "Weather-based demand",
+            "playbook_hinglish": ["Weather-led top items ka display front pe rakho", "2-day demand spike ke liye quick reorder karo"],
+            "playbook_tamil": ["Weather-led top items front display la podunga", "2-naal spike-ku quick reorder pannunga"],
+            "tone": "accent",
+            "priority": 2,
+        },
+    }
+
+    # Select language variant
+    lang_key_narrative = f"narrative_{language}"
+    lang_key_playbook = f"playbook_{language}"
+
+    result = {}
+    for trend_type, info in metadata.items():
+        result[trend_type] = {
+            "icon": info["icon"],
+            "narrative": info.get(lang_key_narrative, info["narrative_hinglish"]),
+            "description": info.get(f"description_{language}", info.get("description_hinglish", "")),
+            "playbook": info.get(lang_key_playbook, info.get("playbook_hinglish", [])),
+            "tone": info["tone"],
+            "priority": info["priority"],
+        }
+
+    return {"metadata": result}
+
+
 @app.get("/trends/all")
-async def get_all_trends():
+async def get_all_trends(festival: str = "general"):
     """Get all 13 trend analyses."""
     try:
         from app.trends.engine import TrendsEngine
@@ -258,21 +478,21 @@ async def get_all_trends():
         
         engine = TrendsEngine(DB_PATH)
 
-        trends = _execute_all_trends(engine)
+        trends = _execute_all_trends(engine, festival=festival)
         return {"trends": trends}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load trends: {e}")
 
 
 @app.get("/trends/export-json")
-async def export_trends_json():
+async def export_trends_json(festival: str = "general"):
     """Export all trends as JSON."""
     try:
         from app.trends.engine import TrendsEngine
         from datetime import datetime
         engine = TrendsEngine(DB_PATH)
 
-        trends = _execute_all_trends(engine)
+        trends = _execute_all_trends(engine, festival=festival)
         report = {
             "generated_at": datetime.now().isoformat(),
             "trends": {t["type"]: t.get("raw", {}) for t in trends}
@@ -370,6 +590,23 @@ class BillUploadResponse(BaseModel):
     error: Optional[str] = None
 
 
+class SalesCsvImportRequest(BaseModel):
+    csv_text: str
+    mode: Optional[str] = "transaction"
+
+
+class SalesCsvImportResponse(BaseModel):
+    success: bool
+    message: str
+    rows_processed: int
+    rows_succeeded: int
+    rows_failed: int
+    inventory_updated: bool
+    trends_refreshed: bool
+    warnings: Optional[list] = None
+    error: Optional[str] = None
+
+
 @app.post("/api/upload-bill", response_model=BillUploadResponse)
 async def upload_bill(bill: BillUploadRequest):
     """
@@ -449,6 +686,38 @@ async def upload_bill(bill: BillUploadRequest):
             message="Internal server error processing bill",
             items_processed=0,
             sales_records_created=0,
+            inventory_updated=False,
+            trends_refreshed=False,
+            error=str(e),
+        )
+
+
+@app.post("/api/import-sales-csv", response_model=SalesCsvImportResponse)
+async def import_sales_csv(payload: SalesCsvImportRequest):
+    """Import a flat shop CSV and update inventory + trends."""
+    try:
+        from app.bill_processor import process_sales_csv
+        from config import DB_PATH as CONFIG_DB_PATH
+
+        result = process_sales_csv(payload.csv_text, str(CONFIG_DB_PATH), inventory_mode=payload.mode)
+        return SalesCsvImportResponse(
+            success=bool(result.get("success")),
+            message=result.get("message", ""),
+            rows_processed=int(result.get("rows_processed", 0)),
+            rows_succeeded=int(result.get("rows_succeeded", 0)),
+            rows_failed=int(result.get("rows_failed", 0)),
+            inventory_updated=bool(result.get("inventory_updated")),
+            trends_refreshed=bool(result.get("trends_refreshed")),
+            warnings=result.get("warnings") or None,
+            error=result.get("error"),
+        )
+    except Exception as e:
+        return SalesCsvImportResponse(
+            success=False,
+            message="Internal server error processing CSV",
+            rows_processed=0,
+            rows_succeeded=0,
+            rows_failed=0,
             inventory_updated=False,
             trends_refreshed=False,
             error=str(e),
