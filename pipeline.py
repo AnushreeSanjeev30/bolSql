@@ -108,6 +108,29 @@ class PipelineResult:
     error: Optional[str] = None
 
 
+DISPLAY_NAME_TAMIL = {
+    "chawal": "arisi",
+    "rice": "arisi",
+    "tel": "ennai",
+    "oil": "ennai",
+    "doodh": "paal",
+    "milk": "paal",
+    "namak": "uppu",
+    "salt": "uppu",
+    "chini": "sakkarai",
+    "sugar": "sakkarai",
+}
+
+
+def _display_item_name(name: str, language: str) -> str:
+    """Render item names per UI language without changing DB canonical storage."""
+    if not name:
+        return name
+    if language == "tamil":
+        return DISPLAY_NAME_TAMIL.get(name.lower(), name)
+    return name
+
+
 # ---------------------------------------------------------------------------
 # Inventory operations (ADD / SELL / simple QUERY)
 # ---------------------------------------------------------------------------
@@ -172,8 +195,9 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
                 row = upsert_item(item_name, qty, unit)
                 rows.append(row)
                 if language == "tamil":
+                    display_name = _display_item_name(row["name"], language)
                     lines.append(
-                        f"✓ {qty} {unit} {item_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
+                        f"✓ {qty} {unit} {display_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
                     )
                 else:
                     lines.append(
@@ -223,7 +247,8 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
         
         # Get base response
         if language == "tamil":
-            response = f"✓ {qty} {unit} {parsed.item_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
+            display_name = _display_item_name(row["name"], language)
+            response = f"✓ {qty} {unit} {display_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
         else:
             response = f"✓ {qty} {unit} {parsed.item_name} add ho gaya. Ab total {row['quantity']} {row['unit']} hai."
         
@@ -285,7 +310,8 @@ def _handle_sell(parsed: ParsedQuery, language: str = "hinglish") -> PipelineRes
     try:
         row = sell_item(parsed.item_name, qty)
         if language == "tamil":
-            response = f"✓ {qty} {row['unit']} {parsed.item_name} sale record pannathu. Ab {row['quantity']} {row['unit']} left irukku."
+            display_name = _display_item_name(row["name"], language)
+            response = f"✓ {qty} {row['unit']} {display_name} sale record pannathu. Ab {row['quantity']} {row['unit']} left irukku."
         else:
             response = f"✓ {qty} {row['unit']} {parsed.item_name} ka sale record ho gaya. Ab {row['quantity']} {row['unit']} bacha hai."
         return PipelineResult(
@@ -342,7 +368,8 @@ def _handle_stock_correction(parsed: ParsedQuery, language: str = "hinglish") ->
     try:
         row = correct_stock(parsed.item_name, float(parsed.quantity), unit)
         if language == "tamil":
-            response = f"✓ {row['name']} stock correct pannathu: {row['quantity']} {row['unit']}"
+            display_name = _display_item_name(row["name"], language)
+            response = f"✓ {display_name} stock correct pannathu: {row['quantity']} {row['unit']}"
         else:
             response = f"✓ {row['name']} ka stock correct ho gaya: {row['quantity']} {row['unit']}"
         return PipelineResult(
@@ -620,14 +647,14 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
         if not low_stock:
             response_map = {
                 "hinglish": "Sab badhiya hai! Koi bhi saman kam nahi hai.",
-                "tamil": "Sab nalla irukku! Yaar samaan less illai."
+                "tamil": "Ellaam nalla irukku! Endha item-um kammi illa."
             }
             return PipelineResult(success=True, response=response_map.get(language, response_map["hinglish"]), intent="QUERY")
         
-        lines = [f"  • {r['name']}: {r['quantity']} {r['unit']}" for r in low_stock]
+        lines = [f"  • {_display_item_name(r['name'], language)}: {r['quantity']} {r['unit']}" for r in low_stock]
         response_map = {
             "hinglish": "⚠️ Yeh saman kam hai:\n",
-            "tamil": "⚠️ Yeh samaan less irukku:\n"
+            "tamil": "⚠️ Indha items kammi irukku:\n"
         }
         response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
         return PipelineResult(success=True, response=response, intent="QUERY", db_rows=low_stock)
@@ -655,7 +682,7 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
         if not rows:
             response_map = {
                 "hinglish": "Inventory khaali hai. Kuch add karo pehle.",
-                "tamil": "Inventory empty. Kuch add panna."
+                "tamil": "Inventory kaaliya irukku. Modhalla konjam add pannunga."
             }
             return PipelineResult(
                 success=True,
@@ -664,10 +691,10 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
                 db_rows=[],
             )
 
-        lines = [f"  • {r['name']}: {r['quantity']} {r['unit']}" for r in rows]
+        lines = [f"  • {_display_item_name(r['name'], language)}: {r['quantity']} {r['unit']}" for r in rows]
         response_map = {
             "hinglish": "📦 Aapka poora stock:\n",
-            "tamil": "📦 Your complete stock:\n"
+            "tamil": "📦 Unga full stock:\n"
         }
         response = response_map.get(language, response_map["hinglish"]) + "\n".join(lines)
         return PipelineResult(
@@ -683,13 +710,13 @@ def _handle_query_direct(parsed: ParsedQuery, language: str = "hinglish") -> Opt
         qty = row.get("quantity", 0)
         # Older databases might not have a 'unit' column; default gracefully
         unit = row.get("unit", "piece")
-        name = row.get("name", item)
+        name = _display_item_name(row.get("name", item), language)
         if qty == 0:
             response = f"⚠️  {name} ka stock khatam ho gaya hai! Restock karo." if language == "hinglish" else f"⚠️  {name} stock over. Restock panna."
         elif qty < 5:
-            response = f"⚠️  {name} kam bacha hai — sirf {qty} {unit}." if language == "hinglish" else f"⚠️  {name} less irukku — only {qty} {unit}."
+            response = f"⚠️  {name} kam bacha hai — sirf {qty} {unit}." if language == "hinglish" else f"⚠️  {name} kammiya irukku — {qty} {unit} dhaan irukku."
         else:
-            response = f"Aapke paas {qty} {unit} {name} bacha hai." if language == "hinglish" else f"You have {qty} {unit} {name} left."
+            response = f"Aapke paas {qty} {unit} {name} bacha hai." if language == "hinglish" else f"Unga kitte {qty} {unit} {name} baki irukku."
         return PipelineResult(
             success=True,
             response=response,
@@ -1269,7 +1296,7 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
     # Step 1: NLP parsing — route to LLM parser for voice, rule-based for text
     if is_voice:
         from app.nlp.extractor import parse_voice
-        parsed = parse_voice(text)  # parse_voice handles Devanagari transliteration
+        parsed = parse_voice(text, language=language)  # parse_voice handles Devanagari transliteration
     else:
         # For text input with Devanagari, transliterate first
         from app.nlp.extractor import _transliterate_devanagari
@@ -1277,7 +1304,7 @@ def process(text: str, is_voice: bool = False, language: str = "hinglish") -> Pi
         if text_normalized != text:
             log.debug("Devanagari transliterated: '%s' → '%s'", text, text_normalized)
             text = text_normalized  # Use transliterated text for all downstream processing
-        parsed = parse(text)
+        parsed = parse(text, language=language)  # Pass language to parse for language-aware keyword matching
     log.info(
         "Intent=%s item=%s qty=%s unit=%s conf=%.2f",
         parsed.intent,

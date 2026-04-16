@@ -40,6 +40,11 @@ export async function getCustomerTrends() {
   return data
 }
 
+export async function getCurrentWeather(language = 'hinglish') {
+  const { data } = await api.get('/weather/current', { params: { language } })
+  return data
+}
+
 export async function uploadBill(bill) {
   const { data } = await api.post('/api/upload-bill', bill)
   return data

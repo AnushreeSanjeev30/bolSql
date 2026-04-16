@@ -250,6 +250,7 @@ def detect_language(text: str) -> str:
     Checks for:
     - Tamil script characters (Unicode 0x0B80-0x0BFF) and Tamil keywords
     - Tamil patterns: saathey, onga, villnga, mynaadu, bikka, neram, hora (Tanglish)
+    - Tamil verbs: pannunga, vendidha, ethra, irukku, pannunga
     - Hindi/Devanagari patterns: एक साथ, साथ, क्या, बार, etc.
     
     Returns: 'tamil', 'hindi', or 'hinglish' (default)
@@ -281,6 +282,12 @@ def detect_language(text: str) -> str:
     
     # Tamil indicators (Roman script / Tanglish patterns)
     tamil_patterns = [
+        # Taglish verb endings
+        r"\bpannunga\b", r"\bpannu\b", r"\bpanna\b",  # put/do (Tamil)
+        r"\bwendidha\b", r"\bvendidha\b", r"\bvendi\b",  # sold (Tamil)
+        r"\bethra\b", r"\betra\b",  # how much (Tamil)
+        r"\birukku\b", r"\birthu\b",  # is/have (Tamil)
+        # Original Taglish patterns
         r"\bsaathey\b", r"\bonga\b", r"\borgane\b",
         r"\bvillnga\b", r"\bbikka\b", r"\bmynaadu\b",
         r"\bneram\b", r"\bhora\b", r"\bbech\s*bol\b",

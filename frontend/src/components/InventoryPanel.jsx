@@ -50,6 +50,17 @@ const s = {
     background: 'var(--teal-dim)',
     cursor: 'pointer',
   },
+  exportBtn: {
+    padding: '8px 16px',
+    borderRadius: 'var(--radius)',
+    border: '1px solid var(--border)',
+    color: 'var(--text-secondary)',
+    fontSize: 12,
+    fontFamily: 'var(--font-mono)',
+    transition: 'all 0.15s',
+    background: 'var(--bg-card)',
+    cursor: 'pointer',
+  },
   statsRow: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -472,7 +483,7 @@ function CSVModal({ onClose, onImported }) {
       if (!name || isNaN(quantity)) { failCount++; continue }
 
       try {
-        const data = await sendQuery(`${quantity} ${unit} ${name} add karo`)
+        const data = await sendQuery(`${quantity} ${unit} ${name} add karo`, language)
         if (data.success) successCount++
         else failCount++
       } catch {
@@ -633,6 +644,44 @@ export default function InventoryPanel({ language = 'hinglish' }) {
 
   useEffect(() => { load() }, [])
 
+  function csvEscape(value) {
+    if (value === null || value === undefined) return ''
+    const str = String(value)
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`
+    }
+    return str
+  }
+
+  function downloadInventoryCSV() {
+    const headers = ['name', 'quantity', 'unit', 'price', 'category', 'expiry_date']
+    const rows = items.map(item => [
+      item.name,
+      item.quantity,
+      item.unit,
+      item.price ?? '',
+      item.category ?? '',
+      item.expiry_date ?? '',
+    ])
+
+    const lines = [
+      headers.join(','),
+      ...rows.map(row => row.map(csvEscape).join(',')),
+    ]
+
+    const csv = lines.join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+
+    const now = new Date()
+    const stamp = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `inventory_export_${stamp}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const lowStock = items.filter(i => i.quantity < 5)
   const totalItems = items.length
   const chartData = items
@@ -654,6 +703,14 @@ export default function InventoryPanel({ language = 'hinglish' }) {
           {language === 'tamil' ? 'Inventory - Samanukkam' : 'Inventory'} <span style={{ color: 'var(--teal)' }}>📦</span>
         </div>
         <div style={s.headerBtns}>
+          <button
+            style={s.exportBtn}
+            onClick={downloadInventoryCSV}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--teal)'; e.currentTarget.style.color = 'var(--teal)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-secondary)' }}
+          >
+            ↓ CSV Download
+          </button>
           <button
             style={s.importBtn}
             onClick={() => setShowCSV(true)}

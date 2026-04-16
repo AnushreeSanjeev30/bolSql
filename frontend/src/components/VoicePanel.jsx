@@ -213,11 +213,11 @@ const QUICK_HINGLISH = [
 ]
 
 const QUICK_TANGLISH = [
-  'arisi kitna irukku',
-  'sab items paathukkala',
-  '50kg aatta add panna',
-  '10 packet biscuit vendi',
-  'yaar samaan less irukku',
+  'arisi evlo irukku',
+  'ella items list kaatu',
+  '50kg aatta add pannunga',
+  '10 packet biscuit vithachu',
+  'endha item kammi irukku',
 ]
 
 // Intent label translations
@@ -375,7 +375,7 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
           </div>
           <div style={s.subtitle}>
             {language === 'tamil' 
-              ? 'Tanglish mein bolo ya type karo — aatta, arisi, ennai, laavani sab samja jaayega' 
+              ? 'Tanglish la pesunga illa type pannunga — aatta, arisi, ennai ellam puriyum' 
               : 'Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai'}
           </div>
         </div>
@@ -427,7 +427,9 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
           <div style={s.emptyState}>
             <div style={s.emptyIcon}>🏪</div>
             <div style={s.emptyText}>
-              {"50kg atta add karo\nchawal kitna bacha hai\n10 packet biscuit becha"}
+              {language === 'tamil'
+                ? "50kg aatta add pannunga\narisi evlo irukku\n10 packet biscuit vithachu"
+                : "50kg atta add karo\nchawal kitna bacha hai\n10 packet biscuit becha"}
             </div>
           </div>
         )}

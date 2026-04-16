@@ -157,7 +157,7 @@ export default function HistoryPanel({ language = 'hinglish' }) {
     setLoading(true)
     setResult(null)
     try {
-      const res = await sendQuery(text)
+      const res = await sendQuery(text, language)
       setResult(res)
     } catch {
       setResult({ success: false, response: 'API error. Is the backend running?' })

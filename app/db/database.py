@@ -19,6 +19,32 @@ from .migrations import run_inventory_migrations, run_customer_migrations
 log = get_logger("db")
 
 
+# Cross-language item synonym groups (all variants map to one canonical name).
+ITEM_SYNONYM_GROUPS = {
+    "atta": {"atta", "aata", "aatta", "wheat flour", "flour", "maavu"},
+    "chawal": {"chawal", "chaawal", "chaval", "rice", "arisi"},
+    "dal": {"dal", "daal", "lentil", "lentils", "paruppu"},
+    "tel": {"tel", "teel", "oil", "cooking oil", "refined oil", "ennai", "ennei", "enai", "nallennai"},
+    "chini": {"chini", "cheeni", "sugar", "shakkar"},
+    "namak": {"namak", "salt", "uppu"},
+    "doodh": {"doodh", "dud", "dhudh", "milk", "paal"},
+    "biscuit": {"biscuit", "biscuits", "biskut", "biskit", "biskoot", "biscut"},
+    "sabun": {"sabun", "soap"},
+    "chai": {"chai", "tea", "tea leaves", "chai patti"},
+    "haldi": {"haldi", "turmeric"},
+    "mirchi": {"mirchi", "mirch", "chilli", "chili", "red chilli", "lal mirchi"},
+    "aloo": {"aloo", "potato", "potatoes"},
+    "apple": {"apple", "apples", "seb"},
+    "mango": {"mango", "mangos", "mongos", "aam"},
+}
+
+ITEM_ALIAS_TO_CANONICAL = {
+    alias: canonical
+    for canonical, aliases in ITEM_SYNONYM_GROUPS.items()
+    for alias in aliases
+}
+
+
 def get_conn() -> sqlite3.Connection:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -117,6 +143,14 @@ def init_db() -> None:
     log.info("Running database migrations")
     run_inventory_migrations(str(DB_PATH))
     run_customer_migrations(str(DB_PATH))
+
+    # Consolidate legacy alias rows (e.g., arisi/chawal/rice -> one row).
+    conn = get_conn()
+    merged = _merge_inventory_alias_duplicates(conn)
+    if merged:
+        log.info("Merged %d alias-duplicate inventory group(s)", merged)
+    conn.commit()
+    conn.close()
     
     log.info("Database ready")
 
@@ -126,18 +160,119 @@ def normalize_name(name: str) -> str:
     return re.sub(r"\s+", " ", name.strip().lower())
 
 
+def canonicalize_name(name: str) -> str:
+    """Map aliases like rice/chawal/arisi to one canonical inventory name."""
+    norm = normalize_name(name)
+    return ITEM_ALIAS_TO_CANONICAL.get(norm, norm)
+
+
+def _name_candidates(name: str) -> list[str]:
+    """Return all known aliases for the item's canonical family."""
+    norm = normalize_name(name)
+    canonical = ITEM_ALIAS_TO_CANONICAL.get(norm)
+    if not canonical:
+        return [norm]
+    aliases = ITEM_SYNONYM_GROUPS.get(canonical, {canonical})
+    # Keep stable ordering for deterministic SQL params/logging.
+    return sorted({normalize_name(a) for a in aliases} | {canonical})
+
+
+def _find_inventory_row(conn: sqlite3.Connection, name: str, allow_like: bool = True):
+    """Find an inventory row by exact alias family match, with optional LIKE fallback."""
+    norm = normalize_name(name)
+    canonical = canonicalize_name(name)
+    candidates = _name_candidates(name)
+
+    placeholders = ",".join(["?"] * len(candidates))
+    row = conn.execute(
+        f"""
+        SELECT * FROM inventory
+        WHERE LOWER(name) IN ({placeholders})
+        ORDER BY
+            CASE
+                WHEN LOWER(name) = ? THEN 0
+                ELSE 1
+            END,
+            id ASC
+        LIMIT 1
+        """,
+        (*candidates, canonical),
+    ).fetchone()
+
+    if not row and allow_like:
+        row = conn.execute(
+            "SELECT * FROM inventory WHERE LOWER(name) LIKE ? ORDER BY id ASC LIMIT 1",
+            (f"%{norm}%",),
+        ).fetchone()
+
+    return row
+
+
+def _merge_inventory_alias_duplicates(conn: sqlite3.Connection) -> int:
+    """Merge legacy duplicate rows that belong to the same synonym family."""
+    merged_groups = 0
+
+    for canonical in ITEM_SYNONYM_GROUPS.keys():
+        candidates = sorted({normalize_name(a) for a in ITEM_SYNONYM_GROUPS[canonical]} | {canonical})
+        placeholders = ",".join(["?"] * len(candidates))
+
+        rows = conn.execute(
+            f"""
+            SELECT * FROM inventory
+            WHERE LOWER(name) IN ({placeholders})
+            ORDER BY
+                CASE WHEN LOWER(name) = ? THEN 0 ELSE 1 END,
+                id ASC
+            """,
+            (*candidates, canonical),
+        ).fetchall()
+
+        if len(rows) <= 1:
+            continue
+
+        keeper = rows[0]
+        dupes = rows[1:]
+
+        merged_qty = sum(float(r["quantity"] or 0.0) for r in rows)
+        merged_unit = keeper["unit"] or next((r["unit"] for r in rows if r["unit"]), "piece")
+
+        merged_price = float(keeper["price"] or 0.0)
+        if merged_price == 0.0:
+            for r in rows:
+                p = float(r["price"] or 0.0)
+                if p > 0:
+                    merged_price = p
+                    break
+
+        conn.execute(
+            "UPDATE inventory SET name=?, quantity=?, unit=?, price=? WHERE id=?",
+            (canonical, merged_qty, merged_unit, merged_price, keeper["id"]),
+        )
+
+        for d in dupes:
+            conn.execute(
+                "UPDATE transactions SET item_id=?, item_name=? WHERE item_id=?",
+                (keeper["id"], canonical, d["id"]),
+            )
+            conn.execute(
+                "UPDATE price_history SET item_id=?, item_name=? WHERE item_id=?",
+                (keeper["id"], canonical, d["id"]),
+            )
+            conn.execute(
+                "UPDATE orders SET item_id=?, item_name=? WHERE item_id=?",
+                (keeper["id"], canonical, d["id"]),
+            )
+            conn.execute("DELETE FROM inventory WHERE id=?", (d["id"],))
+
+        merged_groups += 1
+
+    return merged_groups
+
+
 def get_item(name: str) -> Optional[dict]:
     """Fuzzy-ish item lookup: exact first, then LIKE."""
-    norm = normalize_name(name)
     conn = get_conn()
-    row = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
-    if not row:
-        # Partial match
-        row = conn.execute(
-            "SELECT * FROM inventory WHERE LOWER(name) LIKE ?", (f"%{norm}%",)
-        ).fetchone()
+    row = _find_inventory_row(conn, name, allow_like=True)
     conn.close()
     return dict(row) if row else None
 
@@ -170,11 +305,9 @@ def upsert_item(name: str, quantity: float, unit: str, price: float = 0.0) -> di
     Add item if not exists, else add quantity to existing stock.
     Returns updated row.
     """
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
-    existing = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+    existing = _find_inventory_row(conn, name, allow_like=False)
 
     ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -214,11 +347,9 @@ def sell_item(name: str, quantity: float) -> dict:
     Reduce stock. Raises ValueError if item not found or insufficient stock.
     Returns updated row.
     """
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
-    existing = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+    existing = _find_inventory_row(conn, name, allow_like=False)
 
     if not existing:
         conn.close()
@@ -254,11 +385,9 @@ def correct_stock(name: str, quantity: float, unit: Optional[str] = None) -> dic
     This does NOT insert a sale/restock transaction to avoid skewing
     demand analytics; it is meant for counting/correction only.
     """
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
-    existing = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+    existing = _find_inventory_row(conn, name, allow_like=False)
 
     chosen_unit = unit
     if existing and not chosen_unit:
@@ -308,13 +437,11 @@ def execute_safe_sql(sql: str, params: tuple = ()) -> int:
 
 def update_item_price(name: str, new_price: float, reason: str = "manual") -> dict:
     """Update item price and log to price_history."""
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
     
     # Get current price
-    item = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+    item = _find_inventory_row(conn, name, allow_like=False)
     
     if not item:
         conn.close()
@@ -345,12 +472,10 @@ def update_item_price(name: str, new_price: float, reason: str = "manual") -> di
 
 def rollback_item_price(name: str) -> dict:
     """Rollback item price to previous value from price_history."""
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
     
-    item = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+    item = _find_inventory_row(conn, name, allow_like=False)
     
     if not item:
         conn.close()
@@ -514,12 +639,10 @@ def get_items_by_expiry(days_until_expiry: int = 7) -> list[dict]:
 
 def set_item_expiry(name: str, expiry_date: str) -> dict:
     """Set expiry date for an item (format: YYYY-MM-DD)."""
-    norm = normalize_name(name)
+    norm = canonicalize_name(name)
     conn = get_conn()
-    
-    item = conn.execute(
-        "SELECT * FROM inventory WHERE LOWER(name)=?", (norm,)
-    ).fetchone()
+
+    item = _find_inventory_row(conn, name, allow_like=False)
     
     if not item:
         conn.close()

@@ -22,6 +22,8 @@ from app.db.database import init_db, get_all_items
 from pipeline import process
 from app.trends.classifier import detect_language
 from config import TRENDS_DB_PATH, DB_PATH
+from app.weather.weather import get_weather
+from app.weather.suggestions import get_weather_condition_overview
 
 from app.trends.customer_engine import (
     compute_rfm,
@@ -48,6 +50,49 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Centralized trend catalog to avoid repeating hardcoded lists in multiple endpoints.
+TREND_CATALOG = [
+    ("sales_trend", {"days": 7}),
+    ("hourly_rush", {}),
+    ("product_demand", {}),
+    ("seasonal_trend", {}),
+    ("stock_depletion", {}),
+    ("smart_reorder", {}),
+    ("dead_stock", {}),
+    ("profit_trend", {}),
+    ("festival_trend", {}),
+    ("market_basket", {}),
+    ("customer_pattern", {}),
+    ("auto_subscription", {}),
+    ("weather_trend", {}),
+]
+
+
+def _execute_all_trends(engine) -> list[dict]:
+    """Run all trends from centralized catalog and return UI-ready payload."""
+    from app.trends.formatter import format_trend_response
+
+    trends = []
+    for trend_type, params in TREND_CATALOG:
+        try:
+            raw_data = engine.dispatch(trend_type, params)
+            formatted = format_trend_response(trend_type, raw_data)
+            insight = raw_data.get("insight", "") if isinstance(raw_data, dict) else ""
+            trends.append({
+                "type": trend_type,
+                "raw": raw_data,
+                "formatted": formatted,
+                "insight": insight,
+            })
+        except Exception as e:
+            trends.append({
+                "type": trend_type,
+                "error": str(e),
+                "formatted": f"❌ Error loading {trend_type}: {str(e)}",
+            })
+    return trends
 
 
 @app.on_event("startup")
@@ -184,52 +229,36 @@ async def get_inventory():
     return {"items": get_all_items()}
 
 
+@app.get("/weather/current")
+async def get_current_weather(language: str = "hinglish"):
+    """Return current live weather + weather-aware product playbook."""
+    weather = get_weather()
+    if not weather:
+        return {
+            "success": False,
+            "error": "Weather service unavailable",
+            "weather": None,
+            "playbook": None,
+        }
+
+    playbook = get_weather_condition_overview(weather.get("condition", "unknown"), language=language)
+    return {
+        "success": True,
+        "weather": weather,
+        "playbook": playbook,
+    }
+
+
 @app.get("/trends/all")
 async def get_all_trends():
     """Get all 13 trend analyses."""
     try:
         from app.trends.engine import TrendsEngine
-        from app.trends.formatter import format_trend_response
         from config import DB_PATH
         
         engine = TrendsEngine(DB_PATH)
-        
-        trend_analyses = [
-            ("sales_trend", lambda: engine.sales_trend(days=7)),
-            ("hourly_rush", lambda: engine.hourly_rush()),
-            ("product_demand", lambda: engine.product_demand()),
-            ("seasonal_trend", lambda: engine.seasonal_trend()),
-            ("stock_depletion", lambda: engine.stock_depletion()),
-            ("smart_reorder", lambda: engine.smart_reorder()),
-            ("dead_stock", lambda: engine.dead_stock()),
-            ("profit_trend", lambda: engine.profit_trend()),
-            ("festival_trend", lambda: engine.festival_trend()),
-            ("market_basket", lambda: engine.market_basket()),
-            ("customer_pattern", lambda: engine.customer_pattern()),
-            ("auto_subscription", lambda: engine.auto_subscription()),
-            ("weather_trend", lambda: engine.weather_trend()),
-        ]
-        
-        trends = []
-        for trend_type, fn in trend_analyses:
-            try:
-                raw_data = fn()
-                formatted = format_trend_response(trend_type, raw_data)
-                insight = raw_data.get("insight", "") if isinstance(raw_data, dict) else ""
-                
-                trends.append({
-                    "type": trend_type,
-                    "raw": raw_data,
-                    "formatted": formatted,
-                    "insight": insight,
-                })
-            except Exception as e:
-                trends.append({
-                    "type": trend_type,
-                    "error": str(e),
-                    "formatted": f"❌ Error loading {trend_type}: {str(e)}",
-                })
-        
+
+        trends = _execute_all_trends(engine)
         return {"trends": trends}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to load trends: {e}")
@@ -240,28 +269,13 @@ async def export_trends_json():
     """Export all trends as JSON."""
     try:
         from app.trends.engine import TrendsEngine
-        from config import DB_PATH
         from datetime import datetime
-        
         engine = TrendsEngine(DB_PATH)
-        
+
+        trends = _execute_all_trends(engine)
         report = {
             "generated_at": datetime.now().isoformat(),
-            "trends": {
-                "sales_trend": engine.sales_trend(days=7),
-                "hourly_rush": engine.hourly_rush(),
-                "product_demand": engine.product_demand(),
-                "seasonal_trend": engine.seasonal_trend(),
-                "stock_depletion": engine.stock_depletion(),
-                "smart_reorder": engine.smart_reorder(),
-                "dead_stock": engine.dead_stock(),
-                "profit_trend": engine.profit_trend(),
-                "festival_trend": engine.festival_trend(),
-                "market_basket": engine.market_basket(),
-                "customer_pattern": engine.customer_pattern(),
-                "auto_subscription": engine.auto_subscription(),
-                "weather_trend": engine.weather_trend(),
-            }
+            "trends": {t["type"]: t.get("raw", {}) for t in trends}
         }
         return report
     except Exception as e:

@@ -27,7 +27,7 @@ class WeatherSuggestions:
             "tamil": {
                 "products": ["cupnoodle", "instant noodles", "biscuits", "tea", "coffee", "maggi", "packed snacks"],
                 "message": "Mazhai varuthu! {item} kum stoch increase pannanum — nalla bikum. Noodles, chai, biscuits la irunthu order panniidum! ☔",
-                "weather_tip": "Mazhai time la indoor snacks aur hot beverages velai saalaiyum.",
+                "weather_tip": "Mazhai time la indoor snacks um hot beverages um romba pogum.",
             }
         },
         "heavy_rain": {
@@ -38,8 +38,8 @@ class WeatherSuggestions:
             },
             "tamil": {
                 "products": ["cupnoodle", "tea", "coffee", "biscuits", "maggi", "packed snacks", "instant food"],
-                "message": "Kudaiyana mazhai! {item} stock baagu ve increase pannanum — aaj sales iruppa romba! ☔☔",
-                "weather_tip": "Mazhai time la ghar la irundha order panna koodiya products velai saalaiyum.",
+                "message": "Kudaiyana mazhai! {item} stock baagu ve increase pannanum — innikki sales romba irukkum! ☔☔",
+                "weather_tip": "Kattura mazhaila veetla use panna items demand romba jasthi.",
             }
         },
         "thunderstorm": {
@@ -51,7 +51,7 @@ class WeatherSuggestions:
             "tamil": {
                 "products": ["tea", "coffee", "biscuits", "maggi", "snacks", "candles", "batteries"],
                 "message": "Kalaichchi varuthu! {item} kum saayum candles, batteries stock irukka venum — current poay jayum! ⛈️",
-                "weather_tip": "Badri karana aana vedu, candles la batteries importantu.",
+                "weather_tip": "Current pogalaam, appadi na candles um batteries um ready-a vainga.",
             }
         },
         "snow": {
@@ -62,8 +62,8 @@ class WeatherSuggestions:
             },
             "tamil": {
                 "products": ["tea", "coffee", "hot chocolate", "biscuits", "snacks"],
-                "message": "{item} la saayum hot tea, coffee vithu add panninum — velaippla demand iruppa! ❄️",
-                "weather_tip": "Kunnamban time la garam chai aur coffee velai saalaiyum romba.",
+                "message": "{item} kooda hot tea, coffee add pannunga — kuliru naal la demand adhigam irukkum! ❄️",
+                "weather_tip": "Kuliru nerathula hot tea um coffee um romba move aagum.",
             }
         },
         "clear": {
@@ -74,8 +74,8 @@ class WeatherSuggestions:
             },
             "tamil": {
                 "products": ["cold drinks", "ice cream", "juice", "water", "energy drinks"],
-                "message": "{item} stock sariyana. Aaj heat varuthu — cold drinks, ice cream, juice order panikittu! ☀️",
-                "weather_tip": "Velichcha naal la cold drinks aur ice cream velai saalaiyum romba.",
+                "message": "{item} stock sariyana. Innikki heat adhigam — cold drinks, ice cream, juice order pannikonga! ☀️",
+                "weather_tip": "Veyil naal la cold drinks um ice cream um nalla sell aagum.",
             }
         },
         "mostly_clear": {
@@ -87,7 +87,7 @@ class WeatherSuggestions:
             "tamil": {
                 "products": ["cold drinks", "juice", "water", "energy drinks"],
                 "message": "{item} stock update panninum. Kaatradu miga iruppu — cold drinks, water bottle stoch ensure panninum! ☀️",
-                "weather_tip": "Velichcha naal cold drinks business velai saalaiyum.",
+                "weather_tip": "Soodaana weather la cold beverages demand adhigam.",
             }
         },
         "overcast": {
@@ -99,7 +99,7 @@ class WeatherSuggestions:
             "tamil": {
                 "products": ["tea", "coffee", "biscuits", "snacks"],
                 "message": "{item} stock update aachu. Meghangal iruppu — tea, coffee vithu snacks stoch check pannum! ☁️",
-                "weather_tip": "Megham irundhuku sadha chai aur coffee vikum theerppu.",
+                "weather_tip": "Megam irukkum naal la tea, coffee, snacks steady-a pogum.",
             }
         },
         "foggy": {
@@ -110,8 +110,8 @@ class WeatherSuggestions:
             },
             "tamil": {
                 "products": ["tea", "coffee", "ginger tea", "snacks", "biscuits"],
-                "message": "{item} stoch oka side. Kodi iruppu — ginger tea, adrak chai popularity iruppa! 🌫️",
-                "weather_tip": "Kodi time la ginger tea aur immunity-boosting drinks velai saalaiyum.",
+                "message": "{item} stock sariyaa irukku. Kodi nerathula ginger tea, sukku tea nalla pogum! 🌫️",
+                "weather_tip": "Mooku moodum weather la ginger tea um immunity drinks um nalla pogum.",
             }
         }
     }
@@ -133,7 +133,7 @@ class WeatherSuggestions:
         # Normalize language input
         if language.lower() in ["hindi", "hinglish"]:
             language = "hinglish"
-        elif language.lower() in ["tamil", "tamglish"]:
+        elif language.lower() in ["tamil", "tamglish", "tanglish"]:
             language = "tamil"
         
         # Get suggestions for this weather condition
@@ -171,6 +171,36 @@ class WeatherSuggestions:
                 "weather_tip": "Stock maintain karo",
                 "weather_condition": "unknown"
             }
+
+    def get_condition_overview(self, weather_condition: str, language: str = "hinglish") -> Dict[str, Any]:
+        """Return weather-driven playbook without requiring a specific inventory item."""
+        if language.lower() in ["hindi", "hinglish"]:
+            language = "hinglish"
+        elif language.lower() in ["tamil", "tamglish", "tanglish"]:
+            language = "tamil"
+
+        condition = (weather_condition or "").lower()
+        suggestions_data = self.SUGGESTIONS_MAP.get(condition)
+        if not suggestions_data:
+            return {
+                "weather_condition": condition or "unknown",
+                "products": ["tea", "coffee", "biscuits", "snacks"],
+                "weather_tip": "Stock mix balanced vainga" if language == "tamil" else "Keep stock mix balanced",
+                "headline": "Mausam neutral hai — essentials ready rakho",
+            }
+
+        lang_data = suggestions_data.get(language, suggestions_data.get("hinglish", {}))
+        return {
+            "weather_condition": condition,
+            "products": lang_data.get("products", []),
+            "weather_tip": lang_data.get("weather_tip", ""),
+            # Safe generic headline (no item placeholder)
+            "headline": (
+                "Innikki weather-ku top moving items ready-a vainga"
+                if language == "tamil" else
+                "Aaj ke mausam ke hisaab se top moving items ready rakho"
+            ),
+        }
     
     def format_suggestion_message(self, weather_data: Dict, item_name: str, language: str = "hinglish") -> str:
         """
@@ -199,3 +229,8 @@ def get_weather_suggestions(weather_condition: str, item_name: str, language: st
 def format_weather_suggestion(weather_data: Dict, item_name: str, language: str = "hinglish") -> str:
     """Format suggestion message using global engine"""
     return _suggestions_engine.format_suggestion_message(weather_data, item_name, language)
+
+
+def get_weather_condition_overview(weather_condition: str, language: str = "hinglish") -> Dict[str, Any]:
+    """Get condition-level recommendations using global engine."""
+    return _suggestions_engine.get_condition_overview(weather_condition, language)

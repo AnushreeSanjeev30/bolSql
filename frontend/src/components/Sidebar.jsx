@@ -136,7 +136,7 @@ export default function Sidebar({ active, onNav, apiOnline, language, onLanguage
     <aside style={styles.sidebar}>
       <div style={styles.logo}>
         <div style={styles.logoTop}>KiranaSQL</div>
-        <div style={styles.logoSub}>आपकी दुकान का AI</div>
+        <div style={styles.logoSub}>{language === 'tamil' ? 'unga kadai oda AI' : 'आपकी दुकान का AI'}</div>
       </div>
 
       <nav style={styles.nav}>
@@ -184,7 +184,9 @@ export default function Sidebar({ active, onNav, apiOnline, language, onLanguage
 
       <div style={styles.footer}>
         <span style={styles.dot(apiOnline)} />
-        {apiOnline ? 'API connected' : 'API offline'}
+        {language === 'tamil'
+          ? (apiOnline ? 'API connect aayiduchu' : 'API offline')
+          : (apiOnline ? 'API connected' : 'API offline')}
       </div>
     </aside>
   )

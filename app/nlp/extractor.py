@@ -49,6 +49,19 @@ ADD_KEYWORDS = [
     r"\bmaanga\b", r"\bmangvaya\b",
 ]
 
+# Tamil verbs: add = pannunga (ask), pannu (do), vandhu (bring), irukku (have)
+ADD_KEYWORDS_TAMIL = [
+    r"\bpannunga\b", r"\bpannu\b", r"\bpanna\b",  # "வையுங்கள்" (place), "வை" (put)
+    r"\bvenum\b", r"\bvenuma\b",  # "வேணும்" (need, should add)
+    r"\bvaanga\b", r"\bvaango\b",  # "வாங்கா" (buy, bring)
+    r"\bvandhu\b", r"\bvandha\b", r"\bvandum\b",  # "வந்து" (come/bring)
+    r"\bstoach\s*pannunga\b", r"\bstock\s*pannunga\b",  # "stock வையுங்கள்"
+    r"\birukku\b.*\badd\b",  # "irukku ... add" (have it, add it)
+    r"\brekka\b", r"\brekku\b",  # "ரெக்கா" (rack it, stock it)
+    # Mixed Hindi-Tamil: support Hindi ADD keywords
+    r"\badd\b", r"\bkaro\b", r"\bchai\b", r"\benter\b",  # Hindi mixed with Tamil
+]
+
 SELL_KEYWORDS = [
     r"\bbecha\b", r"\bbechi\b", r"\bbecho\b",
     r"\bdiya\b", r"\bdiye\b", r"\bde\s+diya\b",
@@ -57,6 +70,18 @@ SELL_KEYWORDS = [
     r"\bsale\b", r"\bbika\b", r"\bbiki\b",
     r"\bkhatam\b.*\bkaro\b", r"\bgharcha\b",
     r"\bbechan\b", r"\bbechna\b",
+]
+
+# Tamil: sell = vendika/vandi (sell), vitta (sold), kodukka (give)
+SELL_KEYWORDS_TAMIL = [
+    r"\bvendika\b", r"\bvendi\b", r"\bvandidha\b", r"\bvendidha\b",  # "வெண்டிக்க" (sell)
+    r"\bvitta\b", r"\bvitai\b", r"\bvicha\b",  # "விட्ट" (sold, gave)
+    r"\bkodukka\b", r"\bkodukk\b", r"\bkoduppa\b",  # "கொடுक्क" (give, sell)
+    r"\bkaruppi\b", r"\bkaruppu\b",  # "கருப्पी" (sell/bargain)
+    r"\bthanda\b", r"\bthando\b",  # "தாண்டா" (over, finished)
+    r"\bsold\s+pannunga\b", r"\bsale\s*pannunga\b",  # Taglish
+    # Mixed Hindi-Tamil: support Hindi SELL keywords
+    r"\bbecha\b", r"\bgaya\b", r"\bsale\b",  # Hindi mixed with Tamil
 ]
 
 QUERY_KEYWORDS = [
@@ -71,6 +96,23 @@ QUERY_KEYWORDS = [
     r"\btotal\b", r"\bcount\b", r"\bsummary\b",
     r"\bpending\b", r"\borders\b", r"\baaj\b.*order",
     r"\bexpire\b", r"\bexpiry\b", r"\bkhatam\b.*hoga",
+]
+
+# Tamil: how much = ethra/etra, how many = ethanai, what = enna
+QUERY_KEYWORDS_TAMIL = [
+    r"\bethra\b", r"\betra\b", r"\bethrai\b",  # "எத்திरै" (how much)
+    r"\bevlo\b", r"\bevalo\b",  # Tamil/Taglish: how much
+    r"\bethanai\b", r"\bethanaium\b",  # "எத्तनै" (how many)
+    r"\benna\b", r"\bennum\b",  # "என्ना" (what)
+    r"\birukku\b",  # "இருक्कु" (is/have) - often used in queries
+    r"\bullo\b", r"\bulla\b",  # "उल्लो" (inside/have)
+    r"\bpaathukala\b", r"\bpaathukkum\b",  # "पा::तु" (look/check)
+    r"\bkanu\b",  # "कanuම" (see, look)
+    r"\blist\b.*pannunga\b",  # "list show me" in Taglish
+    # Mixed Hindi-Tamil: support common Hindi query words in Tamil queries
+    r"\bkitna\b", r"\bkitni\b", r"\bkitne\b",  # Hindi: how much/many
+    r"\bkya\b",  # Hindi: what
+    r"\bcheck\b", r"\bshow\b",  # English in Taglish
 ]
 
 # Price and correction keywords
@@ -93,6 +135,20 @@ PRICE_KEYWORDS = [
     r"\bprice.*hai\b", r"\brate.*hai\b", r"\bdaam.*hai\b",
 ]
 
+# Tamil: price = vilai (விலை), rate = kattu (கட्ु)
+PRICE_KEYWORDS_TAMIL = [
+    r"\bvilai\b", r"\bvilee\b", r"\bveelay\b",  # விலை (price)
+    r"\bkattu\b", r"\bkattai\b",  # गट्ु (rate)
+    r"\bkayam\b",  # गayam (fixed price)
+    r"\bkodathu\b", r"\bkodai\b",  # कودathu (increase)
+    r"\bkoraipu\b", r"\bkorai\b",  # कोraई (reduce)
+    r"\bmahalai\b", r"\bmahal\b",  # महालai (expensive)
+    r"\bvinaai\b", r"\bvina\b",  # विनai (cheap)
+    # Mixed Hindi-Tamil: support Hindi PRICE keywords
+    r"\bprice\b", r"\brate\b", r"\bdaam\b", r"\bkeet\b",  # Hindi mixed
+    r"\bprice\s+kodu\b", r"\brate\s+kodu\b",  # Taglish
+]
+
 CORRECTION_KEYWORDS = [
     r"\bcorrect\b", r"\bfix\b", r"\bupdate\b", r"\bhai\b.*correct\b",
     r"\bstock\s+count\b", r"\bmanual\b.*count",
@@ -100,9 +156,26 @@ CORRECTION_KEYWORDS = [
     r"\bkarek?t\b", r"\bkrekt\b", r"\bkar+ekt\b",
 ]
 
+# Tamil: correct = serichu (adjust), sariyanu (right)
+CORRECTION_KEYWORDS_TAMIL = [
+    r"\bcorrect\b", r"\bfix\b",  # English borrowed
+    r"\bserichu\b", r"\bserukku\b",  # "செरुக्कु" (adjust, correct)
+    r"\bsetaipu\b", r"\bsetai\b",  # "सेटैपु" (set it right)
+    r"\bsariyanu\b", r"\bsari\b",  # सरiyanu (correct, right)
+    r"\bmarippu\b", r"\bmari\b",  # "माріپ्पु" (change, correct)
+]
+
 ORDER_KEYWORDS = [
     r"\border\b", r"\bordar\b", r"\bbuya\b", r"\bmangao\b",
     r"\bpending\b", r"\bdelivery\b", r"\bshipping\b",
+]
+
+# Tamil: order = mangai (order), vandhu (come/deliver)
+ORDER_KEYWORDS_TAMIL = [
+    r"\border\b",  # English
+    r"\bmangai\b", r"\bmangnu\b",  # "मंगai" (order)
+    r"\bvantu\b", r"\bvandhu\b",  # "வனtu" (come/deliver)
+    r"\bkaranam\b", r"\bkarana\b",  # राना (cause/order)
 ]
 
 ROLLBACK_KEYWORDS = [
@@ -111,6 +184,13 @@ ROLLBACK_KEYWORDS = [
     r"\bundo\b", r"\bundo karo\b", r"\bundo kar do\b",
     r"\bprevious\b.*price\b", r"\bphle\b.*rate\b",
     r"\bback\b.*price\b", r"\bpichle\b", r"\bpehle\b",
+]
+
+# Tamil: undo = undu (undo), munathu (before)
+ROLLBACK_KEYWORDS_TAMIL = [
+    r"\bundu\b", r"\bundukka\b",  # "उनdu" (undo/back)
+    r"\bmunathu\b", r"\bmuna\b",  # मुnathu (before, previous)
+    r"\bpurathu\b", r"\bpura\b",  # पurathu (old, previous)
 ]
 
 EXPIRY_KEYWORDS = [
@@ -122,9 +202,25 @@ EXPIRY_KEYWORDS = [
     r"\bspoiled\b", r"\bspoil\b", r"\bstale\b",
 ]
 
+# Tamil: expiry = kadacchai (expired), paliyum (will expire)
+EXPIRY_KEYWORDS_TAMIL = [
+    r"\bexpiry\b", r"\bexpire\b",  # English
+    r"\bkadacchai\b", r"\bkadaccha\b",  # कדáccha (expired, rotten)
+    r"\bpaliyum\b", r"\bpali\b",  # paliyum (will expire)
+    r"\bkalaippu\b", r"\bkalaip\b",  # कलลีppu (damaged, spoiled)
+]
+
 CATEGORY_KEYWORDS = [
     r"\bcategory\b", r"\btype\b", r"\bmasala\b", r"\bvegetable\b",
     r"\bfruit\b", r"\bbesan\b", r"\bgrains\b", r"\bpulses\b",
+]
+
+# Tamil: category = sari (type), rukam (kind)
+CATEGORY_KEYWORDS_TAMIL = [
+    r"\bcategory\b",  # English
+    r"\bsari\b",  # சری (type, category)
+    r"\brukam\b", r"\brukka\b",  # "रुक्कम" (kind, type)
+    r"\bpanpaduthu\b", r"\bpanpo\b",  # पанпदuthu (arrange by type)
 ]
 
 QUANTITY_KEYWORDS = [
@@ -136,6 +232,59 @@ QUANTITY_KEYWORDS = [
     # Common Hinglish phrases
     r"\bstock\b.*badha", r"\bstock\b.*increase", r"\bstock\b.*dec",
 ]
+
+# Tamil: quantity = alagam (measure), kavanam (amount)
+QUANTITY_KEYWORDS_TAMIL = [
+    r"\bquantity\b",  # English
+    r"\balagam\b", r"\balagu\b",  # अlaগাम (measure, quantity)
+    r"\bkavanam\b", r"\bkavana\b",  # कavana (amount)
+    r"\bkalavu\b", r"\bkalai\b",  # कalavi (portion, quantity)
+]
+
+
+def _get_keywords(language: str, keyword_type: str) -> list:
+    """Get keyword list based on language and type.
+    
+    Args:
+        language: 'hinglish', 'hindi', 'tamil', or 'taglish'
+        keyword_type: 'add', 'sell', 'query', 'price', 'correction', 'order', 
+                      'rollback', 'expiry', 'category', 'quantity'
+    
+    Returns:
+        List of regex patterns for the specified keyword type and language
+    """
+    language = language.lower()
+    
+    # Use Tamil keywords for Tamil or Taglish
+    if language == "tamil" or language == "taglish":
+        keyword_map = {
+            "add": ADD_KEYWORDS_TAMIL,
+            "sell": SELL_KEYWORDS_TAMIL,
+            "query": QUERY_KEYWORDS_TAMIL,
+            "price": PRICE_KEYWORDS_TAMIL,
+            "correction": CORRECTION_KEYWORDS_TAMIL,
+            "order": ORDER_KEYWORDS_TAMIL,
+            "rollback": ROLLBACK_KEYWORDS_TAMIL,
+            "expiry": EXPIRY_KEYWORDS_TAMIL,
+            "category": CATEGORY_KEYWORDS_TAMIL,
+            "quantity": QUANTITY_KEYWORDS_TAMIL,
+        }
+    else:
+        # Default to Hinglish/Hindi
+        keyword_map = {
+            "add": ADD_KEYWORDS,
+            "sell": SELL_KEYWORDS,
+            "query": QUERY_KEYWORDS,
+            "price": PRICE_KEYWORDS,
+            "correction": CORRECTION_KEYWORDS,
+            "order": ORDER_KEYWORDS,
+            "rollback": ROLLBACK_KEYWORDS,
+            "expiry": EXPIRY_KEYWORDS,
+            "category": CATEGORY_KEYWORDS,
+            "quantity": QUANTITY_KEYWORDS,
+        }
+    
+    return keyword_map.get(keyword_type.lower(), [])
 
 
 # ── Unit normalization map ─────────────────────────────────────────────────────
@@ -186,6 +335,8 @@ ITEM_ALIASES = {
     "oil": "tel", "teel": "tel", "cooking oil": "tel",
     "sarso tel": "sarso tel", "mustard oil": "sarso tel",
     "refined oil": "tel", "tel": "tel",
+    # Tamil/Taglish variants for oil (avoid creating separate "ennai" item)
+    "ennai": "oil", "ennei": "oil", "enai": "oil", "nallennai": "oil",
     # Sugar
     "sugar": "chini", "shakkar": "chini",
     "shakkr": "chini", "cheeni": "chini",
@@ -361,7 +512,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     unit_pattern = "|".join(re.escape(u) for u in sorted(UNIT_MAP.keys(), key=len, reverse=True))
     cleaned = re.sub(rf"\d+(?:\.\d+)?\s*(?:{unit_pattern})?\b", "", text_l)
 
-    # Remove intent words and common fillers (Hindi + English helpers)
+    # Remove intent words and common fillers (Hindi + English + Tamil helpers)
     fillers = [
         r"\badd\b", r"\baid\b", r"\bkaro\b", r"\bkro\b", r"\bdaal\b", r"\bdo\b",  # Note: dalo/dalon are item names, not removed here
         r"\bbecho\b", r"\bbecha\b", r"\bdiya\b", r"\bgaya\b",
@@ -397,6 +548,29 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bthe\b", r"\bof\b", r"\bto\b", r"\bfor\b", r"\bon\b",
         r"\bcan\b", r"\byou\b", r"\baap\b", r"\bplease\b", r"\bplz\b",
         r"\brupees?\b", r"\brs\.?\b",
+        # Tamil/Taglish verb endings and fillers
+        r"\bpannunga\b", r"\bpannu\b", r"\bpanna\b",  # Tamil: put/add
+        r"\bvenum\b", r"\bvenuma\b",  # Tamil: need/should add
+        r"\bvaanga\b", r"\bvaango\b",  # Tamil: buy/bring
+        r"\bvandhu\b", r"\bvandha\b", r"\bvandum\b",  # Tamil: come/bring
+        r"\bvendika\b", r"\bvendi\b", r"\bvandidha\b", r"\bvendidha\b",  # Tamil: sell
+        r"\bvitta\b", r"\bvitai\b", r"\bvicha\b",  # Tamil: sold/gave
+        r"\bkodukka\b", r"\bkodukk\b", r"\bkoduppa\b",  # Tamil: give/sell
+        r"\bethra\b", r"\betra\b", r"\bethrai\b",  # Tamil: how much
+        r"\bevlo\b", r"\bevalo\b",  # Tamil/Taglish: how much
+        r"\bethanai\b", r"\bethanaium\b",  # Tamil: how many
+        r"\benna\b", r"\bennum\b",  # Tamil: what
+        r"\birukku\b", r"\birthu\b",  # Tamil: is/have
+        r"\bullo\b", r"\bulla\b",  # Tamil: inside/have
+        r"\bpaathukala\b", r"\bpaathukkum\b",  # Tamil: look/check
+        r"\bkanu\b",  # Tamil: see/look
+        r"\bvilai\b", r"\bvilee\b", r"\bveelay\b",  # Tamil: price
+        r"\bkattu\b", r"\bkattai\b",  # Tamil: rate
+        r"\bkayam\b",  # Tamil: fixed price
+        r"\bkodathu\b", r"\bkodai\b",  # Tamil: increase
+        r"\bkoraipu\b", r"\bkorai\b",  # Tamil: reduce
+        r"\bmahalai\b", r"\bmahal\b",  # Tamil: expensive
+        r"\bvinaai\b", r"\bvina\b",  # Tamil: cheap
     ]
     for f in fillers:
         cleaned = re.sub(f, " ", cleaned)
@@ -447,9 +621,13 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     return item
 
 
-def parse(text: str) -> ParsedQuery:
+def parse(text: str, language: str = "hinglish") -> ParsedQuery:
     """
-    Main entry point. Parse raw Hinglish text into structured ParsedQuery.
+    Main entry point. Parse raw Hinglish/Tamil text into structured ParsedQuery.
+    
+    Args:
+        text: Input query in Hinglish, Hindi, or Tamil/Taglish
+        language: 'hinglish', 'hindi', or 'tamil' - controls keyword matching
     """
     text = text.strip()
     if not text:
@@ -465,19 +643,31 @@ def parse(text: str) -> ParsedQuery:
             # Fail-soft: if transliteration breaks, continue with raw text
             pass
 
-    log.debug("NLP parsing: '%s'", text)
+    log.debug("NLP parsing: '%s' (language=%s)", text, language)
 
-    # Score intents
-    add_score = _score_intent(text, ADD_KEYWORDS)
-    sell_score = _score_intent(text, SELL_KEYWORDS)
-    query_score = _score_intent(text, QUERY_KEYWORDS)
-    price_score = _score_intent(text, PRICE_KEYWORDS)
-    correction_score = _score_intent(text, CORRECTION_KEYWORDS)
-    order_score = _score_intent(text, ORDER_KEYWORDS)
-    rollback_score = _score_intent(text, ROLLBACK_KEYWORDS)
-    expiry_score = _score_intent(text, EXPIRY_KEYWORDS)
-    category_score = _score_intent(text, CATEGORY_KEYWORDS)
-    quantity_score = _score_intent(text, QUANTITY_KEYWORDS)
+    # Get language-specific keywords
+    add_keywords = _get_keywords(language, "add")
+    sell_keywords = _get_keywords(language, "sell")
+    query_keywords = _get_keywords(language, "query")
+    price_keywords = _get_keywords(language, "price")
+    correction_keywords = _get_keywords(language, "correction")
+    order_keywords = _get_keywords(language, "order")
+    rollback_keywords = _get_keywords(language, "rollback")
+    expiry_keywords = _get_keywords(language, "expiry")
+    category_keywords = _get_keywords(language, "category")
+    quantity_keywords = _get_keywords(language, "quantity")
+
+    # Score intents using language-specific keywords
+    add_score = _score_intent(text, add_keywords)
+    sell_score = _score_intent(text, sell_keywords)
+    query_score = _score_intent(text, query_keywords)
+    price_score = _score_intent(text, price_keywords)
+    correction_score = _score_intent(text, correction_keywords)
+    order_score = _score_intent(text, order_keywords)
+    rollback_score = _score_intent(text, rollback_keywords)
+    expiry_score = _score_intent(text, expiry_keywords)
+    category_score = _score_intent(text, category_keywords)
+    quantity_score = _score_intent(text, quantity_keywords)
 
     scores = {
         "ADD": add_score,
@@ -724,7 +914,7 @@ def _get_groq():
     return _groq if _groq is not False else None
 
 
-def parse_voice(text: str) -> ParsedQuery:
+def parse_voice(text: str, language: str = "hinglish") -> ParsedQuery:
     """
     LLM-based parser for VOICE input only.
     Handles Hinglish naturally with Sarvam codemix — supports Devanagari input.
@@ -732,6 +922,7 @@ def parse_voice(text: str) -> ParsedQuery:
     
     Args:
         text: Transcribed voice input (from Sarvam codemix, may contain Devanagari)
+        language: 'hinglish', 'hindi', or 'tamil' - for fallback parser
     
     Returns:
         ParsedQuery with intent, item_name, quantity, unit
@@ -743,7 +934,7 @@ def parse_voice(text: str) -> ParsedQuery:
     client = _get_groq()
     if not client:
         log.warning("Voice LLM parser unavailable, using rule-based fallback")
-        return parse(text_transliterated)
+        return parse(text_transliterated, language=language)
 
     prompt = f"""You are parsing a Hinglish kirana store voice command.
 Raw input (may have Devanagari): "{text}"
@@ -787,7 +978,7 @@ Examples:
         
         return ParsedQuery(
             intent=data.get("intent", "QUERY").upper(),
-            item_name=data.get("item_name"),
+            item_name=_normalize_item(data.get("item_name")) if data.get("item_name") else None,
             quantity=data.get("quantity"),
             unit=data.get("unit"),
             raw_text=text,
@@ -795,4 +986,4 @@ Examples:
         )
     except Exception as e:
         log.warning("Voice LLM parse failed ('%s'), falling back to rule-based: %s", text, e)
-        return parse(text_transliterated)
+        return parse(text_transliterated, language=language)

@@ -407,9 +407,20 @@ class TrendsEngine:
         window = timedelta(minutes=5)
 
         for item, ts_str in rows:
-            # Handle both ISO format (2026-03-10T14:40:44) and space format (2026-03-10 14:40:44)
-            ts_str_normalized = ts_str[:19].replace('T', ' ')
-            ts = datetime.strptime(ts_str_normalized, "%Y-%m-%d %H:%M:%S")
+            # Handle timestamps with/without seconds, and both 'T' / space separators.
+            ts_raw = (ts_str or "").replace("T", " ").strip()
+            ts = None
+            for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+                try:
+                    ts = datetime.strptime(ts_raw[:19], fmt)
+                    break
+                except ValueError:
+                    continue
+
+            # Skip malformed timestamps instead of crashing the full API request.
+            if ts is None:
+                continue
+
             if last_time is None or (ts - last_time) > window:
                 if current_basket:
                     baskets.append(current_basket)
