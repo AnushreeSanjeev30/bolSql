@@ -1,0 +1,11 @@
+{
+  "timestamp": "20260416_204422",
+  "total_queries": 6,
+  "avg_success": 1.0,
+  "avg_response_nonempty": 1.0,
+  "avg_sql_safe": 1.0,
+  "avg_has_intent": 1.0,
+  "trulens_db": "/Users/bhavana/inventory/bolSql/reports/truelens/trulens.sqlite",
+  "runs_file": "/Users/bhavana/inventory/bolSql/reports/truelens/trulens_runs_20260416_204422.jsonl",
+  "records_file": "/Users/bhavana/inventory/bolSql/reports/truelens/trulens_records_20260416_204422.csv"
+}
