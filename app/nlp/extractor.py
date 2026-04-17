@@ -121,7 +121,8 @@ PRICE_KEYWORDS = [
     # Core price words + common ASR / transliteration variants
     r"\bprice\b", r"\bprais\b", r"\bpraice\b", r"\brate\b", r"\bdaam\b", r"\bkya\s+rate\b",
     # Increase / decrease verbs (Hindi + English + transliteration glitches)
-    r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bkam\b.*karo",
+    r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbdha\b", r"\bbadho\b", r"\bkam\b.*karo",
+    r"\bghata\b", r"\bghatao\b",
     r"\bupdate\b.*price\b", r"\bchange\b.*price\b", r"\bundo\b", r"\brollback\b",
     r"\bincrease\b", r"\bdecrease\b", r"\bset\b.*price\b",
     # Talking about things being expensive / cheap is also price intent
@@ -532,7 +533,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bkeemt\b", r"\bkeet\b",  # कीमत = price (Hindi transliterated)
         r"\bvriddhi\b", r"\bvridhi\b",  # वृद्धि = increase/growth
         r"\bkre\b", r"\bkaren\b",  # करें/करे = do (Hindi verb)
-        r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbadho\b", r"\bbadhado\b", r"\bincrease\b", r"\bdecrease\b", r"\binc\b", r"\bdec\b",
+        r"\bbadha\b", r"\bbadhao\b", r"\bbdhao\b", r"\bbdha\b", r"\bbadho\b", r"\bbadhado\b", r"\bghata\b", r"\bghatao\b", r"\bincrease\b", r"\bdecrease\b", r"\binc\b", r"\bdec\b",
         r"\bupdate\b", r"\bchange\b", r"\bset\b", r"\brollback\b", r"\bundo\b",
         r"\bkar\b", r"\bkarna\b", r"\bkar do\b", r"\bkrdo\b", r"\bkrde\b", r"\bkardo\b",
         r"\bquantity\b", r"\bqty\b", r"\bqts\b",  # Quantity keywords should be removed from item name
@@ -811,6 +812,7 @@ DEVANAGARI_MATRAS = {
     'ै': 'ai',  # ऐ  
     'ो': 'o',   # ओ  
     'ौ': 'au',  # औ  
+    'ॉ': 'o',   # ऑ  
 }
 
 DEVANAGARI_CONSONANTS = {
@@ -821,6 +823,8 @@ DEVANAGARI_CONSONANTS = {
     'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm',
     'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v',
     'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
+    # Nukta variants commonly present in modern Hindi spellings
+    'क़': 'q', 'ख़': 'kh', 'ग़': 'g', 'ज़': 'z', 'ड़': 'd', 'ढ़': 'dh', 'फ़': 'f', 'य़': 'y',
 }
 
 DEVANAGARI_SPECIAL = {
@@ -853,6 +857,13 @@ ITEM_NAME_MAP = {
     'ऑर्डर': 'order', 'ऑर्डर्स': 'orders',
 }
 
+# Common command words for stable intent extraction from Devanagari voice text.
+DEVANAGARI_WORD_MAP = {
+    'बढ़ा': 'badha', 'बढ़ाओ': 'badhao', 'बढ़ा': 'badha', 'बढ़ाओ': 'badhao',
+    'घटा': 'ghata', 'घटाओ': 'ghatao', 'कम': 'kam',
+    'कीमत': 'keemat', 'प्राइस': 'prais', 'रेट': 'rate', 'रुपये': 'rupaye',
+}
+
 
 
 def _transliterate_devanagari(text: str) -> str:
@@ -872,6 +883,10 @@ def _transliterate_devanagari(text: str) -> str:
     # Step 1: Replace full item names (highest priority)
     for devanagari_item, transliterated in ITEM_NAME_MAP.items():
         result = result.replace(devanagari_item, transliterated)
+
+    # Step 1b: Replace common command words before character-level transliteration.
+    for devanagari_word in sorted(DEVANAGARI_WORD_MAP.keys(), key=len, reverse=True):
+        result = result.replace(devanagari_word, DEVANAGARI_WORD_MAP[devanagari_word])
     
     # Step 2: Character-by-character transliteration
     transliterated_chars = []
@@ -897,6 +912,8 @@ def _transliterate_devanagari(text: str) -> str:
     )
     
     # Step 4: Clean up spacing and remove artifacts
+    result = regex.sub(r'\bbdha\b', 'badha', result, flags=regex.IGNORECASE)
+    result = regex.sub(r'\bghta\b', 'ghata', result, flags=regex.IGNORECASE)
     result = regex.sub(r'\s+', ' ', result).strip()
     
     return result

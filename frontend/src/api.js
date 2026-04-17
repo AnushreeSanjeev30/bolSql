@@ -65,3 +65,8 @@ export async function clearInventory() {
   return data
 }
 
+export async function synthesizeVoice(text, language = 'hinglish') {
+  const response = await api.post('/tts', { text, language }, { responseType: 'blob' })
+  return response.data
+}
+

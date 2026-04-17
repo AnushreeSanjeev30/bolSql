@@ -9,15 +9,41 @@ import sqlite3
 from pathlib import Path
 from typing import Optional
 import tempfile
+from io import BytesIO
+import re
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
     from fastapi import FastAPI, HTTPException, File, UploadFile
     from fastapi.middleware.cors import CORSMiddleware
+    from fastapi.responses import StreamingResponse
     from pydantic import BaseModel
 except ImportError:
     raise ImportError("Install FastAPI: pip install fastapi uvicorn")
+
+try:
+    from gtts import gTTS
+except ImportError:
+    gTTS = None
+
+DEVANAGARI_DIGITS = str.maketrans("0123456789", "०१२३४५६७८९")
+
+
+def _normalize_hindi_tts_text(text: str) -> str:
+    """Prepare text so Hindi TTS reads numbers naturally in Hindi style."""
+    out = text
+    # Expand common units before digit conversion.
+    out = re.sub(r"\bkg\b", " किलो ", out, flags=re.IGNORECASE)
+    out = re.sub(r"\bltr\b|\blitre\b|\bliter\b|\bl\b", " लीटर ", out, flags=re.IGNORECASE)
+    out = re.sub(r"\bpcs\b|\bpc\b", " पीस ", out, flags=re.IGNORECASE)
+    out = out.replace("%", " प्रतिशत ")
+    # Speak decimals as "dashamlav".
+    out = re.sub(r"(\d+)\.(\d+)", r"\1 दशमलव \2", out)
+    # Convert digits to Devanagari to avoid English-style number reading.
+    out = out.translate(DEVANAGARI_DIGITS)
+    out = re.sub(r"\s+", " ", out).strip()
+    return out
 
 from app.db.database import init_db, get_all_items
 from pipeline import process
@@ -133,6 +159,11 @@ class VoiceQueryResponse(BaseModel):
     language: Optional[str] = "hinglish"  # Language used for response
 
 
+class TTSRequest(BaseModel):
+    text: str
+    language: Optional[str] = "hinglish"
+
+
 @app.post("/query", response_model=QueryResponse)
 async def query_endpoint(req: QueryRequest):
     """Process a Hinglish text query."""
@@ -225,6 +256,51 @@ async def voice_endpoint(audio: UploadFile = File(...), verbose: bool = False, l
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Processing error: {e}")
+
+
+@app.post("/tts")
+async def tts_endpoint(req: TTSRequest):
+    """Generate Indian-accent speech audio for UI playback."""
+    if gTTS is None:
+        raise HTTPException(status_code=503, detail="gTTS not installed")
+
+    text = (req.text or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Empty text")
+
+    # Keep latency predictable and avoid huge payloads.
+    text = text[:500]
+    language = (req.language or "hinglish").lower()
+
+    if language == "tamil":
+        tts_lang = "ta"
+        tts_text = text
+    elif language == "hindi":
+        tts_lang = "hi"
+        tts_text = _normalize_hindi_tts_text(text)
+    else:
+        # Hinglish: Hindi if Devanagari script detected, otherwise English India accent.
+        has_devanagari = bool(re.search(r"[\u0900-\u097F]", text))
+        has_digits = bool(re.search(r"\d", text))
+        # For Hinglish with numbers, prefer Hindi so quantities are spoken naturally.
+        if has_devanagari or has_digits:
+            tts_lang = "hi"
+            tts_text = _normalize_hindi_tts_text(text)
+        else:
+            tts_lang = "en"
+            tts_text = text
+
+    try:
+        fp = BytesIO()
+        gTTS(text=tts_text, lang=tts_lang, tld="co.in", slow=False).write_to_fp(fp)
+        fp.seek(0)
+        return StreamingResponse(
+            fp,
+            media_type="audio/mpeg",
+            headers={"Cache-Control": "no-store"},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"TTS generation failed: {e}")
 
 
 @app.get("/inventory")
