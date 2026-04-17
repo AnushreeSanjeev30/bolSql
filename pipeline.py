@@ -47,8 +47,6 @@ from app.trends.customer_engine import (
     basket_size_trend,
 )
 from app.trends.formatter import format_customer_result, get_greeting
-from app.weather.weather import get_weather
-from app.weather.suggestions import get_weather_suggestions, format_weather_suggestion
 
 log = get_logger("pipeline")
 
@@ -138,8 +136,6 @@ def _display_item_name(name: str, language: str) -> str:
 
 def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResult:
     """Direct ADD: no LLM needed when NLP extracted enough info.
-    
-    Includes weather-based product suggestions when available.
     """
     if not parsed.item_name:
         response_map = {
@@ -210,27 +206,6 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
             "Kuch bhi add nahi ho paya." if language == "hinglish" else "Yedhume add panna mudiyala."
         )
 
-        # Optionally still add weather-based suggestions using the last item
-        if rows:
-            try:
-                weather_data = get_weather()
-                if weather_data:
-                    suggestions = get_weather_suggestions(
-                        weather_data.get("condition", "clear"),
-                        rows[-1]["name"],
-                        language,
-                    )
-                    if suggestions:
-                        response += "\n\n" + suggestions["message"]
-                        if suggestions.get("products"):
-                            products_str = ", ".join(suggestions["products"][:3])
-                            if language == "tamil":
-                                response += f"\n💡 {products_str} la stoch pannunga!"
-                            else:
-                                response += f"\n💡 {products_str} ka bhi stock dekh lena!"
-            except Exception as e:  # pragma: no cover - defensive
-                log.warning("Weather suggestion addition failed (multi-add): %s", e)
-
         return PipelineResult(
             success=bool(rows),
             response=response,
@@ -251,27 +226,6 @@ def _handle_add(parsed: ParsedQuery, language: str = "hinglish") -> PipelineResu
             response = f"✓ {qty} {unit} {display_name} successfully add pannathu. Total {row['quantity']} {row['unit']} irukku."
         else:
             response = f"✓ {qty} {unit} {parsed.item_name} add ho gaya. Ab total {row['quantity']} {row['unit']} hai."
-        
-        # Try to add weather-based suggestions
-        try:
-            weather_data = get_weather()
-            if weather_data:
-                suggestions = get_weather_suggestions(
-                    weather_data.get("condition", "clear"),
-                    parsed.item_name,
-                    language
-                )
-                if suggestions:
-                    response += "\n\n" + suggestions["message"]
-                    if suggestions.get("products"):
-                        products_str = ", ".join(suggestions["products"][:3])
-                        if language == "tamil":
-                            response += f"\n💡 {products_str} la stoch pannunga!"
-                        else:
-                            response += f"\n💡 {products_str} ka bhi stock dekh lena!"
-        except Exception as e:
-            log.warning(f"Weather suggestion addition failed: {e}")
-            pass  # Continue without weather suggestions if API fails
         
         return PipelineResult(
             success=True,
@@ -977,7 +931,7 @@ def _handle_price_check(parsed: ParsedQuery, language: str = "hinglish") -> Pipe
             # as "badha", "bdhao", etc. Similarly, "कम" / "घटा" indicate
             # price decrease.
             increase_keywords = [
-                "badha", "badhao", "bdhao", "badho", "increase", "inc",
+                "badha", "badhao", "bdhao", "bdha", "badho", "increase", "inc",
                 "बढ़ा", "बढ़ाओ", "बढा", "बढाओ",
             ]
             decrease_keywords = [

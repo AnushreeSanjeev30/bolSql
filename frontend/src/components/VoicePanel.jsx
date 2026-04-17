@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { sendQuery, getAllTrends } from '../api'
+import { sendQuery, getAllTrends, synthesizeVoice } from '../api'
 import { ResponsiveContainer, BarChart, XAxis, YAxis, Tooltip, Bar } from 'recharts'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
@@ -19,6 +19,14 @@ const s = {
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     gap: 16,
+    flexWrap: 'wrap',
+  },
+  headerControls: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 10,
+    flexWrap: 'wrap',
   },
   title: {
     fontFamily: 'var(--font-display)',
@@ -202,6 +210,109 @@ const s = {
     transition: 'all 0.15s',
     whiteSpace: 'nowrap',
   },
+  voiceSettingsCard: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 12,
+    padding: '12px 14px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 10,
+  },
+  voiceSettingsInline: {
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    borderRadius: 10,
+    padding: '8px 10px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    minHeight: 44,
+  },
+  inlineDivider: {
+    width: 1,
+    height: 20,
+    background: 'var(--border)',
+  },
+  voiceSettingsTop: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 10,
+  },
+  voiceSettingsTitle: {
+    fontSize: 12,
+    fontFamily: 'var(--font-mono)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: 'var(--text-secondary)',
+  },
+  voiceSettingsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+    gap: 10,
+  },
+  voiceSettingRow: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 6,
+  },
+  voiceSettingLabel: {
+    fontSize: 11,
+    fontFamily: 'var(--font-mono)',
+    color: 'var(--text-muted)',
+  },
+  voiceSettingSelect: {
+    background: 'var(--bg-base)',
+    border: '1px solid var(--border)',
+    borderRadius: 8,
+    color: 'var(--text-primary)',
+    fontSize: 12,
+    padding: '8px 10px',
+    outline: 'none',
+    minWidth: 118,
+  },
+  smallActionBtn: {
+    background: 'var(--teal-dim)',
+    color: 'var(--teal)',
+    border: '1px solid var(--border-glow)',
+    borderRadius: 8,
+    fontSize: 12,
+    fontFamily: 'var(--font-mono)',
+    padding: '6px 10px',
+    cursor: 'pointer',
+  },
+  speakingBadge: (active) => ({
+    fontSize: 11,
+    fontFamily: 'var(--font-mono)',
+    color: active ? 'var(--teal)' : 'var(--text-muted)',
+    background: active ? 'var(--teal-dim)' : 'var(--bg-base)',
+    border: active ? '1px solid var(--border-glow)' : '1px solid var(--border)',
+    borderRadius: 999,
+    padding: '4px 8px',
+    animation: active ? 'glow-pulse 1.2s infinite' : 'none',
+  }),
+  engineBadge: {
+    fontSize: 11,
+    fontFamily: 'var(--font-mono)',
+    color: 'var(--text-secondary)',
+    background: 'var(--bg-base)',
+    border: '1px solid var(--border)',
+    borderRadius: 999,
+    padding: '4px 8px',
+  },
+}
+
+const DEFAULT_VOICE_SETTINGS = {
+  preset: 'auto',
+}
+
+const VOICE_PRESETS = {
+  auto: { rate: 0.82, pitch: 0.92, volume: 0.88, voiceProfile: 'auto' },
+  female: { rate: 0.88, pitch: 1.2, volume: 0.9, voiceProfile: 'female' },
+  male: { rate: 0.84, pitch: 0.9, volume: 0.9, voiceProfile: 'male' },
 }
 
 const QUICK_HINGLISH = [
@@ -263,6 +374,7 @@ function hasTrendData(trend) {
 
 export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const storageKey = `voice-chat-messages-${language}`
+  const voiceSettingsKey = `voice-output-settings-${language}`
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem(storageKey)
     return saved ? JSON.parse(saved) : []
@@ -272,9 +384,19 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   const [recording, setRecording] = useState(false)
   const [focusInput, setFocusInput] = useState(false)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const [voiceEngine, setVoiceEngine] = useState('Browser')
+  const [voiceSettings, setVoiceSettings] = useState(DEFAULT_VOICE_SETTINGS)
   const [reportTrends, setReportTrends] = useState([])
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
+  const speechTokenRef = useRef(0)
+  const currentUtteranceRef = useRef(null)
+  const currentAudioRef = useRef(null)
+  const currentAudioContextRef = useRef(null)
+  const currentMediaSourceRef = useRef(null)
+  const currentToneNodeRef = useRef(null)
+  const currentPresenceNodeRef = useRef(null)
 
   // Save messages to localStorage whenever they change
   useEffect(() => {
@@ -285,23 +407,369 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  function speak(text) {
-    if (!voiceEnabled || !('speechSynthesis' in window)) return
-    
-    // Stop any ongoing speech
-    window.speechSynthesis.cancel()
-    
+  useEffect(() => {
+    const saved = localStorage.getItem(voiceSettingsKey)
+    if (!saved) {
+      setVoiceSettings(DEFAULT_VOICE_SETTINGS)
+      return
+    }
+    try {
+      const parsed = JSON.parse(saved)
+      const normalizedPreset = parsed.preset === 'aman' ? 'male' : parsed.preset
+      setVoiceSettings({
+        preset: ['auto', 'female', 'male'].includes(normalizedPreset) ? normalizedPreset : DEFAULT_VOICE_SETTINGS.preset,
+      })
+    } catch {
+      setVoiceSettings(DEFAULT_VOICE_SETTINGS)
+    }
+  }, [voiceSettingsKey])
+
+  useEffect(() => {
+    localStorage.setItem(voiceSettingsKey, JSON.stringify(voiceSettings))
+  }, [voiceSettings, voiceSettingsKey])
+
+  function stopSpeaking() {
+    speechTokenRef.current += 1
+    setIsSpeaking(false)
+    currentUtteranceRef.current = null
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+    }
+    if (currentAudioRef.current) {
+      try {
+        currentAudioRef.current.pause()
+        currentAudioRef.current.currentTime = 0
+      } catch {
+        // no-op
+      }
+      currentAudioRef.current = null
+    }
+    if (currentMediaSourceRef.current) {
+      try {
+        currentMediaSourceRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentMediaSourceRef.current = null
+    }
+    if (currentToneNodeRef.current) {
+      try {
+        currentToneNodeRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentToneNodeRef.current = null
+    }
+    if (currentPresenceNodeRef.current) {
+      try {
+        currentPresenceNodeRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentPresenceNodeRef.current = null
+    }
+    if (currentAudioContextRef.current) {
+      try {
+        currentAudioContextRef.current.close()
+      } catch {
+        // no-op
+      }
+      currentAudioContextRef.current = null
+    }
+  }
+
+  useEffect(() => {
+    // Avoid leftover speech when component unmounts.
+    return () => stopSpeaking()
+  }, [])
+
+  useEffect(() => {
+    if (!voiceEnabled) stopSpeaking()
+  }, [voiceEnabled])
+
+  useEffect(() => {
+    // Language switches should not continue reading in the previous voice.
+    stopSpeaking()
+  }, [language])
+
+  function normalizeSpeechText(text) {
+    let out = String(text || '').trim()
+    // Keep spoken numbers concise: 10.000000 -> 10, 10.500000 -> 10.5
+    out = out.replace(/\b(-?\d+)\.0+\b/g, '$1')
+    out = out.replace(/\b(-?\d+\.\d*?[1-9])0+\b/g, '$1')
+    // Remove emoji and symbol clutter to improve spoken quality.
+    out = out.replace(/[\u2600-\u27BF\u{1F300}-\u{1FAFF}]/gu, ' ')
+    out = out.replace(/[\u2022\u25CF\u25AA\u2713]/g, ' ')
+    out = out.replace(/\s+/g, ' ').trim()
+    return out
+  }
+
+  function buildSpeechChunks(text) {
+    let out = normalizeSpeechText(text)
+    if (!out) return []
+
+    const rawSentences = out
+      .replace(/\n+/g, '. ')
+      .split(/[.!?]+/)
+      .map(s => s.trim())
+      .filter(Boolean)
+
+    let sentences = rawSentences
+    if (sentences.length > 2 || out.length > 180) {
+      const closing = language === 'tamil'
+        ? 'Meedhiya details screen la irukku.'
+        : 'Baaki details screen par hai.'
+      sentences = [...rawSentences.slice(0, 2), closing]
+    }
+
+    const chunks = []
+    for (const sentence of sentences) {
+      if (sentence.length <= 120) {
+        chunks.push(sentence)
+        continue
+      }
+      const parts = sentence.split(/[,;:]/).map(p => p.trim()).filter(Boolean)
+      if (!parts.length) chunks.push(sentence)
+      else chunks.push(...parts)
+    }
+
+    return chunks.slice(0, 6)
+  }
+
+  function getTargetLang() {
     const langMap = { 'hinglish': 'hi-IN', 'hindi': 'hi-IN', 'tamil': 'ta-IN' }
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = langMap[language] || 'hi-IN'
-    utterance.rate = 0.9
-    utterance.pitch = 1.0
-    window.speechSynthesis.speak(utterance)
+    return langMap[language] || 'hi-IN'
+  }
+
+  function getPreferredVoice(voices, targetLang, voiceProfile) {
+    if (!voices.length) return null
+    const primaryLang = targetLang.split('-')[0]
+    const languagePool = voices.filter(v => v.lang === targetLang || v.lang?.startsWith(primaryLang))
+    const indianPool = voices.filter(v => {
+      const lang = (v.lang || '').toLowerCase()
+      const text = `${v.name || ''} ${v.voiceURI || ''}`.toLowerCase()
+      return lang === 'hi-in' || lang === 'ta-in' || lang === 'en-in' || /india|indian|hindi|tamil/.test(text)
+    })
+    const pool = languagePool.length ? languagePool : (indianPool.length ? indianPool : voices)
+
+    const asText = (v) => `${v.name || ''} ${v.voiceURI || ''}`.toLowerCase()
+    const femaleHint = /(female|woman|samantha|victoria|karen|zira|moira|tessa|veena|ava|allison|susan|serena|kathy)/i
+    const maleHint = /(male|man|david|alex|fred|daniel|thomas|ralph|jorge|aaron|lee|bruce)/i
+
+    if (voiceProfile === 'female') {
+      const femaleVoice = pool.find(v => femaleHint.test(asText(v))) || voices.find(v => femaleHint.test(asText(v)))
+      if (femaleVoice) return femaleVoice
+    }
+
+    if (voiceProfile === 'male') {
+      const maleVoice = pool.find(v => maleHint.test(asText(v))) || voices.find(v => maleHint.test(asText(v)))
+      if (maleVoice) return maleVoice
+    }
+
+    return pool.find(v => v.lang === targetLang)
+      || pool.find(v => v.lang?.startsWith(primaryLang))
+      || indianPool.find(v => v.lang?.toLowerCase() === 'en-in')
+      || indianPool.find(v => v.lang?.toLowerCase() === 'hi-in')
+      || indianPool.find(v => v.lang?.toLowerCase() === 'ta-in')
+      || indianPool.find(v => /hindi|tamil|india|indian/i.test(`${v.name || ''} ${v.voiceURI || ''}`))
+      || null
+  }
+
+  function cleanupCloudProfileNodes() {
+    if (currentMediaSourceRef.current) {
+      try {
+        currentMediaSourceRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentMediaSourceRef.current = null
+    }
+    if (currentToneNodeRef.current) {
+      try {
+        currentToneNodeRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentToneNodeRef.current = null
+    }
+    if (currentPresenceNodeRef.current) {
+      try {
+        currentPresenceNodeRef.current.disconnect()
+      } catch {
+        // no-op
+      }
+      currentPresenceNodeRef.current = null
+    }
+    if (currentAudioContextRef.current) {
+      currentAudioContextRef.current.close().catch(() => {})
+      currentAudioContextRef.current = null
+    }
+  }
+
+  function attachCloudProfile(audio, voiceProfile) {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext
+    if (!AudioContextCtor) return
+
+    const audioContext = new AudioContextCtor()
+    const source = audioContext.createMediaElementSource(audio)
+    const tone = audioContext.createBiquadFilter()
+    const presence = audioContext.createBiquadFilter()
+
+    if (voiceProfile === 'female') {
+      tone.type = 'lowshelf'
+      tone.frequency.value = 220
+      tone.gain.value = -4
+      presence.type = 'highshelf'
+      presence.frequency.value = 2000
+      presence.gain.value = 4
+    } else {
+      tone.type = 'peaking'
+      tone.frequency.value = 1000
+      tone.Q.value = 1
+      tone.gain.value = 0
+      presence.type = 'peaking'
+      presence.frequency.value = 2500
+      presence.Q.value = 1
+      presence.gain.value = 0
+    }
+
+    source.connect(tone)
+    tone.connect(presence)
+    presence.connect(audioContext.destination)
+
+    currentAudioContextRef.current = audioContext
+    currentMediaSourceRef.current = source
+    currentToneNodeRef.current = tone
+    currentPresenceNodeRef.current = presence
+  }
+
+  function speakWithBrowser(chunks, token) {
+    if (!('speechSynthesis' in window) || !chunks.length) {
+      setVoiceEngine('Browser')
+      setIsSpeaking(false)
+      return
+    }
+
+    const targetLang = getTargetLang()
+    const preset = VOICE_PRESETS[voiceSettings.preset] || VOICE_PRESETS.auto
+    setVoiceEngine(preset.voiceProfile === 'male' ? 'Browser Male' : 'Browser Fallback')
+
+    const voices = window.speechSynthesis.getVoices() || []
+    const preferredVoice = getPreferredVoice(voices, targetLang, preset.voiceProfile)
+
+    const speakChunk = (idx) => {
+      if (speechTokenRef.current !== token || idx >= chunks.length) {
+        if (speechTokenRef.current === token) {
+          currentUtteranceRef.current = null
+          setIsSpeaking(false)
+        }
+        return
+      }
+
+      const utterance = new SpeechSynthesisUtterance(chunks[idx])
+      if (preferredVoice) utterance.voice = preferredVoice
+      utterance.lang = targetLang
+      utterance.rate = preset.rate
+      utterance.pitch = preset.pitch
+      utterance.volume = preset.volume
+      utterance.onstart = () => {
+        currentUtteranceRef.current = utterance
+        setIsSpeaking(true)
+      }
+      utterance.onend = () => {
+        if (speechTokenRef.current !== token) return
+        setTimeout(() => speakChunk(idx + 1), 110)
+      }
+      utterance.onerror = () => {
+        if (speechTokenRef.current === token) {
+          currentUtteranceRef.current = null
+          setIsSpeaking(false)
+        }
+      }
+
+      window.speechSynthesis.speak(utterance)
+    }
+
+    speakChunk(0)
+  }
+
+  async function speak(text) {
+    if (!voiceEnabled) return
+    const chunks = buildSpeechChunks(text)
+    if (!chunks.length) return
+
+    stopSpeaking()
+    const token = speechTokenRef.current
+    const selectedPreset = VOICE_PRESETS[voiceSettings.preset] || VOICE_PRESETS.auto
+    const spokenText = chunks.join('. ')
+
+    if (selectedPreset.voiceProfile === 'male') {
+      speakWithBrowser(chunks, token)
+      return
+    }
+
+    try {
+      const audioBlob = await synthesizeVoice(spokenText, language)
+      if (speechTokenRef.current !== token) return
+
+      if (selectedPreset.voiceProfile === 'female') setVoiceEngine('Indian Cloud Female')
+      else setVoiceEngine('Indian Cloud')
+
+      const audioUrl = URL.createObjectURL(audioBlob)
+      const audio = new Audio(audioUrl)
+
+      // gTTS returns a single cloud voice. Shape playback so male/female presets are audibly distinct.
+      if (selectedPreset.voiceProfile === 'female') {
+        audio.playbackRate = 1.1
+      }
+
+      if ('preservesPitch' in audio) {
+        audio.preservesPitch = false
+      }
+      if ('mozPreservesPitch' in audio) {
+        audio.mozPreservesPitch = false
+      }
+      if ('webkitPreservesPitch' in audio) {
+        audio.webkitPreservesPitch = false
+      }
+
+      cleanupCloudProfileNodes()
+      attachCloudProfile(audio, selectedPreset.voiceProfile)
+
+      currentAudioRef.current = audio
+
+      audio.onplay = () => {
+        if (currentAudioContextRef.current?.state === 'suspended') {
+          currentAudioContextRef.current.resume().catch(() => {})
+        }
+        setIsSpeaking(true)
+      }
+      audio.onended = () => {
+        if (speechTokenRef.current === token) setIsSpeaking(false)
+        cleanupCloudProfileNodes()
+        if (currentAudioRef.current === audio) currentAudioRef.current = null
+        URL.revokeObjectURL(audioUrl)
+      }
+      audio.onerror = () => {
+        cleanupCloudProfileNodes()
+        if (currentAudioRef.current === audio) currentAudioRef.current = null
+        URL.revokeObjectURL(audioUrl)
+        if (speechTokenRef.current === token) {
+          speakWithBrowser(chunks, token)
+        }
+      }
+
+      await audio.play()
+    } catch {
+      speakWithBrowser(chunks, token)
+    }
   }
 
   async function submit(text) {
     const q = (text || input).trim()
-    if (!q || loading) return
+    if (!q) return
+    stopSpeaking()
+    if (loading) return
     setInput('')
     setMessages(prev => [...prev, { type: 'user', text: q }])
     setLoading(true)
@@ -371,6 +839,7 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
   }
 
   function handleMic() {
+    stopSpeaking()
     if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
       alert('Browser speech recognition not supported. Type your query instead.')
       return
@@ -408,29 +877,57 @@ export default function VoicePanel({ onRefresh, language = 'hinglish' }) {
               : 'Hinglish mein bolo ya type karo — atta, chawal, tel sab samajh aata hai'}
           </div>
         </div>
-        <button
-          style={s.speakerBtn(voiceEnabled)}
-          onClick={() => setVoiceEnabled(!voiceEnabled)}
-          title={voiceEnabled ? 'Voice output: ON' : 'Voice output: OFF'}
-        >
-          {voiceEnabled ? '🔊' : '🔇'}
-        </button>
-        <button
-          style={{
-            ...s.speakerBtn(false),
-            background: 'var(--bg-card)',
-            color: 'var(--text-muted)',
-          }}
-          onClick={() => {
-            if (confirm('Clear all chat history?')) {
-              setMessages([])
-              localStorage.removeItem(storageKey)
-            }
-          }}
-          title="Clear chat history"
-        >
-          🗑️
-        </button>
+        <div style={s.headerControls}>
+          <button
+            style={s.speakerBtn(voiceEnabled)}
+            onClick={() => setVoiceEnabled(v => !v)}
+            title={voiceEnabled ? 'Voice output: ON' : 'Voice output: OFF'}
+          >
+            {voiceEnabled ? '🔊' : '🔇'}
+          </button>
+          <button
+            style={{
+              ...s.speakerBtn(false),
+              background: 'var(--bg-card)',
+              color: 'var(--text-muted)',
+            }}
+            onClick={() => {
+              stopSpeaking()
+              if (confirm('Clear all chat history?')) {
+                setMessages([])
+                localStorage.removeItem(storageKey)
+              }
+            }}
+            title="Clear chat history"
+          >
+            🗑️
+          </button>
+          <div style={s.voiceSettingsInline}>
+            <label style={s.voiceSettingLabel}>Voice</label>
+            <select
+              style={{ ...s.voiceSettingSelect, padding: '6px 10px' }}
+              value={voiceSettings.preset}
+              onChange={(e) => setVoiceSettings(prev => ({ ...prev, preset: e.target.value }))}
+            >
+              <option value="auto">Auto</option>
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+            </select>
+            <div style={s.inlineDivider} />
+            <div style={s.engineBadge}>{voiceEngine}</div>
+            <div style={s.speakingBadge(isSpeaking)}>
+              {isSpeaking ? 'Speaking...' : 'Ready'}
+            </div>
+            <button
+              style={s.smallActionBtn}
+              onClick={() => speak(language === 'tamil' ? 'Idhu test voice output.' : 'Yeh test voice output hai.')}
+              disabled={!voiceEnabled}
+              title={voiceEnabled ? 'Play test speech' : 'Enable speaker first'}
+            >
+              Test Voice
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Quick chips */}

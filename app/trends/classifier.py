@@ -23,7 +23,15 @@ def _days(m) -> dict:
 
 def _item(m) -> dict:
     try:
-        return {"item_name": m.group(1).strip()}
+        raw = m.group(1).strip()
+        # Normalize Hindi/Devanagari item mentions (e.g., "एप्पल") to
+        # the same transliterated form used by inventory/trends data.
+        try:
+            from app.nlp.extractor import _transliterate_devanagari, _normalize_item
+            norm = _normalize_item(_transliterate_devanagari(raw).lower())
+            return {"item_name": norm or raw}
+        except Exception:
+            return {"item_name": raw}
     except Exception:
         return {}
 
@@ -128,7 +136,7 @@ TREND_PATTERNS = [
 
     # 10. Market Basket (Hinglish + Hindi + English + Tamil/Tanglish)
     # Extract product name specifically - product k saath pattern
-    (r"(\w+)\s+(?:k|ka|ke|ki)?\s*saath", "market_basket", _item),  # chawal k saath kya bikte h
+    (r"([\w\u0900-\u097F]+)\s*(?:k|ka|ke|ki|का|की|के)?\s*(?:saath|साथ)", "market_basket", _item),  # chawal k/के saath/साथ
     
     # English/Hinglish patterns
     (r"(?:saath|together|combo|bundle|pair|market basket|basket analysis)", "market_basket", lambda m: {}),
@@ -138,6 +146,9 @@ TREND_PATTERNS = [
     
     # Hindi patterns - flexible word order
     (r"एक\s*साथ", "market_basket", lambda m: {}),  # "एक साथ" anywhere
+    (r"साथ\s*में\s*(?:खरीद|बिक|लेते|क्या)", "market_basket", lambda m: {}),  # "साथ में खरीद..."
+    (r"लोग\s*क्या\s*साथ\s*में\s*खरीद", "market_basket", lambda m: {}),  # "लोग क्या साथ में खरीदते हैं"
+    (r"साथ\s*में\s*क्या\s*खरीद", "market_basket", lambda m: {}),  # "साथ में क्या खरीदते हैं"
     (r"साथ\s*(?:खरीद|बिक|बिकता|क्या)", "market_basket", lambda m: {}),  # "साथ खरीद/बिक"
     (r"(?:दोनों|donon|दोनो)\s*[\w\s]*(?:एक\s*साथ|together)", "market_basket", lambda m: {}),  # "दोनों ... एक साथ"
     (r"(?:किस|kis)\s*[\w\s]*(?:साथ|saath)\s*[\w\s]*(?:क्या|kya)", "market_basket", lambda m: {}),  # "किस साथ क्या"
