@@ -1,0 +1,414 @@
+{
+  "meta": {
+    "shop": "Meri Kirana Dukaan",
+    "month": "April 2026",
+    "generated_at": "2026-04-16T12:18:35.601081",
+    "period": "2026-04-01 to 2026-04-30"
+  },
+  "summary": {
+    "total_revenue": 59757.0,
+    "total_profit": 17243.0,
+    "margin_pct": 28.9,
+    "total_orders": 280,
+    "total_units_sold": 1069,
+    "unique_customers": 20,
+    "peak_day": {
+      "day": "2026-04-04",
+      "revenue": 8418.0,
+      "orders": 42
+    },
+    "peak_hour": "20:00–21:00"
+  },
+  "daily_breakdown": [
+    {
+      "day": "2026-04-01",
+      "revenue": 4950.0,
+      "orders": 29
+    },
+    {
+      "day": "2026-04-02",
+      "revenue": 6058.0,
+      "orders": 31
+    },
+    {
+      "day": "2026-04-03",
+      "revenue": 8380.0,
+      "orders": 24
+    },
+    {
+      "day": "2026-04-04",
+      "revenue": 8418.0,
+      "orders": 42
+    },
+    {
+      "day": "2026-04-05",
+      "revenue": 6114.0,
+      "orders": 39
+    },
+    {
+      "day": "2026-04-06",
+      "revenue": 4872.0,
+      "orders": 35
+    },
+    {
+      "day": "2026-04-07",
+      "revenue": 5444.0,
+      "orders": 26
+    },
+    {
+      "day": "2026-04-08",
+      "revenue": 6481.0,
+      "orders": 36
+    },
+    {
+      "day": "2026-04-09",
+      "revenue": 5500.0,
+      "orders": 8
+    },
+    {
+      "day": "2026-04-11",
+      "revenue": 2800.0,
+      "orders": 3
+    },
+    {
+      "day": "2026-04-15",
+      "revenue": 200.0,
+      "orders": 1
+    },
+    {
+      "day": "2026-04-16",
+      "revenue": 540.0,
+      "orders": 6
+    }
+  ],
+  "top_products": [
+    {
+      "item": "Atta",
+      "qty": 244.0,
+      "revenue": 5368.0
+    },
+    {
+      "item": "Ice Cream",
+      "qty": 164.0,
+      "revenue": 8200.0
+    },
+    {
+      "item": "Cold Drink",
+      "qty": 127.0,
+      "revenue": 5080.0
+    },
+    {
+      "item": "Biscuit",
+      "qty": 113.0,
+      "revenue": 2260.0
+    },
+    {
+      "item": "Chai Patti",
+      "qty": 55.0,
+      "revenue": 15400.0
+    }
+  ],
+  "dead_stock": [],
+  "critical_stock": [
+    {
+      "item": "Biscuit",
+      "current_stock": 45.0,
+      "avg_daily_sales": 7.86,
+      "days_until_stockout": 5.7,
+      "urgency": "🟡 LOW"
+    }
+  ],
+  "customers": {
+    "segments": {
+      "Champion": 19,
+      "Loyal": 1
+    },
+    "rfm": [
+      {
+        "customer_id": "C001",
+        "recency_days": 8,
+        "frequency": 223,
+        "monetary": 45754.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C002",
+        "recency_days": 7,
+        "frequency": 240,
+        "monetary": 57352.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C003",
+        "recency_days": 7,
+        "frequency": 216,
+        "monetary": 52749.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C004",
+        "recency_days": 7,
+        "frequency": 232,
+        "monetary": 54356.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C005",
+        "recency_days": 7,
+        "frequency": 235,
+        "monetary": 56175.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C006",
+        "recency_days": 7,
+        "frequency": 211,
+        "monetary": 49939.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C007",
+        "recency_days": 7,
+        "frequency": 230,
+        "monetary": 53439.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C008",
+        "recency_days": 7,
+        "frequency": 226,
+        "monetary": 52487.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C009",
+        "recency_days": 9,
+        "frequency": 205,
+        "monetary": 49431.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C010",
+        "recency_days": 7,
+        "frequency": 249,
+        "monetary": 59808.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C011",
+        "recency_days": 7,
+        "frequency": 227,
+        "monetary": 49423.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C012",
+        "recency_days": 7,
+        "frequency": 222,
+        "monetary": 45348.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C013",
+        "recency_days": 9,
+        "frequency": 224,
+        "monetary": 57162.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C014",
+        "recency_days": 8,
+        "frequency": 216,
+        "monetary": 55277.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C015",
+        "recency_days": 7,
+        "frequency": 219,
+        "monetary": 49728.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C016",
+        "recency_days": 8,
+        "frequency": 237,
+        "monetary": 57295.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C017",
+        "recency_days": 8,
+        "frequency": 256,
+        "monetary": 59396.0,
+        "rfm_score": 4.67,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C018",
+        "recency_days": 7,
+        "frequency": 223,
+        "monetary": 47079.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C019",
+        "recency_days": 7,
+        "frequency": 240,
+        "monetary": 50680.0,
+        "rfm_score": 5.0,
+        "segment": "Champion"
+      },
+      {
+        "customer_id": "C55",
+        "recency_days": 4,
+        "frequency": 2,
+        "monetary": 2600.0,
+        "rfm_score": 3.67,
+        "segment": "Loyal"
+      }
+    ],
+    "top_churn_risks": [],
+    "top_ltv_customers": [
+      {
+        "customer_id": "C010",
+        "total_spend": 59808.0,
+        "avg_monthly": 8544.0,
+        "ltv_6m": 33370.76
+      },
+      {
+        "customer_id": "C017",
+        "total_spend": 59396.0,
+        "avg_monthly": 8485.14,
+        "ltv_6m": 33140.88
+      },
+      {
+        "customer_id": "C002",
+        "total_spend": 57352.0,
+        "avg_monthly": 8193.14,
+        "ltv_6m": 32000.4
+      },
+      {
+        "customer_id": "C016",
+        "total_spend": 57295.0,
+        "avg_monthly": 8185.0,
+        "ltv_6m": 31968.59
+      },
+      {
+        "customer_id": "C013",
+        "total_spend": 57162.0,
+        "avg_monthly": 8166.0,
+        "ltv_6m": 31880.96
+      },
+      {
+        "customer_id": "C005",
+        "total_spend": 56175.0,
+        "avg_monthly": 8025.0,
+        "ltv_6m": 31343.67
+      },
+      {
+        "customer_id": "C014",
+        "total_spend": 55277.0,
+        "avg_monthly": 7896.71,
+        "ltv_6m": 30842.62
+      },
+      {
+        "customer_id": "C004",
+        "total_spend": 54356.0,
+        "avg_monthly": 7765.14,
+        "ltv_6m": 30328.73
+      },
+      {
+        "customer_id": "C007",
+        "total_spend": 53439.0,
+        "avg_monthly": 7634.14,
+        "ltv_6m": 29817.08
+      },
+      {
+        "customer_id": "C003",
+        "total_spend": 52749.0,
+        "avg_monthly": 7535.57,
+        "ltv_6m": 29432.08
+      }
+    ],
+    "visit_frequency": [
+      {
+        "customer_id": "C55",
+        "visit_count": 2,
+        "avg_gap_days": 0.0,
+        "next_expected": "2026-04-11"
+      },
+      {
+        "customer_id": "C005",
+        "visit_count": 235,
+        "avg_gap_days": 0.3,
+        "next_expected": "2026-04-09"
+      },
+      {
+        "customer_id": "C017",
+        "visit_count": 256,
+        "avg_gap_days": 0.3,
+        "next_expected": "2026-04-08"
+      },
+      {
+        "customer_id": "C001",
+        "visit_count": 223,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-07"
+      },
+      {
+        "customer_id": "C002",
+        "visit_count": 240,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-09"
+      },
+      {
+        "customer_id": "C004",
+        "visit_count": 232,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-09"
+      },
+      {
+        "customer_id": "C007",
+        "visit_count": 230,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-08"
+      },
+      {
+        "customer_id": "C008",
+        "visit_count": 226,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-09"
+      },
+      {
+        "customer_id": "C009",
+        "visit_count": 205,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-07"
+      },
+      {
+        "customer_id": "C010",
+        "visit_count": 249,
+        "avg_gap_days": 0.4,
+        "next_expected": "2026-04-09"
+      }
+    ]
+  }
+}

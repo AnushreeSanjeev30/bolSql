@@ -1,0 +1,37 @@
+# VoiceSQL - Kirana Intelligence
+# Install: pip install -r requirements.txt
+
+# === Core ===
+python-dotenv>=1.0.0
+
+# === ASR ===
+# openai-whisper>=20231117    # Whisper (commented out - using Sarvam Saaras v3)
+sounddevice>=0.4.6
+numpy>=1.24.0
+scipy>=1.11.0
+requests>=2.31.0              # For Sarvam API calls
+
+# === RAG ===
+faiss-cpu>=1.7.4
+sentence-transformers>=2.2.2
+
+# === LLM ===
+groq>=0.9.0           # Free 14,400 req/day at console.groq.com
+# ollama>=0.1.0       # Uncomment for fully offline mode
+
+# === NLP ===
+rapidfuzz>=3.0.0      # Fuzzy string matching for item names
+scikit-learn>=1.3.0   # Machine learning metrics for trends
+
+# === Voice Output (TTS) ===
+pyttsx3>=2.90          # Free offline text-to-speech (Hindi/English/Hinglish)
+gTTS>=2.5.1            # Google TTS fallback for Indian-accent web audio
+
+# === API ===
+fastapi>=0.104.0
+uvicorn>=0.24.0
+python-multipart>=0.0.6   # FastAPI form/file upload parsing
+
+# === Utilities ===
+colorama>=0.4.6       # Colored terminal output
+tabulate>=0.9.0       # Pretty table output
