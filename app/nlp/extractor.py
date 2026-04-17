@@ -325,20 +325,15 @@ UNIT_MAP = {
 
 ITEM_ALIASES = {
     # Wheat flour
-    "aata": "atta", "aatta": "atta", "wheat flour": "atta", "maida": "maida",
-    "aata": "atta", "aatto": "atta",
+    "aata": "atta", "aatta": "atta", "aatha": "atta", "aataa": "atta", "aata maavu": "atta", "atta maavu": "atta",
+    "wheat flour": "atta", "maida": "maida", "aato": "atta", "aattu": "atta", "atta": "atta",
     # Rice
-    "rice": "chawal", "chaawal": "chawal", "chaval": "chawal",
-    "chaawal": "chawal", "chaol": "chawal",
+    "rice": "arisi", "arisi": "arisi", "arise": "arisi", "arise maavu": "arisi", "chawal": "arisi", "chaawal": "arisi", "chaval": "arisi", "chaol": "arisi", "arisee": "arisi",
     # Lentils
     "lentil": "dal", "daal": "dal", "lentils": "dal",
     "dahal": "dal", "dahl": "dal", "dalo": "dal", "dalon": "dal",  # plural forms
     # Oil
-    "oil": "tel", "teel": "tel", "cooking oil": "tel",
-    "sarso tel": "sarso tel", "mustard oil": "sarso tel",
-    "refined oil": "tel", "tel": "tel",
-    # Tamil/Taglish variants for oil (avoid creating separate "ennai" item)
-    "ennai": "oil", "ennei": "oil", "enai": "oil", "nallennai": "oil",
+    "oil": "ennai", "teel": "ennai", "cooking oil": "ennai", "ennai": "ennai", "ennei": "ennai", "enai": "ennai", "nallennai": "ennai", "refined oil": "ennai", "tel": "ennai", "sarso tel": "ennai", "mustard oil": "ennai",
     # Sugar
     "sugar": "chini", "shakkar": "chini",
     "shakkr": "chini", "cheeni": "chini",
@@ -352,9 +347,7 @@ ITEM_ALIASES = {
     "tea": "chai", "chai patti": "chai", "tea leaves": "chai",
     "chai": "chai", "chay": "chai",
     # Biscuits
-    "biscuits": "biscuit", "biskut": "biscuit", "biskoot": "biscuit",
-    "biscuit": "biscuit", "besuit": "biscuit", "biskit": "biscuit",
-    "biscut": "biscuit",
+    "biscuits": "biscuit", "biskut": "biscuit", "biskoot": "biscuit", "biscuit": "biscuit", "besuit": "biscuit", "biskit": "biscuit", "biscut": "biscuit", "bisket": "biscuit", "bisked": "biscuit",
     # Soap
     "soap": "sabun", "sabun": "sabun",
     # Turmeric
@@ -499,10 +492,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     #
     # We therefore truncate the text at the first "aur" that is
     # followed by another quantity (a digit). This keeps:
-    #   "5 packets biscuit"  from the above example, so the item
-    # extracted is just "biscuit".
-    #
-    # We do *not* truncate for phrases like "thoda aur atta add karo"
+        
     # because there is no quantity after "aur" there.
     aur_match = re.search(r"\baur\b", text_l)
     if aur_match:
@@ -510,9 +500,24 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         if re.search(r"\d", tail):
             text_l = text_l[:aur_match.start()]
 
+
+
+    # Remove possessive/filler words like 'oda', 'oda price', 'oda rate', 'oda rupa', 'oda rupee', 'oda amount' (Tamil/Taglish)
+    cleaned = re.sub(r"\boda(\s+(price|rate|rupa|rupee|amount))?\b", "", text_l)
+
+    # Remove any occurrence of price/rate/rupee/rupa/amount after the main item name (e.g., 'arisi rupa', 'arisi price', etc. → 'arisi')
+    cleaned = re.sub(r"[\s.,-]*(price|rate|rupa|rupee|amount)[\s.,-]*", " ", cleaned).strip()
+
+
+    # Remove adjectives like 'costly', 'expensive', 'cheap', 'mehenga', 'mahenga', 'mehengi', 'mahengi', 'mahalai', 'mahal', 'vinaai', 'vina' from item name
+    cleaned = re.sub(r"[\s.,-]*(costly|expensive|cheap|mehenga|mahenga|mehengi|mahengi|mahalai|mahal|vinaai|vina)[\s.,-]*", " ", cleaned).strip()
+
+    # Remove time/filler words like 'innaiku', 'nettu', 'naalaiku', 'today', 'yesterday', 'tomorrow', 'panna', 'pannunga', 'undo', etc.
+    cleaned = re.sub(r"[\s.,-]*(innaiku|nettu|naalaiku|today|yesterday|tomorrow|panna|pannunga|undo|change|add|set|update|fix|correct|increase|decrease|badha|ghata|rollback|order|price|rate|rupa|rupee|amount)[\s.,-]*", " ", cleaned).strip()
+
     # Remove numbers + units
     unit_pattern = "|".join(re.escape(u) for u in sorted(UNIT_MAP.keys(), key=len, reverse=True))
-    cleaned = re.sub(rf"\d+(?:\.\d+)?\s*(?:{unit_pattern})?\b", "", text_l)
+    cleaned = re.sub(rf"\d+(?:\.\d+)?\s*(?:{unit_pattern})?\b", "", cleaned)
 
     # Remove intent words and common fillers (Hindi + English + Tamil helpers)
     fillers = [
@@ -578,11 +583,15 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     for f in fillers:
         cleaned = re.sub(f, " ", cleaned)
 
+
     # Collapse spaces
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
 
     # Remove leading/trailing punctuation
     cleaned = cleaned.strip(".,?!।-")
+
+    # Remove trailing Tamil verb/filler phrases (e.g., 'vandirukku', 'irukku', 'pannunga', 'venum', etc.)
+    cleaned = re.sub(r"\b(vandirukku|irukku|pannunga|venum|venuma|vaanga|vaango|vandhu|vandha|vandhum|vendika|vendi|vandidha|vendidha|vitta|vitai|vicha|kodukka|kodukk|koduppa|karuppi|karuppu|thanda|thando|sold\s*pannunga|sale\s*pannunga)\b$", "", cleaned).strip()
 
     # Post-fix for stock-correction style phrases like
     #   "dal ka stock 40kg hai, correct karo"
