@@ -22,7 +22,7 @@ log = get_logger("db")
 # Cross-language item synonym groups (all variants map to one canonical name).
 ITEM_SYNONYM_GROUPS = {
     "atta": {"atta", "aata", "aatta", "wheat flour", "flour", "maavu"},
-    "chawal": {"chawal", "chaawal", "chaval", "rice", "arisi"},
+    "chawal": {"chawal", "chaawal", "chaval", "rice", "arisi", "arrise", "arice", "arrice"},
     "dal": {"dal", "daal", "lentil", "lentils", "paruppu"},
     "tel": {"tel", "teel", "oil", "cooking oil", "refined oil", "ennai", "ennei", "enai", "nallennai"},
     "chini": {"chini", "cheeni", "sugar", "shakkar"},
@@ -33,7 +33,7 @@ ITEM_SYNONYM_GROUPS = {
     "chai": {"chai", "tea", "tea leaves", "chai patti"},
     "haldi": {"haldi", "turmeric"},
     "mirchi": {"mirchi", "mirch", "chilli", "chili", "red chilli", "lal mirchi"},
-    "aloo": {"aloo", "potato", "potatoes"},
+    "aloo": {"aloo", "potato", "potatoes", "aalu", "ஆலு"},
     "apple": {"apple", "apples", "seb"},
     "mango": {"mango", "mangos", "mongos", "aam"},
 }

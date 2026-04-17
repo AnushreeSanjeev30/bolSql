@@ -330,6 +330,7 @@ ITEM_ALIASES = {
     # Rice
     "rice": "chawal", "chaawal": "chawal", "chaval": "chawal",
     "chaawal": "chawal", "chaol": "chawal",
+    "arisi": "chawal", "arrise": "chawal", "arice": "chawal",
     # Lentils
     "lentil": "dal", "daal": "dal", "lentils": "dal",
     "dahal": "dal", "dahl": "dal", "dalo": "dal", "dalon": "dal",  # plural forms
@@ -371,7 +372,7 @@ ITEM_ALIASES = {
     "appel": "apple", "seb": "apple",
     # Potato
     "potato": "aloo", "potatoes": "aloo", "potaj": "aloo",
-    "poto": "aloo", "potat": "aloo",
+    "poto": "aloo", "potat": "aloo", "aalu": "aloo",
     # Spices
     "jeera": "jeera", "jeera": "jeera",
     "hing": "hing", "asafoetida": "hing",
@@ -390,6 +391,59 @@ ITEM_ALIASES = {
     "maggi": "maggi", "maggie": "maggi", "maigee": "maggi", "megii": "maggi",
     "meggi": "maggi", "मैगी": "maggi",
 }
+
+# Common Tamil-script words/phrases mapped to Latin forms so the
+# existing Hinglish/Taglish rules can still parse them reliably.
+TAMIL_SCRIPT_MAP = {
+    # Item names
+    "அரிசி": "arisi",
+    "தால்": "dal",
+    "பருப்பு": "paruppu",
+    "ஆத்தா": "atta",
+    "ஆட்டா": "atta",
+    "ஆட்டை": "atta",
+    "ஆட்டோ": "atta",
+    "ஆலு": "aloo",
+    "எண்ணெய்": "ennai",
+    "பால்": "milk",
+    "சர்க்கரை": "chini",
+    "உப்பு": "namak",
+    # Action words
+    "ஆட்": "add",
+    "பண்ணு": "pannu",
+    "பண்ணுங்க": "pannunga",
+    "சரி": "sari",
+    "கரெக்ட்": "correct",
+    "இருக்கு": "irukku",
+    "இருக்கா": "irukka",
+    "வந்திருக்கு": "vandirukku",
+    "வந்துருக்கு": "vandirukku",
+    "ஸ்டாக்": "stock",
+    "கிலோ": "kilo",
+    # Query words
+    "எந்த": "entha",
+    "பொருள்": "product",
+    "எவ்வளவு": "evlo",
+    "வ்ளோ": "evlo",
+    "வளோ": "evlo",
+    "வ்லோ": "evlo",
+    "சீக்கிரம்": "seekram",
+    "முடியப்போகுது": "mudiyapogudhu",
+}
+
+
+def _normalize_tamil_script(text: str) -> str:
+    """Replace common Tamil-script tokens with Latin equivalents."""
+    out = text
+    # Match whole tokens only so short action words like "ஆட்" do not
+    # corrupt item words such as "ஆட்டோ".
+    token_chars = r"A-Za-z0-9_\u0B80-\u0BFF"
+    for tamil_word, latin_word in sorted(TAMIL_SCRIPT_MAP.items(), key=lambda kv: len(kv[0]), reverse=True):
+        pattern = rf"(?<![{token_chars}]){re.escape(tamil_word)}(?![{token_chars}])"
+        out = re.sub(pattern, f" {latin_word} ", out)
+    out = out.replace("ச்", " ").replace("ங்", " ").replace("ங்க", " ")
+    out = re.sub(r"\s+", " ", out).strip()
+    return out
 
 
 def _normalize_item(name: str) -> str:
@@ -563,7 +617,7 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
         r"\bevlo\b", r"\bevalo\b",  # Tamil/Taglish: how much
         r"\bethanai\b", r"\bethanaium\b",  # Tamil: how many
         r"\benna\b", r"\bennum\b",  # Tamil: what
-        r"\birukku\b", r"\birthu\b",  # Tamil: is/have
+        r"\birukku\b", r"\biruku\b", r"\birthu\b",  # Tamil: is/have
         r"\bullo\b", r"\bulla\b",  # Tamil: inside/have
         r"\bpaathukala\b", r"\bpaathukkum\b",  # Tamil: look/check
         r"\bkanu\b",  # Tamil: see/look
@@ -592,6 +646,14 @@ def _extract_item_name(text: str, qty: Optional[float], unit: Optional[str]) -> 
     # Trim any trailing ", correct" / " correct" chunk so we
     # get a clean canonical item ("dal").
     cleaned = re.sub(r",?\s*correct\b.*$", "", cleaned).strip()
+
+    # Remove trailing Tamil/Hinglish action tails so commands like
+    # "50kg arisi vandirukku add pannu" don't create "arisi vandirukku" items.
+    cleaned = re.sub(
+        r"\b(vandirukku|vandiruku|vanthurukku|vandhurukku|irukka|irukkaa?|correct)\b.*$",
+        "",
+        cleaned,
+    ).strip()
 
     if not cleaned:
         return None
@@ -645,6 +707,11 @@ def parse(text: str, language: str = "hinglish") -> ParsedQuery:
         except Exception:
             # Fail-soft: if transliteration breaks, continue with raw text
             pass
+
+    # Tamil/Taglish inputs can include Tamil script. Normalize common
+    # Tamil words to Latin forms so existing rules work consistently.
+    if language.lower() in {"tamil", "taglish"}:
+        text = _normalize_tamil_script(text)
 
     log.debug("NLP parsing: '%s' (language=%s)", text, language)
 
@@ -748,18 +815,35 @@ def parse(text: str, language: str = "hinglish") -> ParsedQuery:
     if any(w in text_l for w in ["dikhao", "dikha", "show"]):
         scores["QUERY"] += 2
 
-    # Sentences like "dal ka stock 30 kg hai" or
-    # "दाल का स्टॉक 30 केजी है" are usually stock CORRECTION,
-    # not additive restock. When we see 'stock' + a number and
-    # 'hai', prefer CORRECTION over ADD/SELL.
-    if ("stock" in text_l or "stok" in text_l) and "hai" in text_l:
-        if re.search(r"\b\d+(?:\.\d+)?\b", text_l):
-            scores["CORRECTION"] += 3
-            scores["ADD"] = max(0, scores["ADD"] - 2)
-            scores["SELL"] = max(0, scores["SELL"] - 1)
+    # Sentences like "dal ka stock 30 kg hai" / "... irukku, correct pannunga"
+    # are usually stock CORRECTION, not additive restock.
+    # Accept both spaced and compact quantity forms (e.g., "30 kg" and "30kg").
+    has_number = bool(re.search(r"\d+(?:\.\d+)?", text_l))
+    has_stock_word = ("stock" in text_l or "stok" in text_l)
+    has_state_word = any(w in text_l for w in ["hai", "irukku", "iruku", "irthu"])
+
+    # Hindi + Tamil correction pattern: stock + number + state verb
+    if has_stock_word and has_state_word and has_number:
+        scores["CORRECTION"] += 4
+        scores["ADD"] = max(0, scores["ADD"] - 3)
+        scores["SELL"] = max(0, scores["SELL"] - 1)
+
+    # If explicit correction words are present with a number, strongly prefer CORRECTION.
+    # This avoids ADD winning ties due to words like "pannunga" in Tamil commands.
+    if correction_score > 0 and has_number:
+        scores["CORRECTION"] += 2
+        scores["ADD"] = max(0, scores["ADD"] - 2)
     
-    intent = max(scores, key=scores.get)
-    max_score = scores[intent]
+    # Deterministic override: explicit correction command with numeric stock context
+    # should not fall back to ADD even if "pannunga"/"karo" words are present.
+    force_correction = correction_score > 0 and has_number and (has_stock_word or has_state_word)
+
+    if force_correction:
+        intent = "CORRECTION"
+        max_score = scores.get("CORRECTION", 1) + 1
+    else:
+        intent = max(scores, key=scores.get)
+        max_score = scores[intent]
 
     # If all zero, default to QUERY
     if max_score == 0:
